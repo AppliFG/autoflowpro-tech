@@ -15,6 +15,8 @@ import Agences from "./pages/Agences";
 import Abonnement from "./pages/Abonnement";
 import Extensions from "./pages/Extensions";
 import Parametres from "./pages/Parametres";
+import Devis from "./pages/Devis";
+import Vitrine from "./pages/Vitrine";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
           <Route path="/abonnement" element={<Abonnement />} />
           <Route path="/extensions" element={<Extensions />} />
           <Route path="/parametres" element={<Parametres />} />
+          <Route path="/devis" element={<Devis />} />
+          <Route path="/vitrine" element={<Vitrine />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

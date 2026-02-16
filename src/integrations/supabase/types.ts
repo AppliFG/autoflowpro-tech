@@ -14,7 +14,259 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      quote_items: {
+        Row: {
+          article_name: string
+          created_at: string
+          id: string
+          quantity: number
+          quote_id: string
+          unit_price: number | null
+        }
+        Insert: {
+          article_name: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          quote_id: string
+          unit_price?: number | null
+        }
+        Update: {
+          article_name?: string
+          created_at?: string
+          id?: string
+          quantity?: number
+          quote_id?: string
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          supplier_id: string | null
+          total_amount: number | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      trade_ins: {
+        Row: {
+          created_at: string
+          desired_amount: number | null
+          email: string
+          full_name: string
+          id: string
+          mileage: number
+          notes: string | null
+          phone: string
+          photo_urls: string[] | null
+          registration: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          desired_amount?: number | null
+          email: string
+          full_name: string
+          id?: string
+          mileage: number
+          notes?: string | null
+          phone: string
+          photo_urls?: string[] | null
+          registration: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          desired_amount?: number | null
+          email?: string
+          full_name?: string
+          id?: string
+          mileage?: number
+          notes?: string | null
+          phone?: string
+          photo_urls?: string[] | null
+          registration?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vehicle_works: {
+        Row: {
+          cost: number
+          created_at: string
+          designation: string
+          id: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          designation: string
+          id?: string
+          vehicle_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          designation?: string
+          id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_works_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand: string
+          color: string | null
+          created_at: string
+          description: string | null
+          fuel_type: string | null
+          id: string
+          mileage: number | null
+          model: string
+          photo_url: string | null
+          purchase_price: number | null
+          registration: string
+          selling_price: number | null
+          status: string
+          updated_at: string
+          version: string | null
+          year: number | null
+        }
+        Insert: {
+          brand: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          fuel_type?: string | null
+          id?: string
+          mileage?: number | null
+          model: string
+          photo_url?: string | null
+          purchase_price?: number | null
+          registration: string
+          selling_price?: number | null
+          status?: string
+          updated_at?: string
+          version?: string | null
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          fuel_type?: string | null
+          id?: string
+          mileage?: number | null
+          model?: string
+          photo_url?: string | null
+          purchase_price?: number | null
+          registration?: string
+          selling_price?: number | null
+          status?: string
+          updated_at?: string
+          version?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

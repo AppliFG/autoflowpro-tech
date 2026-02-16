@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   Car,
@@ -18,6 +19,7 @@ import {
   Building2,
   FileText,
   Globe,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -39,8 +41,15 @@ const navItems = [
 
 export default function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -96,13 +105,25 @@ export default function AppSidebar() {
           })}
         </nav>
 
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setDesktopCollapsed(!desktopCollapsed)}
-          className="hidden lg:flex items-center justify-center border-t border-sidebar-border p-3 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
-        >
-          <ChevronLeft className={`h-4 w-4 transition-transform ${desktopCollapsed ? "rotate-180" : ""}`} />
-        </button>
+        {/* User & Logout */}
+        <div className="border-t border-sidebar-border p-3 space-y-2">
+          {!desktopCollapsed && user && (
+            <p className="text-xs text-sidebar-foreground/60 truncate px-1">{user.email}</p>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <LogOut className="h-[18px] w-[18px] shrink-0" />
+            {!desktopCollapsed && <span>Déconnexion</span>}
+          </button>
+          <button
+            onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+            className="hidden lg:flex items-center justify-center w-full text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+          >
+            <ChevronLeft className={`h-4 w-4 transition-transform ${desktopCollapsed ? "rotate-180" : ""}`} />
+          </button>
+        </div>
       </aside>
 
       {/* Mobile backdrop */}

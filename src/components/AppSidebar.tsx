@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -35,29 +35,35 @@ const navItems = [
 
 export default function AppSidebar() {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   return (
     <>
       {/* Mobile overlay */}
       <button
         className="fixed top-4 left-4 z-50 lg:hidden rounded-lg bg-primary p-2 text-primary-foreground shadow-lg"
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => setMobileOpen(!mobileOpen)}
       >
         <Menu className="h-5 w-5" />
       </button>
 
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ${
-          collapsed ? "w-16 -translate-x-full lg:translate-x-0" : "w-60"
-        }`}
+          desktopCollapsed ? "w-16" : "w-60"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm shrink-0">
             AF
           </div>
-          {!collapsed && (
+          {!desktopCollapsed && (
             <div className="overflow-hidden">
               <h1 className="text-base font-bold tracking-tight">AutoFlow Pro</h1>
               <p className="text-[10px] opacity-70">Gestion VO & Dépôt-vente</p>
@@ -80,7 +86,7 @@ export default function AppSidebar() {
                 }`}
               >
                 <item.icon className="h-[18px] w-[18px] shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!desktopCollapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
@@ -88,18 +94,18 @@ export default function AppSidebar() {
 
         {/* Collapse toggle */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => setDesktopCollapsed(!desktopCollapsed)}
           className="hidden lg:flex items-center justify-center border-t border-sidebar-border p-3 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
         >
-          <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+          <ChevronLeft className={`h-4 w-4 transition-transform ${desktopCollapsed ? "rotate-180" : ""}`} />
         </button>
       </aside>
 
       {/* Mobile backdrop */}
-      {!collapsed && (
+      {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-foreground/20 backdrop-blur-sm lg:hidden"
-          onClick={() => setCollapsed(true)}
+          onClick={() => setMobileOpen(false)}
         />
       )}
     </>

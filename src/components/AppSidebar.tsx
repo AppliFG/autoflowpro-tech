@@ -16,6 +16,8 @@ import {
   Menu,
   Receipt,
   Building2,
+  FileText,
+  Globe,
 } from "lucide-react";
 
 const navItems = [
@@ -25,11 +27,13 @@ const navItems = [
   { icon: Users, label: "CRM", path: "/crm" },
   { icon: ArrowLeftRight, label: "Reprises", path: "/reprises" },
   { icon: Megaphone, label: "Diffusion", path: "/diffusion" },
+  { icon: FileText, label: "Devis", path: "/devis" },
   { icon: Receipt, label: "Finance", path: "/finance" },
   { icon: Package, label: "Stock", path: "/stock" },
   { icon: Building2, label: "Agences", path: "/agences" },
   { icon: CreditCard, label: "Abonnement", path: "/abonnement" },
   { icon: Puzzle, label: "Extensions", path: "/extensions" },
+  { icon: Globe, label: "Site vitrine", path: "/vitrine" },
   { icon: Settings, label: "Paramètres", path: "/parametres" },
 ];
 

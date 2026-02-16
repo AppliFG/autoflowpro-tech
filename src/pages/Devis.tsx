@@ -1,7 +1,7 @@
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X, Search } from "lucide-react";
 
 type DevisStatus = "brouillon" | "envoye" | "devis_recu" | "accepte" | "facture";
 
@@ -66,6 +66,25 @@ export default function Devis() {
   const [newFournisseur, setNewFournisseur] = useState(mockFournisseurs[0].id);
   const [selectedPieces, setSelectedPieces] = useState<string[]>([]);
   const [expandedCats, setExpandedCats] = useState<string[]>(Object.keys(PIECES_CATEGORIES));
+  const [searchPiece, setSearchPiece] = useState("");
+  const [customArticle, setCustomArticle] = useState("");
+
+  const allPieces = Object.values(PIECES_CATEGORIES).flat();
+  const filteredCategories: Record<string, string[]> = searchPiece.trim()
+    ? Object.fromEntries(
+        Object.entries(PIECES_CATEGORIES)
+          .map(([cat, pieces]) => [cat, pieces.filter((p) => p.toLowerCase().includes(searchPiece.toLowerCase()))])
+          .filter(([, pieces]) => (pieces as string[]).length > 0)
+      )
+    : PIECES_CATEGORIES;
+
+  const addCustomArticle = () => {
+    const trimmed = customArticle.trim();
+    if (trimmed && !selectedPieces.includes(trimmed)) {
+      setSelectedPieces((prev) => [...prev, trimmed]);
+      setCustomArticle("");
+    }
+  };
 
   const togglePiece = (piece: string) => {
     setSelectedPieces((prev) => prev.includes(piece) ? prev.filter((p) => p !== piece) : [...prev, piece]);
@@ -141,9 +160,36 @@ export default function Devis() {
             </div>
           </div>
 
+          {/* Search bar */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Rechercher un article..."
+              value={searchPiece}
+              onChange={(e) => setSearchPiece(e.target.value)}
+              className="w-full h-9 rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Add custom article */}
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              placeholder="Ajouter un article personnalisé..."
+              value={customArticle}
+              onChange={(e) => setCustomArticle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustomArticle()}
+              className="flex-1 h-9 rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <Button size="sm" variant="outline" onClick={addCustomArticle} disabled={!customArticle.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
           {/* Pieces checklist */}
           <div className="border border-border rounded-lg overflow-hidden mb-4 max-h-[400px] overflow-y-auto">
-            {Object.entries(PIECES_CATEGORIES).map(([cat, pieces]) => (
+            {Object.entries(filteredCategories).map(([cat, pieces]) => (
               <div key={cat}>
                 <button
                   onClick={() => toggleCat(cat)}

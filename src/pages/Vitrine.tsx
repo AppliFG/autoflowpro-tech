@@ -1,5 +1,6 @@
-import { Car, MapPin, Calendar, Gauge, Fuel, Phone, Mail } from "lucide-react";
+import { Car, MapPin, Calendar, Gauge, Fuel, Phone, Mail, ArrowLeft, Camera, Send, MessageCircle } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const vehiclesShowcase = [
   {
@@ -36,6 +37,41 @@ const vehiclesShowcase = [
 
 export default function Vitrine() {
   const [selected, setSelected] = useState<typeof vehiclesShowcase[0] | null>(null);
+  const [showReprise, setShowReprise] = useState(false);
+  const [repriseForm, setRepriseForm] = useState({
+    nom: "", email: "", telephone: "", immatriculation: "", km: "", montantSouhaite: "",
+  });
+  const [reprisePhotos, setReprisePhotos] = useState<File[]>([]);
+  const navigate = useNavigate();
+
+  const handleRepriseChange = (field: string, value: string) => {
+    setRepriseForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setReprisePhotos((prev) => [...prev, ...Array.from(e.target.files!)].slice(0, 10));
+    }
+  };
+
+  const removePhoto = (idx: number) => {
+    setReprisePhotos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const isRepriseValid = repriseForm.nom && repriseForm.email && repriseForm.telephone && repriseForm.immatriculation && repriseForm.km && reprisePhotos.length >= 3;
+
+  const sendReprise = (via: "email" | "whatsapp" | "telegram") => {
+    if (!isRepriseValid) return;
+    const msg = `Demande de rachat\nNom: ${repriseForm.nom}\nEmail: ${repriseForm.email}\nTél: ${repriseForm.telephone}\nImmat: ${repriseForm.immatriculation}\nKM: ${repriseForm.km}${repriseForm.montantSouhaite ? `\nMontant souhaité: ${repriseForm.montantSouhaite} €` : ""}\nPhotos: ${reprisePhotos.length} jointes`;
+
+    if (via === "whatsapp") {
+      window.open(`https://wa.me/33612345678?text=${encodeURIComponent(msg)}`, "_blank");
+    } else if (via === "telegram") {
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(msg)}`, "_blank");
+    } else {
+      window.open(`mailto:contact@autoflow.fr?subject=${encodeURIComponent("Demande de rachat - " + repriseForm.immatriculation)}&body=${encodeURIComponent(msg)}`, "_blank");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,9 +85,17 @@ export default function Vitrine() {
               <p className="text-xs opacity-80">Véhicules d'occasion sélectionnés</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-4 text-sm">
-            <a href="tel:0472460432" className="flex items-center gap-1.5 hover:opacity-80"><Phone className="h-4 w-4" /> 04 72 46 04 32</a>
-            <a href="mailto:contact@autoflow.fr" className="flex items-center gap-1.5 hover:opacity-80"><Mail className="h-4 w-4" /> Contact</a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 text-sm hover:opacity-80 bg-primary-foreground/15 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> Accueil
+            </button>
+            <div className="hidden sm:flex items-center gap-4 text-sm">
+              <a href="tel:0472460432" className="flex items-center gap-1.5 hover:opacity-80"><Phone className="h-4 w-4" /> 04 72 46 04 32</a>
+              <a href="mailto:contact@autoflow.fr" className="flex items-center gap-1.5 hover:opacity-80"><Mail className="h-4 w-4" /> Contact</a>
+            </div>
           </div>
         </div>
       </header>
@@ -64,35 +108,129 @@ export default function Vitrine() {
           <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" /> Tignieu-Jameyzieu 38230
           </div>
+          <div className="flex justify-center gap-3 mt-4">
+            <button
+              onClick={() => setShowReprise(!showReprise)}
+              className="bg-accent text-accent-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              {showReprise ? "Voir les annonces" : "Faire racheter mon véhicule"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <p className="text-sm text-muted-foreground mb-6">{vehiclesShowcase.length} véhicules disponibles</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vehiclesShowcase.map((v) => (
-            <div
-              key={v.id}
-              onClick={() => setSelected(v)}
-              className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
-            >
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img src={v.photo} alt={`${v.marque} ${v.modele}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+      {/* Buyback form */}
+      {showReprise && (
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="rounded-xl border border-border bg-card shadow-sm p-6">
+            <h3 className="text-lg font-bold text-card-foreground mb-1">Proposer votre véhicule au rachat</h3>
+            <p className="text-sm text-muted-foreground mb-5">Remplissez le formulaire ci-dessous, nous vous recontacterons rapidement.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {[
+                { key: "nom", label: "Nom complet *", type: "text", placeholder: "Jean Dupont" },
+                { key: "email", label: "Email *", type: "email", placeholder: "jean@exemple.fr" },
+                { key: "telephone", label: "Téléphone portable *", type: "tel", placeholder: "06 12 34 56 78" },
+                { key: "immatriculation", label: "Plaque d'immatriculation *", type: "text", placeholder: "AB-123-CD" },
+                { key: "km", label: "Kilométrage *", type: "number", placeholder: "85000" },
+                { key: "montantSouhaite", label: "Montant souhaité (optionnel)", type: "number", placeholder: "12000" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{f.label}</label>
+                  <input
+                    type={f.type}
+                    placeholder={f.placeholder}
+                    value={repriseForm[f.key as keyof typeof repriseForm]}
+                    onChange={(e) => handleRepriseChange(f.key, e.target.value)}
+                    className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Photos */}
+            <div className="mb-4">
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Photos du véhicule * (minimum 3)
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {reprisePhotos.map((photo, idx) => (
+                  <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted">
+                    <img src={URL.createObjectURL(photo)} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removePhoto(idx)}
+                      className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                  <Camera className="h-5 w-5 text-muted-foreground" />
+                  <input type="file" accept="image/*" multiple onChange={handlePhotos} className="hidden" />
+                </label>
               </div>
-              <div className="p-4">
-                <h3 className="font-bold text-card-foreground text-lg">{v.marque} {v.modele}</h3>
-                <p className="text-primary font-bold text-xl mt-1">{v.prix.toLocaleString()} €</p>
-                <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{v.annee}</span>
-                  <span className="flex items-center gap-1"><Gauge className="h-3.5 w-3.5" />{v.km.toLocaleString()} km</span>
-                  <span className="flex items-center gap-1"><Fuel className="h-3.5 w-3.5" />{v.carburant}</span>
+              {reprisePhotos.length < 3 && (
+                <p className="text-xs text-destructive">Ajoutez encore {3 - reprisePhotos.length} photo(s)</p>
+              )}
+            </div>
+
+            {/* Send buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => sendReprise("email")}
+                disabled={!isRepriseValid}
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                <Send className="h-4 w-4" /> Envoyer par email
+              </button>
+              <button
+                onClick={() => sendReprise("whatsapp")}
+                disabled={!isRepriseValid}
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-success text-success-foreground rounded-lg py-2.5 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </button>
+              <button
+                onClick={() => sendReprise("telegram")}
+                disabled={!isRepriseValid}
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-info text-info-foreground rounded-lg py-2.5 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                <Send className="h-4 w-4" /> Telegram
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grid */}
+      {!showReprise && (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <p className="text-sm text-muted-foreground mb-6">{vehiclesShowcase.length} véhicules disponibles</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vehiclesShowcase.map((v) => (
+              <div
+                key={v.id}
+                onClick={() => setSelected(v)}
+                className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                  <img src={v.photo} alt={`${v.marque} ${v.modele}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-card-foreground text-lg">{v.marque} {v.modele}</h3>
+                  <p className="text-primary font-bold text-xl mt-1">{v.prix.toLocaleString()} €</p>
+                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{v.annee}</span>
+                    <span className="flex items-center gap-1"><Gauge className="h-3.5 w-3.5" />{v.km.toLocaleString()} km</span>
+                    <span className="flex items-center gap-1"><Fuel className="h-3.5 w-3.5" />{v.carburant}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Detail modal */}
       {selected && (

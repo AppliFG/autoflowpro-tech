@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       quote_items: {
         Row: {
           article_name: string
@@ -148,6 +172,8 @@ export type Database = {
           phone: string
           photo_urls: string[] | null
           registration: string
+          rgpd_consent: boolean
+          rgpd_consent_date: string | null
           status: string
           updated_at: string
         }
@@ -162,6 +188,8 @@ export type Database = {
           phone: string
           photo_urls?: string[] | null
           registration: string
+          rgpd_consent?: boolean
+          rgpd_consent_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -176,6 +204,8 @@ export type Database = {
           phone?: string
           photo_urls?: string[] | null
           registration?: string
+          rgpd_consent?: boolean
+          rgpd_consent_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -277,6 +307,7 @@ export type Database = {
           mileage: number | null
           model: string
           photo_url: string | null
+          police_number: number | null
           purchase_price: number | null
           registration: string
           selling_price: number | null
@@ -295,6 +326,7 @@ export type Database = {
           mileage?: number | null
           model: string
           photo_url?: string | null
+          police_number?: number | null
           purchase_price?: number | null
           registration: string
           selling_price?: number | null
@@ -313,6 +345,7 @@ export type Database = {
           mileage?: number | null
           model?: string
           photo_url?: string | null
+          police_number?: number | null
           purchase_price?: number | null
           registration?: string
           selling_price?: number | null

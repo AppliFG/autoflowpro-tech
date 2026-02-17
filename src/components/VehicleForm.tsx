@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 interface VehicleFormData {
   id?: string;
+  police_number?: number | "";
   registration: string;
   brand: string;
   model: string;
@@ -26,6 +27,7 @@ interface VehicleFormData {
 }
 
 const emptyForm: VehicleFormData = {
+  police_number: "",
   registration: "", brand: "", model: "", version: "", year: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null,
@@ -45,9 +47,27 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.photo_url ?? null);
   const [saving, setSaving] = useState(false);
+  const [nextPoliceNumber, setNextPoliceNumber] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!initialData?.id;
+
+  // Fetch next police number for new vehicles
+  useState(() => {
+    if (!isEdit) {
+      (async () => {
+        const [{ data: settings }, { data: maxVehicle }] = await Promise.all([
+          supabase.from("app_settings").select("value").eq("key", "police_number_start").single(),
+          supabase.from("vehicles").select("police_number").order("police_number", { ascending: false }).limit(1).single(),
+        ]);
+        const start = parseInt(settings?.value || "1", 10);
+        const maxNum = maxVehicle?.police_number ?? (start - 1);
+        const next = Math.max(start, (maxNum as number) + 1);
+        setNextPoliceNumber(next);
+        setForm((f) => ({ ...f, police_number: next }));
+      })();
+    }
+  });
 
   const set = (key: keyof VehicleFormData, value: any) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -88,7 +108,8 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         photoUrl = urlData.publicUrl;
       }
 
-      const payload = {
+      const payload: any = {
+        police_number: form.police_number === "" ? null : Number(form.police_number),
         registration: form.registration.trim().toUpperCase(),
         brand: form.brand.trim(),
         model: form.model.trim(),
@@ -166,12 +187,22 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          {/* Main fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="reg">Immatriculation *</Label>
-              <Input id="reg" value={form.registration} onChange={(e) => set("registration", e.target.value)} placeholder="AA-123-BB" />
+          {/* Police number + Main fields */}
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="police" className="text-primary font-semibold">N° de Police (Livre de police)</Label>
+                <Input id="police" type="number" value={form.police_number} onChange={(e) => set("police_number", e.target.value === "" ? "" : Number(e.target.value))} placeholder="1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Numéro chronologique du livre de police / registre VO</p>
+              </div>
+              <div>
+                <Label htmlFor="reg">Immatriculation *</Label>
+                <Input id="reg" value={form.registration} onChange={(e) => set("registration", e.target.value)} placeholder="AA-123-BB" />
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="brand">Marque *</Label>
               <Input id="brand" value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Peugeot" />

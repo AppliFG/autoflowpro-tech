@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload } from "lucide-react";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +32,18 @@ export default function Parametres() {
   const [savingPolice, setSavingPolice] = useState(false);
   const [savingRgpd, setSavingRgpd] = useState(false);
   const [savingAgency, setSavingAgency] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -56,6 +68,30 @@ export default function Parametres() {
       }
     })();
   }, []);
+
+  const changePassword = async () => {
+    if (newPassword.length < 8) {
+      toast.error("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Mot de passe modifié avec succès");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const savePoliceStart = async () => {
     setSavingPolice(true);
@@ -319,6 +355,80 @@ export default function Parametres() {
                 <Save className="h-4 w-4 mr-1.5" />
                 {savingRgpd ? "..." : "Enregistrer les mentions"}
               </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Sécurité */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "securite" ? null : "securite")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Sécurité</h3>
+                <p className="text-xs text-muted-foreground">Mot de passe, sessions actives</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "securite" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "securite" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-5" onClick={(e) => e.stopPropagation()}>
+              {/* Email affiché */}
+              <div>
+                <Label>Adresse email du compte</Label>
+                <p className="text-sm text-card-foreground mt-1">{userEmail || "—"}</p>
+              </div>
+
+              {/* Changement de mot de passe */}
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Changer le mot de passe</Label>
+                <div>
+                  <Label htmlFor="newPwd" className="text-xs">Nouveau mot de passe</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPwd"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min. 8 caractères"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="confirmPwd" className="text-xs">Confirmer le nouveau mot de passe</Label>
+                  <Input
+                    id="confirmPwd"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Retapez le mot de passe"
+                  />
+                </div>
+                <Button onClick={changePassword} disabled={changingPassword || !newPassword || !confirmPassword} size="sm">
+                  <Save className="h-4 w-4 mr-1.5" />
+                  {changingPassword ? "..." : "Modifier le mot de passe"}
+                </Button>
+              </div>
+
+              {/* 2FA info */}
+              <div className="bg-muted/50 rounded-lg p-4 text-xs text-muted-foreground space-y-2">
+                <p className="font-semibold text-card-foreground text-sm">Authentification à deux facteurs (2FA)</p>
+                <p>La 2FA ajoute une couche de sécurité supplémentaire en demandant un code temporaire en plus de votre mot de passe.</p>
+                <p className="text-primary font-medium">🔒 Cette fonctionnalité sera bientôt disponible.</p>
+              </div>
             </div>
           )}
         </div>

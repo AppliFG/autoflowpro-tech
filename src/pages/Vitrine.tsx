@@ -231,7 +231,11 @@ export default function Vitrine() {
                       className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value="">Tous</option>
-                      {fuelTypes.map((f) => (
+                      <option value="Essence">Essence</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Électrique">Électrique</option>
+                      <option value="Hybride">Hybride</option>
+                      {fuelTypes.filter(f => !["Essence","Diesel","Électrique","Hybride"].includes(f)).map((f) => (
                         <option key={f} value={f}>{f}</option>
                       ))}
                     </select>
@@ -241,7 +245,7 @@ export default function Vitrine() {
                     <label className="text-xs text-muted-foreground mb-2 block">
                       Prix : <span className="font-medium text-foreground">{priceRange[0].toLocaleString()} € — {priceRange[1].toLocaleString()} €</span>
                     </label>
-                    <div className="relative h-5 flex items-center">
+                    <div className="relative h-5 flex items-center mt-2">
                       <div className="absolute w-full h-1.5 rounded-full bg-muted" />
                       <div
                         className="absolute h-1.5 rounded-full bg-primary"
@@ -255,17 +259,17 @@ export default function Vitrine() {
                         value={priceRange[0]}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (val <= priceRange[1]) setPriceRange([val, priceRange[1]]);
+                          setPriceRange([Math.min(val, priceRange[1] - 500), priceRange[1]]);
                         }}
                         className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
-                        style={{ zIndex: priceRange[0] > 79000 ? 5 : 3 }}
+                        style={{ zIndex: priceRange[0] >= priceRange[1] - 500 ? 5 : 3 }}
                       />
                       <input
                         type="range" min={0} max={80000} step={500}
                         value={priceRange[1]}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (val >= priceRange[0]) setPriceRange([priceRange[0], val]);
+                          setPriceRange([priceRange[0], Math.max(val, priceRange[0] + 500)]);
                         }}
                         className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
                         style={{ zIndex: 4 }}
@@ -277,7 +281,7 @@ export default function Vitrine() {
                     <label className="text-xs text-muted-foreground mb-2 block">
                       Kilométrage : <span className="font-medium text-foreground">{kmRange[0].toLocaleString()} km — {kmRange[1].toLocaleString()} km</span>
                     </label>
-                    <div className="relative h-5 flex items-center">
+                    <div className="relative h-5 flex items-center mt-2">
                       <div className="absolute w-full h-1.5 rounded-full bg-muted" />
                       <div
                         className="absolute h-1.5 rounded-full bg-primary"
@@ -291,17 +295,17 @@ export default function Vitrine() {
                         value={kmRange[0]}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (val <= kmRange[1]) setKmRange([val, kmRange[1]]);
+                          setKmRange([Math.min(val, kmRange[1] - 5000), kmRange[1]]);
                         }}
                         className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
-                        style={{ zIndex: kmRange[0] > 290000 ? 5 : 3 }}
+                        style={{ zIndex: kmRange[0] >= kmRange[1] - 5000 ? 5 : 3 }}
                       />
                       <input
                         type="range" min={0} max={300000} step={5000}
                         value={kmRange[1]}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (val >= kmRange[0]) setKmRange([kmRange[0], val]);
+                          setKmRange([kmRange[0], Math.max(val, kmRange[0] + 5000)]);
                         }}
                         className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
                         style={{ zIndex: 4 }}

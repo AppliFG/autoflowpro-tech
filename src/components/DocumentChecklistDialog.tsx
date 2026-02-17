@@ -10,8 +10,7 @@ import { toast } from "sonner";
 const BUYER_DOCS = [
   { id: "id_buyer", label: "Pièce d'identité (CNI ou passeport)" },
   { id: "domicile", label: "Justificatif de domicile (- de 3 mois)" },
-  { id: "hebergement", label: "Attestation d'hébergement (si hébergé)" },
-  { id: "id_hebergeur", label: "Pièce d'identité de l'hébergeur (si hébergé)" },
+  { id: "hebergement", label: "Attestation d'hébergement + Pièce d'identité de l'hébergeur (si hébergé)" },
   { id: "permis", label: "Permis de conduire" },
   { id: "assurance", label: "Attestation d'assurance" },
 ];

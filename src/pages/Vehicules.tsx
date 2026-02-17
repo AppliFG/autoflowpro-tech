@@ -2,17 +2,20 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge, { VehicleStatus } from "@/components/StatusBadge";
 import { Plus, Search, Filter, Eye, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface Travail {
-  id: number;
+  id: string;
   designation: string;
   cout: number;
 }
 
 interface Vehicle {
-  id: number;
+  id: string;
   immatriculation: string;
   photo: string;
   marque: string;
@@ -30,15 +33,44 @@ interface Vehicle {
   description: string;
 }
 
-const mockVehicles: Vehicle[] = [
-  { id: 1, immatriculation: "FG-123-AB", photo: "https://images.unsplash.com/photo-1549317661-bd32c8ce0afa?w=80&h=60&fit=crop", marque: "Peugeot", modele: "3008 GT", annee: 2021, km: 45000, carburant: "Diesel", prixAchat: 18500, travaux: [{ id: 1, designation: "Distribution", cout: 850 }, { id: 2, designation: "Plaquettes AV", cout: 220 }, { id: 3, designation: "Nettoyage complet", cout: 150 }, { id: 4, designation: "Carte grise", cout: 280 }, { id: 5, designation: "Transport", cout: 200 }], coutRevient: 20200, prixVente: 24800, marge: 4600, status: "en_ligne", jours: 12, description: "Peugeot 3008 GT Line, full options, toit panoramique, GPS, caméra de recul, sièges chauffants. Véhicule en excellent état, entretien suivi en concession. CT OK, garantie 6 mois." },
-  { id: 2, immatriculation: "EH-456-CD", photo: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=80&h=60&fit=crop", marque: "BMW", modele: "Série 3 320d", annee: 2020, km: 62000, carburant: "Diesel", prixAchat: 22000, travaux: [{ id: 1, designation: "Vidange + filtres", cout: 380 }, { id: 2, designation: "Pneus AV", cout: 420 }, { id: 3, designation: "CT", cout: 80 }, { id: 4, designation: "Carte grise", cout: 320 }, { id: 5, designation: "Nettoyage", cout: 150 }, { id: 6, designation: "Transport", cout: 450 }], coutRevient: 23800, prixVente: 27500, marge: 3700, status: "en_ligne", jours: 28, description: "BMW 320d Sport Line, boîte auto, GPS Pro, LED, régulateur adaptatif. Carnet d'entretien BMW complet. Première main." },
-  { id: 3, immatriculation: "DJ-789-EF", photo: "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=80&h=60&fit=crop", marque: "Renault", modele: "Captur", annee: 2022, km: 28000, carburant: "Essence", prixAchat: 14000, travaux: [{ id: 1, designation: "Pare-brise", cout: 650 }, { id: 2, designation: "Nettoyage", cout: 120 }, { id: 3, designation: "Carte grise", cout: 230 }, { id: 4, designation: "Transport", cout: 200 }], coutRevient: 15200, prixVente: 18900, marge: 3700, status: "depose", jours: 45, description: "Renault Captur Intens TCe 130, GPS, caméra, climatisation auto, aide au stationnement. Faible kilométrage." },
-  { id: 4, immatriculation: "CK-012-GH", photo: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=80&h=60&fit=crop", marque: "Mercedes", modele: "Classe A 200", annee: 2021, km: 35000, carburant: "Essence", prixAchat: 24000, travaux: [{ id: 1, designation: "Plaquettes AV+AR", cout: 480 }, { id: 2, designation: "Nettoyage complet", cout: 180 }, { id: 3, designation: "CT", cout: 80 }, { id: 4, designation: "Carte grise", cout: 360 }, { id: 5, designation: "Transport", cout: 400 }], coutRevient: 25500, prixVente: 29900, marge: 4400, status: "reserve", jours: 8, description: "Mercedes Classe A 200 AMG Line, pack premium, MBUX, toit ouvrant, éclairage ambiance 64 couleurs. État irréprochable." },
-  { id: 5, immatriculation: "BL-345-IJ", photo: "https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=80&h=60&fit=crop", marque: "Volkswagen", modele: "Golf 8", annee: 2022, km: 22000, carburant: "Essence", prixAchat: 19500, travaux: [{ id: 1, designation: "Vidange", cout: 180 }, { id: 2, designation: "Nettoyage", cout: 120 }, { id: 3, designation: "Carte grise", cout: 300 }, { id: 4, designation: "CT", cout: 80 }, { id: 5, designation: "Transport", cout: 620 }], coutRevient: 20800, prixVente: 24500, marge: 3700, status: "preparation", jours: 3, description: "Volkswagen Golf 8 Style 1.5 TSI 150, Digital Cockpit Pro, ACC, Lane Assist, App-Connect. Garantie constructeur." },
-  { id: 6, immatriculation: "AM-678-KL", photo: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=80&h=60&fit=crop", marque: "Audi", modele: "A3 Sportback", annee: 2019, km: 78000, carburant: "Diesel", prixAchat: 16000, travaux: [{ id: 1, designation: "Embrayage", cout: 1200 }, { id: 2, designation: "Nettoyage", cout: 120 }, { id: 3, designation: "Carte grise", cout: 280 }, { id: 4, designation: "Transport", cout: 200 }], coutRevient: 17800, prixVente: 20500, marge: 2700, status: "en_ligne", jours: 65, description: "Audi A3 Sportback 35 TDI S-Tronic, Virtual Cockpit, MMI Navigation, sièges sport. Entretien Audi à jour." },
-  { id: 7, immatriculation: "GN-901-MN", photo: "https://images.unsplash.com/photo-1621993202323-eb4e7a283458?w=80&h=60&fit=crop", marque: "Toyota", modele: "Yaris Cross", annee: 2023, km: 12000, carburant: "Hybride", prixAchat: 21000, travaux: [{ id: 1, designation: "Nettoyage complet", cout: 180 }, { id: 2, designation: "Carte grise", cout: 320 }, { id: 3, designation: "CT", cout: 80 }, { id: 4, designation: "Transport", cout: 420 }], coutRevient: 22000, prixVente: 25900, marge: 3900, status: "vendu", jours: 18, description: "Toyota Yaris Cross Hybride 116H Design, GPS, caméra, Toyota Safety Sense. Faible consommation." },
-];
+const statusDbToUi: Record<string, VehicleStatus> = {
+  "En préparation": "preparation",
+  "En ligne": "en_ligne",
+  "Réservé": "reserve",
+  "Vendu": "vendu",
+  "Déposé": "depose",
+  "En stock": "preparation",
+};
+
+function mapVehicle(v: any, works: any[]): Vehicle {
+  const travaux: Travail[] = works
+    .filter((w: any) => w.vehicle_id === v.id)
+    .map((w: any) => ({ id: w.id, designation: w.designation, cout: Number(w.cost) }));
+  const totalTravaux = travaux.reduce((s, t) => s + t.cout, 0);
+  const prixAchat = Number(v.purchase_price) || 0;
+  const prixVente = Number(v.selling_price) || 0;
+  const coutRevient = prixAchat + totalTravaux;
+  const jours = Math.floor((Date.now() - new Date(v.created_at).getTime()) / 86400000);
+
+  return {
+    id: v.id,
+    immatriculation: v.registration,
+    photo: v.photo_url || "/placeholder.svg",
+    marque: v.brand,
+    modele: v.model,
+    annee: v.year || 0,
+    km: v.mileage || 0,
+    carburant: v.fuel_type || "",
+    prixAchat,
+    travaux,
+    coutRevient,
+    prixVente,
+    marge: prixVente - coutRevient,
+    status: statusDbToUi[v.status] || "preparation",
+    jours,
+    description: v.description || "",
+  };
+}
 
 function margeColor(marge: number) {
   if (marge > 2000) return "text-success font-semibold";
@@ -94,7 +126,7 @@ function FicheVehicule({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
             <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted transition-colors">
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <img src={vehicle.photo.replace("w=80&h=60", "w=120&h=80")} alt="" className="h-12 w-16 object-cover rounded-lg" />
+            <img src={vehicle.photo} alt="" className="h-12 w-16 object-cover rounded-lg" />
             <div>
               <h2 className="font-bold text-lg text-card-foreground">{vehicle.marque} {vehicle.modele}</h2>
               <p className="text-sm text-muted-foreground">{vehicle.immatriculation} · {vehicle.annee} · {vehicle.km.toLocaleString()} km</p>
@@ -208,7 +240,20 @@ export default function Vehicules() {
   const [search, setSearch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
-  const filtered = mockVehicles.filter((v) =>
+  const { data: vehicles = [], isLoading } = useQuery({
+    queryKey: ["vehicles-with-works"],
+    queryFn: async () => {
+      const [{ data: vData, error: vErr }, { data: wData, error: wErr }] = await Promise.all([
+        supabase.from("vehicles").select("*").order("created_at", { ascending: false }),
+        supabase.from("vehicle_works").select("*"),
+      ]);
+      if (vErr) throw vErr;
+      if (wErr) throw wErr;
+      return (vData || []).map((v) => mapVehicle(v, wData || []));
+    },
+  });
+
+  const filtered = vehicles.filter((v) =>
     `${v.immatriculation} ${v.marque} ${v.modele}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -237,59 +282,65 @@ export default function Vehicules() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/50">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
-              <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
-              <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((v) => (
-              <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
-                <td className="px-4 py-2">
-                  <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
-                </td>
-                <td className="px-4 py-3">
-                  <div>
-                    <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
-                    <p className="text-xs text-muted-foreground">{v.annee}</p>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
-                <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
-                <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
-                <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
-                <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
-                <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
-                <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
-                <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => setSelectedVehicle(v)}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                    title="Voir fiche"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                </td>
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Chargement...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">Aucun véhicule trouvé</div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
+                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
+                <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map((v) => (
+                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
+                  <td className="px-4 py-2">
+                    <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div>
+                      <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
+                      <p className="text-xs text-muted-foreground">{v.annee}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
+                  <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
+                  <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
+                  <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
+                  <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => setSelectedVehicle(v)}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                      title="Voir fiche"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AppLayout>
   );
 }

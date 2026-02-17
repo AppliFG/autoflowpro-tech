@@ -13,6 +13,8 @@ export default function Vitrine() {
   });
   const [reprisePhotos, setReprisePhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [rgpdConsent, setRgpdConsent] = useState(false);
+  const [rgpdText, setRgpdText] = useState("");
   const navigate = useNavigate();
 
   // Filter state
@@ -32,6 +34,16 @@ export default function Vitrine() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Fetch RGPD text from settings
+  useQuery({
+    queryKey: ["rgpd-text"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "rgpd_text").single();
+      if (data?.value) setRgpdText(data.value);
+      return data?.value || "";
     },
   });
 
@@ -77,7 +89,7 @@ export default function Vitrine() {
     setReprisePhotos((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const isRepriseValid = repriseForm.nom && repriseForm.email && repriseForm.telephone && repriseForm.immatriculation && repriseForm.km && reprisePhotos.length >= 3;
+  const isRepriseValid = repriseForm.nom && repriseForm.email && repriseForm.telephone && repriseForm.immatriculation && repriseForm.km && reprisePhotos.length >= 3 && rgpdConsent;
 
   const submitReprise = async () => {
     if (!isRepriseValid || submitting) return;
@@ -101,11 +113,14 @@ export default function Vitrine() {
         mileage: parseInt(repriseForm.km),
         desired_amount: repriseForm.montantSouhaite ? parseFloat(repriseForm.montantSouhaite) : null,
         photo_urls: photoUrls,
+        rgpd_consent: true,
+        rgpd_consent_date: new Date().toISOString(),
       });
       if (error) throw error;
 
       toast.success("Demande envoyée avec succès !");
       setRepriseForm({ nom: "", email: "", telephone: "", immatriculation: "", km: "", montantSouhaite: "" });
+      setRgpdConsent(false);
       setReprisePhotos([]);
       setShowReprise(false);
     } catch (err: any) {
@@ -199,6 +214,27 @@ export default function Vitrine() {
                 </label>
               </div>
               {reprisePhotos.length < 3 && <p className="text-xs text-destructive">Ajoutez encore {3 - reprisePhotos.length} photo(s)</p>}
+            </div>
+
+            {/* RGPD Consent */}
+            <div className="mb-4 p-3 rounded-lg border border-border bg-muted/30">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rgpdConsent}
+                  onChange={(e) => setRgpdConsent(e.target.checked)}
+                  className="mt-0.5 rounded border-input"
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  J'accepte que mes données personnelles soient collectées et traitées dans le cadre de ma demande de rachat. *
+                </span>
+              </label>
+              {rgpdText && (
+                <details className="mt-2">
+                  <summary className="text-[10px] text-primary cursor-pointer hover:underline">Lire les mentions RGPD complètes</summary>
+                  <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed whitespace-pre-line">{rgpdText}</p>
+                </details>
+              )}
             </div>
 
             <button onClick={submitReprise} disabled={!isRepriseValid || submitting}

@@ -3,17 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save } from "lucide-react";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const sections = [
-  { icon: Building2, title: "Agence", description: "Nom, adresse, logo, mentions légales" },
   { icon: Users, title: "Utilisateurs & Rôles", description: "Gérer les accès et permissions" },
   { icon: FileText, title: "Templates", description: "Modèles d'annonces, factures, mandats" },
   { icon: Bell, title: "Notifications", description: "Alertes email, push et SMS" },
-  { icon: Shield, title: "Sécurité", description: "Mot de passe, 2FA, sessions" },
 ];
 
 export default function Parametres() {
@@ -22,16 +20,35 @@ export default function Parametres() {
   const [rgpdText, setRgpdText] = useState(
     "Conformément au Règlement Général sur la Protection des Données (RGPD - UE 2016/679), les données personnelles collectées sont traitées dans le cadre de notre activité de vente de véhicules d'occasion. Vos données sont conservées pendant la durée légale requise et ne sont jamais transmises à des tiers sans votre consentement. Vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité de vos données. Pour exercer vos droits, contactez-nous par email."
   );
+  const [agencyName, setAgencyName] = useState("");
+  const [agencyAddress, setAgencyAddress] = useState("");
+  const [agencyPhone, setAgencyPhone] = useState("");
+  const [agencyEmail, setAgencyEmail] = useState("");
+  const [agencySiret, setAgencySiret] = useState("");
+  const [agencyTva, setAgencyTva] = useState("");
+  const [agencyLegalMentions, setAgencyLegalMentions] = useState("");
   const [savingPolice, setSavingPolice] = useState(false);
   const [savingRgpd, setSavingRgpd] = useState(false);
+  const [savingAgency, setSavingAgency] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("app_settings").select("key, value").in("key", ["police_number_start", "rgpd_text"]);
+      const { data } = await supabase.from("app_settings").select("key, value").in("key", [
+        "police_number_start", "rgpd_text",
+        "agency_name", "agency_address", "agency_phone", "agency_email",
+        "agency_siret", "agency_tva", "agency_legal_mentions"
+      ]);
       if (data) {
         for (const row of data) {
           if (row.key === "police_number_start") setPoliceStart(row.value);
           if (row.key === "rgpd_text") setRgpdText(row.value);
+          if (row.key === "agency_name") setAgencyName(row.value);
+          if (row.key === "agency_address") setAgencyAddress(row.value);
+          if (row.key === "agency_phone") setAgencyPhone(row.value);
+          if (row.key === "agency_email") setAgencyEmail(row.value);
+          if (row.key === "agency_siret") setAgencySiret(row.value);
+          if (row.key === "agency_tva") setAgencyTva(row.value);
+          if (row.key === "agency_legal_mentions") setAgencyLegalMentions(row.value);
         }
       }
     })();
@@ -63,9 +80,91 @@ export default function Parametres() {
     }
   };
 
+  const saveAgency = async () => {
+    setSavingAgency(true);
+    try {
+      const settings = [
+        { key: "agency_name", value: agencyName },
+        { key: "agency_address", value: agencyAddress },
+        { key: "agency_phone", value: agencyPhone },
+        { key: "agency_email", value: agencyEmail },
+        { key: "agency_siret", value: agencySiret },
+        { key: "agency_tva", value: agencyTva },
+        { key: "agency_legal_mentions", value: agencyLegalMentions },
+      ];
+      for (const s of settings) {
+        const { error } = await supabase.from("app_settings").upsert(s, { onConflict: "key" });
+        if (error) throw error;
+      }
+      toast.success("Informations agence enregistrées");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingAgency(false);
+    }
+  };
+
   return (
     <AppLayout title="Paramètres">
       <div className="max-w-2xl space-y-4">
+        {/* Agence */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "agence" ? null : "agence")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Agence</h3>
+                <p className="text-xs text-muted-foreground">Nom, adresse, SIRET, mentions légales</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "agence" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "agence" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="agencyName">Nom de l'agence</Label>
+                  <Input id="agencyName" value={agencyName} onChange={(e) => setAgencyName(e.target.value)} placeholder="Mon Garage Auto" />
+                </div>
+                <div>
+                  <Label htmlFor="agencyPhone">Téléphone</Label>
+                  <Input id="agencyPhone" value={agencyPhone} onChange={(e) => setAgencyPhone(e.target.value)} placeholder="01 23 45 67 89" />
+                </div>
+                <div>
+                  <Label htmlFor="agencyEmail">Email</Label>
+                  <Input id="agencyEmail" type="email" value={agencyEmail} onChange={(e) => setAgencyEmail(e.target.value)} placeholder="contact@mongarage.fr" />
+                </div>
+                <div>
+                  <Label htmlFor="agencySiret">SIRET</Label>
+                  <Input id="agencySiret" value={agencySiret} onChange={(e) => setAgencySiret(e.target.value)} placeholder="123 456 789 00012" />
+                </div>
+                <div>
+                  <Label htmlFor="agencyTva">N° TVA intracommunautaire</Label>
+                  <Input id="agencyTva" value={agencyTva} onChange={(e) => setAgencyTva(e.target.value)} placeholder="FR12345678901" />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="agencyAddress">Adresse complète</Label>
+                <Textarea id="agencyAddress" rows={2} value={agencyAddress} onChange={(e) => setAgencyAddress(e.target.value)} placeholder="12 rue du Commerce, 75015 Paris" />
+              </div>
+              <div>
+                <Label htmlFor="agencyLegal">Mentions légales</Label>
+                <p className="text-xs text-muted-foreground mb-1">Apparaîtront sur les factures et documents officiels.</p>
+                <Textarea id="agencyLegal" rows={3} value={agencyLegalMentions} onChange={(e) => setAgencyLegalMentions(e.target.value)} placeholder="SAS au capital de... RCS Paris..." />
+              </div>
+              <Button onClick={saveAgency} disabled={savingAgency} size="sm">
+                <Save className="h-4 w-4 mr-1.5" />
+                {savingAgency ? "..." : "Enregistrer"}
+              </Button>
+            </div>
+          )}
+        </div>
+
         {sections.map((s) => (
           <div key={s.title} className="flex items-center justify-between rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center gap-4">

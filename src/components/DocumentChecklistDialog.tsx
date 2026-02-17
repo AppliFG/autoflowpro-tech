@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Mail, MessageCircle } from "lucide-react";
+import { FileText, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 const BUYER_DOCS = [
   { id: "id_buyer", label: "Pièce d'identité (CNI ou passeport)" },
   { id: "domicile", label: "Justificatif de domicile (- de 3 mois)" },
   { id: "hebergement", label: "Attestation d'hébergement (si hébergé)" },
+  { id: "id_hebergeur", label: "Pièce d'identité de l'hébergeur (si hébergé)" },
   { id: "permis", label: "Permis de conduire" },
   { id: "assurance", label: "Attestation d'assurance" },
 ];
@@ -54,18 +55,6 @@ export default function DocumentChecklistDialog({ clientName, children }: Props)
     const lines = selectedDocs.map((d, i) => `${i + 1}. ${d.label}`);
 
     return `Bonjour ${clientName},\n\nVoici la liste des documents nécessaires pour ${roleLabel} de votre véhicule :\n\n${lines.join("\n")}\n\nMerci de nous les transmettre dès que possible.\n\nCordialement,\nAutoFlow Pro`;
-  };
-
-  const sendWhatsApp = () => {
-    const msg = buildMessage();
-    if (!msg) {
-      toast.error("Sélectionnez au moins un document");
-      return;
-    }
-    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-    toast.success("WhatsApp ouvert");
-    setOpen(false);
   };
 
   const sendEmail = () => {
@@ -123,14 +112,10 @@ export default function DocumentChecklistDialog({ clientName, children }: Props)
           </TabsContent>
         </Tabs>
 
-        <div className="flex gap-3 mt-4">
-          <Button onClick={sendWhatsApp} className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700">
-            <MessageCircle className="h-4 w-4" />
-            WhatsApp
-          </Button>
-          <Button onClick={sendEmail} variant="outline" className="flex-1 gap-2">
+        <div className="mt-4">
+          <Button onClick={sendEmail} className="w-full gap-2">
             <Mail className="h-4 w-4" />
-            Email
+            Envoyer par Email
           </Button>
         </div>
       </DialogContent>

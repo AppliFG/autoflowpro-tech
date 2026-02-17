@@ -180,24 +180,33 @@ export type Database = {
       }
       vehicle_works: {
         Row: {
+          client_visible: boolean
           cost: number
           created_at: string
           designation: string
           id: string
+          intervention_date: string | null
+          intervention_km: number | null
           vehicle_id: string
         }
         Insert: {
+          client_visible?: boolean
           cost?: number
           created_at?: string
           designation: string
           id?: string
+          intervention_date?: string | null
+          intervention_km?: number | null
           vehicle_id: string
         }
         Update: {
+          client_visible?: boolean
           cost?: number
           created_at?: string
           designation?: string
           id?: string
+          intervention_date?: string | null
+          intervention_km?: number | null
           vehicle_id?: string
         }
         Relationships: [

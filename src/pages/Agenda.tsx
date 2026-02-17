@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import AppLayout from "@/components/AppLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday, isTomorrow, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -118,6 +118,56 @@ export default function Agenda() {
       toast.success("Événement supprimé");
     },
   });
+
+  // Toast notifications for today/tomorrow events
+  const { data: upcomingEvents = [] } = useQuery({
+    queryKey: ["upcoming_events_toast"],
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("vehicle_events")
+        .select("*, vehicles(brand, model)")
+        .gte("event_date", today)
+        .lte("event_date", tomorrow)
+        .order("event_date")
+        .order("event_time", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const toastShown = useRef(false);
+  useEffect(() => {
+    if (toastShown.current || upcomingEvents.length === 0) return;
+    toastShown.current = true;
+    const todayEvents = upcomingEvents.filter((e: any) => isToday(new Date(e.event_date)));
+    const tomorrowEvents = upcomingEvents.filter((e: any) => isTomorrow(new Date(e.event_date)));
+    if (todayEvents.length > 0) {
+      toast.info(`📅 ${todayEvents.length} événement(s) aujourd'hui`, {
+        description: todayEvents.slice(0, 3).map((e: any) => {
+          const cfg = getEventConfig(e.event_type);
+          const time = e.event_time ? e.event_time.slice(0, 5) + " — " : "";
+          const vehicle = e.vehicles ? `${e.vehicles.brand} ${e.vehicles.model}` : cfg.label;
+          return `${time}${vehicle}`;
+        }).join(" • "),
+        duration: 8000,
+      });
+    }
+    if (tomorrowEvents.length > 0) {
+      setTimeout(() => {
+        toast.info(`🔔 ${tomorrowEvents.length} événement(s) demain`, {
+          description: tomorrowEvents.slice(0, 3).map((e: any) => {
+            const cfg = getEventConfig(e.event_type);
+            const time = e.event_time ? e.event_time.slice(0, 5) + " — " : "";
+            const vehicle = e.vehicles ? `${e.vehicles.brand} ${e.vehicles.model}` : cfg.label;
+            return `${time}${vehicle}`;
+          }).join(" • "),
+          duration: 8000,
+        });
+      }, 1500);
+    }
+  }, [upcomingEvents]);
 
   const days = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [currentMonth]);
   const startDay = getDay(monthStart); // 0=Sun

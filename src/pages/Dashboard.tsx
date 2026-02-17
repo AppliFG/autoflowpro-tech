@@ -1,6 +1,7 @@
 import AppLayout from "@/components/AppLayout";
 import KpiCard from "@/components/KpiCard";
 import TodayAgendaWidget from "@/components/TodayAgendaWidget";
+import UpcomingEventsAlert from "@/components/UpcomingEventsAlert";
 import { Car, Euro, TrendingUp, Users, Clock, CalendarCheck, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
@@ -115,8 +116,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Agenda du jour */}
+      {/* Rappels + Agenda du jour */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <UpcomingEventsAlert />
         <TodayAgendaWidget />
       </div>
     </AppLayout>

@@ -27,6 +27,8 @@ export default function Parametres() {
   const [agencySiret, setAgencySiret] = useState("");
   const [agencyTva, setAgencyTva] = useState("");
   const [agencyLegalMentions, setAgencyLegalMentions] = useState("");
+  const [agencyLogoUrl, setAgencyLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [savingPolice, setSavingPolice] = useState(false);
   const [savingRgpd, setSavingRgpd] = useState(false);
   const [savingAgency, setSavingAgency] = useState(false);
@@ -36,7 +38,7 @@ export default function Parametres() {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
         "police_number_start", "rgpd_text",
         "agency_name", "agency_address", "agency_phone", "agency_email",
-        "agency_siret", "agency_tva", "agency_legal_mentions"
+        "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url"
       ]);
       if (data) {
         for (const row of data) {
@@ -49,6 +51,7 @@ export default function Parametres() {
           if (row.key === "agency_siret") setAgencySiret(row.value);
           if (row.key === "agency_tva") setAgencyTva(row.value);
           if (row.key === "agency_legal_mentions") setAgencyLegalMentions(row.value);
+          if (row.key === "agency_logo_url") setAgencyLogoUrl(row.value);
         }
       }
     })();
@@ -77,6 +80,33 @@ export default function Parametres() {
       toast.error(err.message);
     } finally {
       setSavingRgpd(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `logo.${ext}`;
+      // Remove old logo first
+      await supabase.storage.from("agency-assets").remove([path]);
+      const { error } = await supabase.storage.from("agency-assets").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("agency-assets").getPublicUrl(path);
+      const url = urlData.publicUrl + "?t=" + Date.now();
+      setAgencyLogoUrl(url);
+      await supabase.from("app_settings").upsert({ key: "agency_logo_url", value: url }, { onConflict: "key" });
+      toast.success("Logo mis à jour");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -126,6 +156,29 @@ export default function Parametres() {
           </div>
           {activeSection === "agence" && (
             <div className="mt-4 pt-4 border-t border-border space-y-4" onClick={(e) => e.stopPropagation()}>
+              {/* Logo upload */}
+              <div>
+                <Label>Logo de l'agence</Label>
+                <p className="text-xs text-muted-foreground mb-2">Format recommandé : PNG ou SVG, fond transparent.</p>
+                <div className="flex items-center gap-4">
+                  {agencyLogoUrl ? (
+                    <img src={agencyLogoUrl} alt="Logo agence" className="h-16 w-16 rounded-lg object-contain border border-border bg-background p-1" />
+                  ) : (
+                    <div className="h-16 w-16 rounded-lg border border-dashed border-border flex items-center justify-center bg-muted/30">
+                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <label className="cursor-pointer">
+                    <Button variant="outline" size="sm" asChild disabled={uploadingLogo}>
+                      <span>
+                        <Upload className="h-4 w-4 mr-1.5" />
+                        {uploadingLogo ? "Envoi..." : "Changer le logo"}
+                      </span>
+                    </Button>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  </label>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="agencyName">Nom de l'agence</Label>

@@ -18,6 +18,7 @@ interface Travail {
 
 interface Vehicle {
   id: string;
+  policeNumber: number | null;
   immatriculation: string;
   photo: string;
   marque: string;
@@ -57,6 +58,7 @@ function mapVehicle(v: any, works: any[]): Vehicle {
 
   return {
     id: v.id,
+    policeNumber: v.police_number ?? null,
     immatriculation: v.registration,
     photo: v.photo_url || "/placeholder.svg",
     marque: v.brand,
@@ -132,7 +134,10 @@ function FicheVehicule({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
             <img src={vehicle.photo} alt="" className="h-12 w-16 object-cover rounded-lg" />
             <div>
               <h2 className="font-bold text-lg text-card-foreground">{vehicle.marque} {vehicle.modele}</h2>
-              <p className="text-sm text-muted-foreground">{vehicle.immatriculation} · {vehicle.annee} · {vehicle.km.toLocaleString()} km</p>
+              <p className="text-sm text-muted-foreground">
+                {vehicle.policeNumber ? <span className="font-semibold text-primary">N° {vehicle.policeNumber}</span> : null}
+                {vehicle.policeNumber ? " · " : ""}{vehicle.immatriculation} · {vehicle.annee} · {vehicle.km.toLocaleString()} km
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -317,6 +322,7 @@ export default function Vehicules() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Police</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
@@ -334,6 +340,7 @@ export default function Vehicules() {
             <tbody>
               {filtered.map((v) => (
                 <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
                   <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
                   <td className="px-4 py-2">
                     <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
@@ -357,7 +364,7 @@ export default function Vehicules() {
                       <button
                         onClick={() => {
                           setEditVehicle({
-                            id: v.id, registration: v.immatriculation, brand: v.marque, model: v.modele,
+                            id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele,
                             version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel",
                             color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "",
                             status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation",

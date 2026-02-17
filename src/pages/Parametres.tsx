@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const sections = [
-  { icon: Users, title: "Utilisateurs & Rôles", description: "Gérer les accès et permissions" },
   { icon: FileText, title: "Templates", description: "Modèles d'annonces, factures, mandats" },
   { icon: Bell, title: "Notifications", description: "Alertes email, push et SMS" },
 ];
@@ -38,12 +39,80 @@ export default function Parametres() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [currentUserId, setCurrentUserId] = useState("");
+
+  // Users management
+  const [teamUsers, setTeamUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState<string>("commercial");
+  const [inviting, setInviting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const roleLabels: Record<string, string> = {
+    admin: "Admin",
+    commercial: "Commercial",
+    comptable: "Comptable",
+  };
+
+  const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
+    admin: "default",
+    commercial: "secondary",
+    comptable: "outline",
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) setUserEmail(data.user.email);
+      if (data.user?.id) setCurrentUserId(data.user.id);
     });
   }, []);
+
+  const loadTeamUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data: profiles } = await supabase.from("profiles").select("*");
+      const { data: roles } = await supabase.from("user_roles").select("*");
+      if (profiles && roles) {
+        const merged = profiles.map((p) => ({
+          ...p,
+          role: roles.find((r) => r.user_id === p.user_id)?.role || null,
+        }));
+        setTeamUsers(merged);
+        const currentRole = roles.find((r) => r.user_id === currentUserId);
+        setIsAdmin(currentRole?.role === "admin");
+      }
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId) loadTeamUsers();
+  }, [currentUserId]);
+
+  const inviteUser = async () => {
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await supabase.functions.invoke("invite-user", {
+        body: { email: inviteEmail, full_name: inviteName, role: inviteRole },
+      });
+      if (resp.error) throw new Error(resp.error.message);
+      if (resp.data?.error) throw new Error(resp.data.error);
+      toast.success(`Invitation envoyée à ${inviteEmail}`);
+      setInviteEmail("");
+      setInviteName("");
+      setInviteRole("commercial");
+      loadTeamUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setInviting(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -250,6 +319,101 @@ export default function Parametres() {
                 <Save className="h-4 w-4 mr-1.5" />
                 {savingAgency ? "..." : "Enregistrer"}
               </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Utilisateurs & Rôles */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "users" ? null : "users")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Utilisateurs & Rôles</h3>
+                <p className="text-xs text-muted-foreground">Gérer les accès et permissions</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "users" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "users" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-5" onClick={(e) => e.stopPropagation()}>
+              {/* Users list */}
+              <div>
+                <Label className="text-sm font-semibold">Membres de l'équipe</Label>
+                {loadingUsers ? (
+                  <p className="text-sm text-muted-foreground mt-2">Chargement...</p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {teamUsers.map((u) => (
+                      <div key={u.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                            {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-card-foreground">{u.full_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground">{u.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {u.role && (
+                            <Badge variant={roleBadgeVariant[u.role] || "outline"}>
+                              {roleLabels[u.role] || u.role}
+                            </Badge>
+                          )}
+                          {u.user_id === currentUserId && (
+                            <Badge variant="outline" className="text-xs">Vous</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {teamUsers.length === 0 && (
+                      <p className="text-sm text-muted-foreground">Aucun utilisateur trouvé.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Invite form (admin only) */}
+              {isAdmin && (
+                <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
+                  <Label className="text-sm font-semibold flex items-center gap-1.5">
+                    <UserPlus className="h-4 w-4" /> Inviter un utilisateur
+                  </Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="invEmail" className="text-xs">Email</Label>
+                      <Input id="invEmail" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="collaborateur@email.com" />
+                    </div>
+                    <div>
+                      <Label htmlFor="invName" className="text-xs">Nom complet</Label>
+                      <Input id="invName" value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Jean Dupont" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Rôle</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="commercial">Commercial</SelectItem>
+                        <SelectItem value="comptable">Comptable</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={inviteUser} disabled={inviting || !inviteEmail} size="sm">
+                    <UserPlus className="h-4 w-4 mr-1.5" />
+                    {inviting ? "Envoi..." : "Envoyer l'invitation"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,7 +1,8 @@
 import AppLayout from "@/components/AppLayout";
 import StatusBadge, { VehicleStatus } from "@/components/StatusBadge";
 import VehicleForm from "@/components/VehicleForm";
-import { Plus, Search, Filter, Eye, Pencil, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, Filter, Eye, Pencil, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon, Wrench } from "lucide-react";
+import VehicleWorksDialog from "@/components/VehicleWorksDialog";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -242,6 +243,7 @@ export default function Vehicules() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editVehicle, setEditVehicle] = useState<any>(null);
+  const [worksVehicle, setWorksVehicle] = useState<Vehicle | null>(null);
   const queryClient = useQueryClient();
 
   const { data: vehicles = [], isLoading } = useQuery({
@@ -264,6 +266,19 @@ export default function Vehicules() {
   return (
     <AppLayout title="Véhicules">
       {selectedVehicle && <FicheVehicule vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} />}
+      {worksVehicle && (
+        <VehicleWorksDialog
+          vehicleId={worksVehicle.id}
+          registration={worksVehicle.immatriculation}
+          brand={worksVehicle.marque}
+          model={worksVehicle.modele}
+          year={worksVehicle.annee}
+          mileage={worksVehicle.km}
+          fuelType={worksVehicle.carburant}
+          open={!!worksVehicle}
+          onOpenChange={(o) => { if (!o) setWorksVehicle(null); }}
+        />
+      )}
       {showForm && (
         <VehicleForm
           initialData={editVehicle}
@@ -353,6 +368,13 @@ export default function Vehicules() {
                         title="Modifier"
                       >
                         <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setWorksVehicle(v)}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                        title="Travaux"
+                      >
+                        <Wrench className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setSelectedVehicle(v)}

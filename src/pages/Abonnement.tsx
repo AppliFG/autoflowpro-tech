@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Crown, Zap, Rocket } from "lucide-react";
 
 const features = [
-  { name: "Véhicules en stock", starter: "25", pro: "100", entreprise: "Illimité" },
+  { name: "Véhicules en stock", starter: "10", pro: "100", entreprise: "Illimité" },
   { name: "Utilisateurs", starter: "1", pro: "5", entreprise: "Illimité" },
   { name: "Gestion de stock", starter: true, pro: true, entreprise: true },
   { name: "Demandes de devis fournisseurs", starter: true, pro: true, entreprise: true },
-  { name: "Site vitrine", starter: true, pro: true, entreprise: true },
+  { name: "Site vitrine", starter: false, pro: true, entreprise: true },
   { name: "Formulaire de reprise", starter: true, pro: true, entreprise: true },
   { name: "Agenda & événements", starter: true, pro: true, entreprise: true },
   { name: "CRM avancé & relances auto", starter: false, pro: true, entreprise: true },

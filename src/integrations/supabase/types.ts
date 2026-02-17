@@ -54,6 +54,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          photo_urls: string[] | null
           status: string
           supplier_id: string | null
           total_amount: number | null
@@ -64,6 +65,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          photo_urls?: string[] | null
           status?: string
           supplier_id?: string | null
           total_amount?: number | null
@@ -74,6 +76,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          photo_urls?: string[] | null
           status?: string
           supplier_id?: string | null
           total_amount?: number | null

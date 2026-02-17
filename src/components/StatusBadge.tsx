@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 
-export type VehicleStatus = "preparation" | "en_ligne" | "reserve" | "vendu" | "depose";
+export type VehicleStatus = "attente_reception" | "preparation" | "en_ligne" | "reserve" | "vendu" | "depose";
 
 const statusConfig: Record<VehicleStatus, { label: string; className: string }> = {
+  attente_reception: { label: "Attente réception", className: "bg-accent/15 text-accent-foreground border-accent/30" },
   preparation: { label: "Préparation", className: "bg-warning/15 text-warning border-warning/30" },
   en_ligne: { label: "En ligne", className: "bg-success/15 text-success border-success/30" },
   reserve: { label: "Réservé", className: "bg-info/15 text-info border-info/30" },

@@ -1,7 +1,7 @@
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X, Search } from "lucide-react";
+import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X, Search, Upload, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -38,6 +38,8 @@ export default function Devis() {
   const [expandedCats, setExpandedCats] = useState<string[]>(Object.keys(PIECES_CATEGORIES));
   const [searchPiece, setSearchPiece] = useState("");
   const [customArticle, setCustomArticle] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers"],
@@ -69,11 +71,40 @@ export default function Devis() {
     },
   });
 
+  const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 2 - photoFiles.length;
+    if (remaining <= 0) { toast.error("Maximum 2 photos"); return; }
+    const toAdd = files.slice(0, remaining);
+    for (const f of toAdd) {
+      if (f.size > 5 * 1024 * 1024) { toast.error(`${f.name} trop volumineux (max 5 Mo)`); return; }
+    }
+    setPhotoFiles((prev) => [...prev, ...toAdd]);
+    setPhotoPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const createMutation = useMutation({
-    mutationFn: async ({ vehicleId, supplierId, pieces, sendVia }: { vehicleId: string; supplierId: string; pieces: string[]; sendVia: "email" | "whatsapp" }) => {
+    mutationFn: async ({ vehicleId, supplierId, pieces, sendVia, photos }: { vehicleId: string; supplierId: string; pieces: string[]; sendVia: "email" | "whatsapp"; photos: File[] }) => {
+      // Upload photos
+      const photoUrls: string[] = [];
+      for (const file of photos) {
+        const ext = file.name.split(".").pop();
+        const path = `quotes/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("quote-attachments").upload(path, file);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("quote-attachments").getPublicUrl(path);
+        photoUrls.push(urlData.publicUrl);
+      }
+
       const { data: quote, error: qErr } = await supabase
         .from("quotes")
-        .insert({ vehicle_id: vehicleId, supplier_id: supplierId, status: "Envoyé" })
+        .insert({ vehicle_id: vehicleId, supplier_id: supplierId, status: "Envoyé", photo_urls: photoUrls } as any)
         .select()
         .single();
       if (qErr) throw qErr;
@@ -82,14 +113,15 @@ export default function Devis() {
       const { error: iErr } = await supabase.from("quote_items").insert(items);
       if (iErr) throw iErr;
 
-      return { quote, sendVia };
+      return { quote, sendVia, photoUrls };
     },
-    onSuccess: ({ sendVia }) => {
+    onSuccess: ({ sendVia, photoUrls }) => {
       queryClient.invalidateQueries({ queryKey: ["quotes-with-items"] });
       const veh = vehicles.find((v) => v.id === newVehicle);
       const sup = suppliers.find((s) => s.id === newFournisseur);
       if (veh && sup) {
-        const msg = `Bonjour,\nDemande de devis pour ${veh.brand} ${veh.model} (${veh.registration}) :\n${selectedPieces.map((p) => `- ${p}`).join("\n")}\nMerci.`;
+        const photoText = photoUrls.length > 0 ? `\n\nPhotos de référence :\n${photoUrls.join("\n")}` : "";
+        const msg = `Bonjour,\nDemande de devis pour ${veh.brand} ${veh.model} (${veh.registration}) :\n${selectedPieces.map((p) => `- ${p}`).join("\n")}${photoText}\nMerci.`;
         if (sendVia === "whatsapp" && sup.whatsapp) {
           window.open(`https://wa.me/${sup.whatsapp.replace("+", "")}?text=${encodeURIComponent(msg)}`, "_blank");
         } else if (sup.email) {
@@ -100,6 +132,8 @@ export default function Devis() {
       setShowNew(false);
       setSelectedPieces([]);
       setNewVehicle("");
+      setPhotoFiles([]);
+      setPhotoPreviews([]);
       toast.success("Demande de devis créée");
     },
     onError: () => toast.error("Erreur lors de la création"),
@@ -139,7 +173,7 @@ export default function Devis() {
 
   const createDemande = (sendVia: "email" | "whatsapp") => {
     if (!newVehicle || !newFournisseur || selectedPieces.length === 0) return;
-    createMutation.mutate({ vehicleId: newVehicle, supplierId: newFournisseur, pieces: selectedPieces, sendVia });
+    createMutation.mutate({ vehicleId: newVehicle, supplierId: newFournisseur, pieces: selectedPieces, sendVia, photos: photoFiles });
   };
 
   return (
@@ -171,6 +205,30 @@ export default function Devis() {
                 <option value="">Sélectionner...</option>
                 {suppliers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
+            </div>
+          </div>
+
+          {/* Photos de référence */}
+          <div className="mb-4">
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              <ImageIcon className="h-3.5 w-3.5 inline mr-1" />Photos de référence (max 2) — ex: réf constructeur
+            </label>
+            <div className="flex items-center gap-3">
+              {photoPreviews.map((url, idx) => (
+                <div key={idx} className="relative">
+                  <img src={url} alt="" className="h-20 w-28 object-cover rounded-lg border border-border" />
+                  <button type="button" onClick={() => removePhoto(idx)} className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {photoFiles.length < 2 && (
+                <label className="h-20 w-28 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                  <Upload className="h-5 w-5" />
+                  <span className="text-[10px]">Ajouter</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoAdd} />
+                </label>
+              )}
             </div>
           </div>
 

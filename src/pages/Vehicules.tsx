@@ -36,6 +36,7 @@ interface Vehicle {
 }
 
 const statusDbToUi: Record<string, VehicleStatus> = {
+  "Attente de réception": "attente_reception",
   "En préparation": "preparation",
   "En ligne": "en_ligne",
   "Réservé": "reserve",

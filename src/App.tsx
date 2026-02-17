@@ -37,21 +37,30 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/vitrine" element={<Vitrine />} />
 
-            {/* Protected routes */}
+            {/* Protected routes - all roles */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/vehicules" element={<ProtectedRoute><Vehicules /></ProtectedRoute>} />
-            <Route path="/depot-vente" element={<ProtectedRoute><DepotVente /></ProtectedRoute>} />
-            <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
-            <Route path="/reprises" element={<ProtectedRoute><Reprises /></ProtectedRoute>} />
-            <Route path="/diffusion" element={<ProtectedRoute><Diffusion /></ProtectedRoute>} />
-            <Route path="/finance" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
             <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
-            <Route path="/agences" element={<ProtectedRoute><Agences /></ProtectedRoute>} />
-            <Route path="/abonnement" element={<ProtectedRoute><Abonnement /></ProtectedRoute>} />
-            <Route path="/extensions" element={<ProtectedRoute><Extensions /></ProtectedRoute>} />
-            <Route path="/parametres" element={<ProtectedRoute><Parametres /></ProtectedRoute>} />
-            <Route path="/devis" element={<ProtectedRoute><Devis /></ProtectedRoute>} />
             <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+
+            {/* Admin + Commercial */}
+            <Route path="/depot-vente" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><DepotVente /></ProtectedRoute>} />
+            <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><CRM /></ProtectedRoute>} />
+            <Route path="/reprises" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Reprises /></ProtectedRoute>} />
+            <Route path="/diffusion" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Diffusion /></ProtectedRoute>} />
+
+            {/* Admin + Commercial + Comptable */}
+            <Route path="/devis" element={<ProtectedRoute allowedRoles={["admin", "commercial", "comptable"]}><Devis /></ProtectedRoute>} />
+
+            {/* Admin + Comptable */}
+            <Route path="/finance" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><Finance /></ProtectedRoute>} />
+
+            {/* Admin only */}
+            <Route path="/agences" element={<ProtectedRoute allowedRoles={["admin"]}><Agences /></ProtectedRoute>} />
+            <Route path="/abonnement" element={<ProtectedRoute allowedRoles={["admin"]}><Abonnement /></ProtectedRoute>} />
+            <Route path="/extensions" element={<ProtectedRoute allowedRoles={["admin"]}><Extensions /></ProtectedRoute>} />
+            <Route path="/parametres" element={<ProtectedRoute allowedRoles={["admin"]}><Parametres /></ProtectedRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

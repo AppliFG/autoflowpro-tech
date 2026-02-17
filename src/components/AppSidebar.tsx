@@ -23,28 +23,37 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-const navItems = [
+type AppRole = "admin" | "commercial" | "comptable";
+
+interface NavItem {
+  icon: any;
+  label: string;
+  path: string;
+  roles?: AppRole[]; // undefined = accessible to all authenticated users
+}
+
+const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Tableau de bord", path: "/" },
   { icon: CalendarDays, label: "Agenda", path: "/agenda" },
   { icon: Car, label: "Véhicules", path: "/vehicules" },
-  { icon: HandCoins, label: "Dépôt-vente", path: "/depot-vente" },
-  { icon: Globe, label: "Site vitrine", path: "/vitrine" },
-  { icon: Users, label: "CRM", path: "/crm" },
-  { icon: ArrowLeftRight, label: "Reprises", path: "/reprises" },
-  { icon: Megaphone, label: "Diffusion", path: "/diffusion" },
-  { icon: FileText, label: "Devis", path: "/devis" },
-  { icon: Receipt, label: "Finance", path: "/finance" },
+  { icon: HandCoins, label: "Dépôt-vente", path: "/depot-vente", roles: ["admin", "commercial"] },
+  { icon: Globe, label: "Site vitrine", path: "/vitrine", roles: ["admin", "commercial"] },
+  { icon: Users, label: "CRM", path: "/crm", roles: ["admin", "commercial"] },
+  { icon: ArrowLeftRight, label: "Reprises", path: "/reprises", roles: ["admin", "commercial"] },
+  { icon: Megaphone, label: "Diffusion", path: "/diffusion", roles: ["admin", "commercial"] },
+  { icon: FileText, label: "Devis", path: "/devis", roles: ["admin", "commercial", "comptable"] },
+  { icon: Receipt, label: "Finance", path: "/finance", roles: ["admin", "comptable"] },
   { icon: Package, label: "Stock", path: "/stock" },
-  { icon: Building2, label: "Agences", path: "/agences" },
-  { icon: CreditCard, label: "Abonnement", path: "/abonnement" },
-  { icon: Puzzle, label: "Extensions", path: "/extensions" },
-  { icon: Settings, label: "Paramètres", path: "/parametres" },
+  { icon: Building2, label: "Agences", path: "/agences", roles: ["admin"] },
+  { icon: CreditCard, label: "Abonnement", path: "/abonnement", roles: ["admin"] },
+  { icon: Puzzle, label: "Extensions", path: "/extensions", roles: ["admin"] },
+  { icon: Settings, label: "Paramètres", path: "/parametres", roles: ["admin"] },
 ];
 
 export default function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
@@ -57,6 +66,12 @@ export default function AppSidebar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.roles) return true; // no restriction
+    if (!role) return false; // no role assigned, hide restricted items
+    return item.roles.includes(role);
+  });
 
   return (
     <>
@@ -88,7 +103,7 @@ export default function AppSidebar() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link

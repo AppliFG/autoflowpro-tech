@@ -17,10 +17,8 @@ export default function Vitrine() {
 
   // Filter state
   const [fuelFilter, setFuelFilter] = useState("");
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [kmMin, setKmMin] = useState("");
-  const [kmMax, setKmMax] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 80000]);
+  const [kmRange, setKmRange] = useState<[number, number]>([0, 300000]);
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vitrine-vehicles"],
@@ -46,21 +44,17 @@ export default function Vitrine() {
     return vehicles.filter((v) => {
       if (fuelFilter && v.fuel_type !== fuelFilter) return false;
       const price = v.selling_price || 0;
-      if (priceMin && price < Number(priceMin)) return false;
-      if (priceMax && price > Number(priceMax)) return false;
+      if (price < priceRange[0] || price > priceRange[1]) return false;
       const km = v.mileage || 0;
-      if (kmMin && km < Number(kmMin)) return false;
-      if (kmMax && km > Number(kmMax)) return false;
+      if (km < kmRange[0] || km > kmRange[1]) return false;
       return true;
     });
-  }, [vehicles, fuelFilter, priceMin, priceMax, kmMin, kmMax]);
+  }, [vehicles, fuelFilter, priceRange, kmRange]);
 
   const resetFilters = () => {
     setFuelFilter("");
-    setPriceMin("");
-    setPriceMax("");
-    setKmMin("");
-    setKmMax("");
+    setPriceRange([0, 80000]);
+    setKmRange([0, 300000]);
   };
 
   const handleRepriseChange = (field: string, value: string) => {
@@ -218,19 +212,19 @@ export default function Vitrine() {
             <>
               {/* Filters */}
               <div className="rounded-xl border border-border bg-card p-4 mb-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-4">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />
                   <span className="text-sm font-semibold text-card-foreground">Filtres</span>
-                  {(fuelFilter || priceMin || priceMax || kmMin || kmMax) && (
+                  {(fuelFilter || priceRange[0] !== 0 || priceRange[1] !== 80000 || kmRange[0] !== 0 || kmRange[1] !== 300000) && (
                     <button onClick={resetFilters} className="ml-auto text-xs text-primary hover:underline">
                       Réinitialiser
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   {/* Fuel type */}
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Carburant</label>
+                    <label className="text-xs text-muted-foreground mb-2 block">Carburant</label>
                     <select
                       value={fuelFilter}
                       onChange={(e) => setFuelFilter(e.target.value)}
@@ -242,27 +236,77 @@ export default function Vitrine() {
                       ))}
                     </select>
                   </div>
-                  {/* Price range */}
+                  {/* Price range slider */}
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Prix min (€)</label>
-                    <input type="number" placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <label className="text-xs text-muted-foreground mb-2 block">
+                      Prix : <span className="font-medium text-foreground">{priceRange[0].toLocaleString()} € — {priceRange[1].toLocaleString()} €</span>
+                    </label>
+                    <div className="relative h-5 flex items-center">
+                      <div className="absolute w-full h-1.5 rounded-full bg-muted" />
+                      <div
+                        className="absolute h-1.5 rounded-full bg-primary"
+                        style={{
+                          left: `${(priceRange[0] / 80000) * 100}%`,
+                          right: `${100 - (priceRange[1] / 80000) * 100}%`,
+                        }}
+                      />
+                      <input
+                        type="range" min={0} max={80000} step={500}
+                        value={priceRange[0]}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val <= priceRange[1]) setPriceRange([val, priceRange[1]]);
+                        }}
+                        className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
+                        style={{ zIndex: priceRange[0] > 79000 ? 5 : 3 }}
+                      />
+                      <input
+                        type="range" min={0} max={80000} step={500}
+                        value={priceRange[1]}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val >= priceRange[0]) setPriceRange([priceRange[0], val]);
+                        }}
+                        className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
+                        style={{ zIndex: 4 }}
+                      />
+                    </div>
                   </div>
+                  {/* Km range slider */}
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Prix max (€)</label>
-                    <input type="number" placeholder="50000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                  </div>
-                  {/* Mileage range */}
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Km min</label>
-                    <input type="number" placeholder="0" value={kmMin} onChange={(e) => setKmMin(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Km max</label>
-                    <input type="number" placeholder="200000" value={kmMax} onChange={(e) => setKmMax(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <label className="text-xs text-muted-foreground mb-2 block">
+                      Kilométrage : <span className="font-medium text-foreground">{kmRange[0].toLocaleString()} km — {kmRange[1].toLocaleString()} km</span>
+                    </label>
+                    <div className="relative h-5 flex items-center">
+                      <div className="absolute w-full h-1.5 rounded-full bg-muted" />
+                      <div
+                        className="absolute h-1.5 rounded-full bg-primary"
+                        style={{
+                          left: `${(kmRange[0] / 300000) * 100}%`,
+                          right: `${100 - (kmRange[1] / 300000) * 100}%`,
+                        }}
+                      />
+                      <input
+                        type="range" min={0} max={300000} step={5000}
+                        value={kmRange[0]}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val <= kmRange[1]) setKmRange([val, kmRange[1]]);
+                        }}
+                        className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
+                        style={{ zIndex: kmRange[0] > 290000 ? 5 : 3 }}
+                      />
+                      <input
+                        type="range" min={0} max={300000} step={5000}
+                        value={kmRange[1]}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val >= kmRange[0]) setKmRange([kmRange[0], val]);
+                        }}
+                        className="absolute w-full appearance-none bg-transparent cursor-pointer range-thumb"
+                        style={{ zIndex: 4 }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

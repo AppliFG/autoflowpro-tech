@@ -18,6 +18,7 @@ import Abonnement from "./pages/Abonnement";
 import Extensions from "./pages/Extensions";
 import Parametres from "./pages/Parametres";
 import Devis from "./pages/Devis";
+import Agenda from "./pages/Agenda";
 import Vitrine from "./pages/Vitrine";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/extensions" element={<ProtectedRoute><Extensions /></ProtectedRoute>} />
             <Route path="/parametres" element={<ProtectedRoute><Parametres /></ProtectedRoute>} />
             <Route path="/devis" element={<ProtectedRoute><Devis /></ProtectedRoute>} />
+            <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

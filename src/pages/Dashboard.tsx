@@ -1,5 +1,6 @@
 import AppLayout from "@/components/AppLayout";
 import KpiCard from "@/components/KpiCard";
+import TodayAgendaWidget from "@/components/TodayAgendaWidget";
 import { Car, Euro, TrendingUp, Users, Clock, CalendarCheck, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
@@ -66,7 +67,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-card-foreground mb-4">Performance plateformes</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -112,6 +113,11 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Agenda du jour */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TodayAgendaWidget />
       </div>
     </AppLayout>
   );

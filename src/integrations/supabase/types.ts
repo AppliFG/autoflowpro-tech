@@ -181,6 +181,50 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_events: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          event_date: string
+          event_time: string | null
+          event_type: string
+          id: string
+          notes: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          event_date: string
+          event_time?: string | null
+          event_type: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          event_date?: string
+          event_time?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_works: {
         Row: {
           client_visible: boolean

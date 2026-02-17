@@ -105,4 +105,35 @@
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border shadow-sm;
   }
+
+  /* Dual range slider thumbs */
+  .range-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 1px 4px hsl(var(--foreground) / 0.2);
+    cursor: pointer;
+    pointer-events: all;
+  }
+  .range-thumb::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 1px 4px hsl(var(--foreground) / 0.2);
+    cursor: pointer;
+    pointer-events: all;
+  }
+  .range-thumb::-webkit-slider-runnable-track {
+    background: transparent;
+  }
+  .range-thumb::-moz-range-track {
+    background: transparent;
+  }
 }
+

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
@@ -56,6 +57,12 @@ export default function AppSidebar() {
   const { signOut, user, role } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  const roleLabels: Record<string, string> = {
+    admin: "Admin",
+    commercial: "Commercial",
+    comptable: "Comptable",
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -125,7 +132,14 @@ export default function AppSidebar() {
         {/* User & Logout */}
         <div className="border-t border-sidebar-border p-3 space-y-2">
           {!desktopCollapsed && user && (
-            <p className="text-xs text-sidebar-foreground/60 truncate px-1">{user.email}</p>
+            <div className="px-1 space-y-1">
+              <p className="text-xs text-sidebar-foreground/60 truncate">{user.email}</p>
+              {role && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {roleLabels[role] || role}
+                </Badge>
+              )}
+            </div>
           )}
           <button
             onClick={handleSignOut}

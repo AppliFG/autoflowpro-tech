@@ -89,6 +89,14 @@ export default function Dashboard() {
         </Popover>
       </div>
 
+      {/* Rappels + Agenda du jour — toujours en haut */}
+      {visibility.agenda && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <UpcomingEventsAlert />
+          <TodayAgendaWidget />
+        </div>
+      )}
+
       {/* KPIs */}
       {visibility.kpis && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -188,13 +196,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Rappels + Agenda du jour */}
-      {visibility.agenda && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <UpcomingEventsAlert />
-          <TodayAgendaWidget />
-        </div>
-      )}
     </AppLayout>
   );
 }

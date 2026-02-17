@@ -28,6 +28,7 @@ const navItems = [
   { icon: CalendarDays, label: "Agenda", path: "/agenda" },
   { icon: Car, label: "Véhicules", path: "/vehicules" },
   { icon: HandCoins, label: "Dépôt-vente", path: "/depot-vente" },
+  { icon: Globe, label: "Site vitrine", path: "/vitrine" },
   { icon: Users, label: "CRM", path: "/crm" },
   { icon: ArrowLeftRight, label: "Reprises", path: "/reprises" },
   { icon: Megaphone, label: "Diffusion", path: "/diffusion" },
@@ -37,7 +38,6 @@ const navItems = [
   { icon: Building2, label: "Agences", path: "/agences" },
   { icon: CreditCard, label: "Abonnement", path: "/abonnement" },
   { icon: Puzzle, label: "Extensions", path: "/extensions" },
-  { icon: Globe, label: "Site vitrine", path: "/vitrine" },
   { icon: Settings, label: "Paramètres", path: "/parametres" },
 ];
 

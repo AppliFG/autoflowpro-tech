@@ -1,8 +1,8 @@
-import { Car, MapPin, Calendar, Gauge, Fuel, Phone, Mail, ArrowLeft, Camera, Send, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { Car, MapPin, Calendar, Gauge, Fuel, Phone, Mail, ArrowLeft, Camera, Send, MessageCircle, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function Vitrine() {
@@ -14,6 +14,13 @@ export default function Vitrine() {
   const [reprisePhotos, setReprisePhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  // Filter state
+  const [fuelFilter, setFuelFilter] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+  const [kmMin, setKmMin] = useState("");
+  const [kmMax, setKmMax] = useState("");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vitrine-vehicles"],
@@ -27,6 +34,34 @@ export default function Vitrine() {
       return data || [];
     },
   });
+
+  // Derive unique fuel types for filter dropdown
+  const fuelTypes = useMemo(() => {
+    const types = new Set(vehicles.map((v) => v.fuel_type).filter(Boolean));
+    return Array.from(types).sort() as string[];
+  }, [vehicles]);
+
+  // Filtered vehicles
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter((v) => {
+      if (fuelFilter && v.fuel_type !== fuelFilter) return false;
+      const price = v.selling_price || 0;
+      if (priceMin && price < Number(priceMin)) return false;
+      if (priceMax && price > Number(priceMax)) return false;
+      const km = v.mileage || 0;
+      if (kmMin && km < Number(kmMin)) return false;
+      if (kmMax && km > Number(kmMax)) return false;
+      return true;
+    });
+  }, [vehicles, fuelFilter, priceMin, priceMax, kmMin, kmMax]);
+
+  const resetFilters = () => {
+    setFuelFilter("");
+    setPriceMin("");
+    setPriceMax("");
+    setKmMin("");
+    setKmMax("");
+  };
 
   const handleRepriseChange = (field: string, value: string) => {
     setRepriseForm((prev) => ({ ...prev, [field]: value }));
@@ -181,9 +216,60 @@ export default function Vitrine() {
             <div className="text-center py-12 text-muted-foreground">Chargement...</div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground mb-6">{vehicles.length} véhicules disponibles</p>
+              {/* Filters */}
+              <div className="rounded-xl border border-border bg-card p-4 mb-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-card-foreground">Filtres</span>
+                  {(fuelFilter || priceMin || priceMax || kmMin || kmMax) && (
+                    <button onClick={resetFilters} className="ml-auto text-xs text-primary hover:underline">
+                      Réinitialiser
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  {/* Fuel type */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Carburant</label>
+                    <select
+                      value={fuelFilter}
+                      onChange={(e) => setFuelFilter(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Tous</option>
+                      {fuelTypes.map((f) => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Price range */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Prix min (€)</label>
+                    <input type="number" placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Prix max (€)</label>
+                    <input type="number" placeholder="50000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  {/* Mileage range */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Km min</label>
+                    <input type="number" placeholder="0" value={kmMin} onChange={(e) => setKmMin(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Km max</label>
+                    <input type="number" placeholder="200000" value={kmMax} onChange={(e) => setKmMax(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-6">{filteredVehicles.length} véhicule{filteredVehicles.length > 1 ? "s" : ""} disponible{filteredVehicles.length > 1 ? "s" : ""}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {vehicles.map((v) => (
+                {filteredVehicles.map((v) => (
                   <div key={v.id} onClick={() => setSelected(v)}
                     className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group">
                     <div className="aspect-[4/3] overflow-hidden bg-muted">
@@ -201,6 +287,11 @@ export default function Vitrine() {
                     </div>
                   </div>
                 ))}
+                {filteredVehicles.length === 0 && !isLoading && (
+                  <div className="col-span-full text-center py-12 text-muted-foreground">
+                    Aucun véhicule ne correspond à vos critères
+                  </div>
+                )}
               </div>
             </>
           )}

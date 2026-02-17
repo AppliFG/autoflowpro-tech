@@ -20,10 +20,12 @@ import {
   FileText,
   Globe,
   LogOut,
+  CalendarDays,
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Tableau de bord", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/agenda" },
   { icon: Car, label: "Véhicules", path: "/vehicules" },
   { icon: HandCoins, label: "Dépôt-vente", path: "/depot-vente" },
   { icon: Users, label: "CRM", path: "/crm" },

@@ -1,6 +1,7 @@
 import AppLayout from "@/components/AppLayout";
 import StatusBadge, { VehicleStatus } from "@/components/StatusBadge";
-import { Plus, Search, Filter, Eye, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon } from "lucide-react";
+import VehicleForm from "@/components/VehicleForm";
+import { Plus, Search, Filter, Eye, Pencil, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -239,6 +240,9 @@ function FicheVehicule({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
 export default function Vehicules() {
   const [search, setSearch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editVehicle, setEditVehicle] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles-with-works"],
@@ -260,7 +264,13 @@ export default function Vehicules() {
   return (
     <AppLayout title="Véhicules">
       {selectedVehicle && <FicheVehicule vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} />}
-
+      {showForm && (
+        <VehicleForm
+          initialData={editVehicle}
+          onClose={() => { setShowForm(false); setEditVehicle(null); }}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ["vehicles-with-works"] })}
+        />
+      )}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -276,7 +286,7 @@ export default function Vehicules() {
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-1.5" /> Filtrer
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => { setEditVehicle(null); setShowForm(true); }}>
             <Plus className="h-4 w-4 mr-1.5" /> Ajouter
           </Button>
         </div>
@@ -327,13 +337,31 @@ export default function Vehicules() {
                   <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
                   <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => setSelectedVehicle(v)}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                      title="Voir fiche"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditVehicle({
+                            id: v.id, registration: v.immatriculation, brand: v.marque, model: v.modele,
+                            version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel",
+                            color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "",
+                            status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation",
+                            description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo,
+                          });
+                          setShowForm(true);
+                        }}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                        title="Modifier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedVehicle(v)}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                        title="Voir fiche"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

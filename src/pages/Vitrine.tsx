@@ -227,14 +227,14 @@ export default function Vitrine() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="flex flex-wrap gap-2 items-end">
                   {/* Fuel type */}
-                  <div>
+                  <div className="flex-1 min-w-[120px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Carburant</label>
                     <select
                       value={fuelFilter}
                       onChange={(e) => setFuelFilter(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value="">Tous</option>
                       <option value="Essence">Essence</option>
@@ -247,26 +247,26 @@ export default function Vitrine() {
                     </select>
                   </div>
                   {/* Price range */}
-                  <div>
+                  <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Prix min (€)</label>
                     <input type="number" placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                      className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Prix max (€)</label>
                     <input type="number" placeholder="80 000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                      className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
                   {/* Mileage range */}
-                  <div>
+                  <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Km min</label>
                     <input type="number" placeholder="0" value={kmMin} onChange={(e) => setKmMin(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                      className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Km max</label>
                     <input type="number" placeholder="300 000" value={kmMax} onChange={(e) => setKmMax(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                      className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
                 </div>
               </div>

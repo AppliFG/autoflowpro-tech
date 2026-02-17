@@ -1,6 +1,7 @@
 import AppLayout from "@/components/AppLayout";
-import { Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import DocumentChecklistDialog from "@/components/DocumentChecklistDialog";
 
 interface Prospect {
   id: number;
@@ -98,7 +99,18 @@ export default function CRM() {
                   <p className="text-xs text-muted-foreground mt-1">{p.vehicule}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs font-medium text-primary">{p.budget}</span>
-                    <span className="text-[10px] text-muted-foreground">{p.date}</span>
+                    <div className="flex items-center gap-1.5">
+                      <DocumentChecklistDialog clientName={p.nom}>
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:bg-muted transition-colors"
+                          title="Checklist documents"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                        </button>
+                      </DocumentChecklistDialog>
+                      <span className="text-[10px] text-muted-foreground">{p.date}</span>
+                    </div>
                   </div>
                 </div>
               ))}

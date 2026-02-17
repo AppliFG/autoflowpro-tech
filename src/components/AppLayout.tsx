@@ -28,9 +28,6 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
             </div>
             <button className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors">
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-                3
-              </span>
             </button>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
               AD

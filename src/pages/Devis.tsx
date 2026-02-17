@@ -1,10 +1,13 @@
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X, Search, Upload, Image as ImageIcon } from "lucide-react";
+import { Send, MessageCircle, Plus, Check, Clock, FileText, Receipt, ChevronDown, ChevronUp, X, Search, Upload, Image as ImageIcon, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type DevisStatus = "Brouillon" | "Envoyé" | "Devis reçu" | "Accepté" | "Facturé";
 
@@ -29,6 +32,9 @@ const PIECES_CATEGORIES = {
   "Divers": ["Injecteur", "Turbo", "Joint cache culbuteur", "Joint de culasse", "Vanne EGR", "Attelage"],
 };
 
+type SupplierForm = { name: string; email: string; phone: string; whatsapp: string };
+const emptySupplier: SupplierForm = { name: "", email: "", phone: "", whatsapp: "" };
+
 export default function Devis() {
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
@@ -40,6 +46,11 @@ export default function Devis() {
   const [customArticle, setCustomArticle] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+
+  // Supplier dialog state
+  const [supplierDialog, setSupplierDialog] = useState(false);
+  const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
+  const [supplierForm, setSupplierForm] = useState<SupplierForm>(emptySupplier);
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ["suppliers"],
@@ -71,6 +82,7 @@ export default function Devis() {
     },
   });
 
+  // Photo handlers
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const remaining = 2 - photoFiles.length;
@@ -89,9 +101,9 @@ export default function Devis() {
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Create quote mutation
   const createMutation = useMutation({
     mutationFn: async ({ vehicleId, supplierId, pieces, sendVia, photos }: { vehicleId: string; supplierId: string; pieces: string[]; sendVia: "email" | "whatsapp"; photos: File[] }) => {
-      // Upload photos
       const photoUrls: string[] = [];
       for (const file of photos) {
         const ext = file.name.split(".").pop();
@@ -101,18 +113,15 @@ export default function Devis() {
         const { data: urlData } = supabase.storage.from("quote-attachments").getPublicUrl(path);
         photoUrls.push(urlData.publicUrl);
       }
-
       const { data: quote, error: qErr } = await supabase
         .from("quotes")
         .insert({ vehicle_id: vehicleId, supplier_id: supplierId, status: "Envoyé", photo_urls: photoUrls } as any)
         .select()
         .single();
       if (qErr) throw qErr;
-
       const items = pieces.map((p) => ({ quote_id: quote.id, article_name: p }));
       const { error: iErr } = await supabase.from("quote_items").insert(items);
       if (iErr) throw iErr;
-
       return { quote, sendVia, photoUrls };
     },
     onSuccess: ({ sendVia, photoUrls }) => {
@@ -129,14 +138,25 @@ export default function Devis() {
           window.open(`mailto:${sup.email}?subject=${subject}&body=${encodeURIComponent(msg)}`, "_blank");
         }
       }
-      setShowNew(false);
-      setSelectedPieces([]);
-      setNewVehicle("");
-      setPhotoFiles([]);
-      setPhotoPreviews([]);
+      resetForm();
       toast.success("Demande de devis créée");
     },
     onError: () => toast.error("Erreur lors de la création"),
+  });
+
+  // Delete quote mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      const { error: itemsErr } = await supabase.from("quote_items").delete().eq("quote_id", quoteId);
+      if (itemsErr) throw itemsErr;
+      const { error } = await supabase.from("quotes").delete().eq("id", quoteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotes-with-items"] });
+      toast.success("Demande supprimée");
+    },
+    onError: () => toast.error("Erreur lors de la suppression"),
   });
 
   const updateStatusMutation = useMutation({
@@ -147,6 +167,37 @@ export default function Devis() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["quotes-with-items"] }),
   });
 
+  // Supplier mutations
+  const saveSupplierMutation = useMutation({
+    mutationFn: async ({ id, form }: { id: string | null; form: SupplierForm }) => {
+      if (id) {
+        const { error } = await supabase.from("suppliers").update(form).eq("id", id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("suppliers").insert(form);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      setSupplierDialog(false);
+      setEditingSupplierId(null);
+      setSupplierForm(emptySupplier);
+      toast.success(editingSupplierId ? "Fournisseur modifié" : "Fournisseur ajouté");
+    },
+    onError: () => toast.error("Erreur"),
+  });
+
+  const resetForm = () => {
+    setShowNew(false);
+    setSelectedPieces([]);
+    setNewVehicle("");
+    setNewFournisseur("");
+    setPhotoFiles([]);
+    setPhotoPreviews([]);
+    setCustomArticle("");
+  };
+
   const filteredCategories: Record<string, string[]> = searchPiece.trim()
     ? Object.fromEntries(
         Object.entries(PIECES_CATEGORIES)
@@ -154,6 +205,9 @@ export default function Devis() {
           .filter(([, pieces]) => (pieces as string[]).length > 0)
       )
     : PIECES_CATEGORIES;
+
+  const togglePiece = (piece: string) => setSelectedPieces((prev) => prev.includes(piece) ? prev.filter((p) => p !== piece) : [...prev, piece]);
+  const toggleCat = (cat: string) => setExpandedCats((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
 
   const addCustomArticle = () => {
     const trimmed = customArticle.trim();
@@ -163,17 +217,21 @@ export default function Devis() {
     }
   };
 
-  const togglePiece = (piece: string) => {
-    setSelectedPieces((prev) => prev.includes(piece) ? prev.filter((p) => p !== piece) : [...prev, piece]);
-  };
-
-  const toggleCat = (cat: string) => {
-    setExpandedCats((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
-  };
-
   const createDemande = (sendVia: "email" | "whatsapp") => {
     if (!newVehicle || !newFournisseur || selectedPieces.length === 0) return;
     createMutation.mutate({ vehicleId: newVehicle, supplierId: newFournisseur, pieces: selectedPieces, sendVia, photos: photoFiles });
+  };
+
+  const openEditSupplier = (s: any) => {
+    setEditingSupplierId(s.id);
+    setSupplierForm({ name: s.name, email: s.email || "", phone: s.phone || "", whatsapp: s.whatsapp || "" });
+    setSupplierDialog(true);
+  };
+
+  const openNewSupplier = () => {
+    setEditingSupplierId(null);
+    setSupplierForm(emptySupplier);
+    setSupplierDialog(true);
   };
 
   return (
@@ -185,11 +243,35 @@ export default function Devis() {
         </Button>
       </div>
 
+      {/* Supplier list */}
+      <div className="rounded-xl border border-border bg-card shadow-sm p-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-card-foreground text-sm">Fournisseurs</h3>
+          <Button size="sm" variant="outline" onClick={openNewSupplier}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
+          </Button>
+        </div>
+        <div className="divide-y divide-border">
+          {suppliers.map((s) => (
+            <div key={s.id} className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-card-foreground">{s.name}</p>
+                <p className="text-xs text-muted-foreground">{s.email || "—"} · {s.phone || "—"}</p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => openEditSupplier(s)}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+          {suppliers.length === 0 && <p className="text-sm text-muted-foreground py-2">Aucun fournisseur</p>}
+        </div>
+      </div>
+
       {showNew && (
         <div className="rounded-xl border border-border bg-card shadow-sm p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-card-foreground">Nouvelle demande de devis</h3>
-            <button onClick={() => setShowNew(false)} className="p-1 hover:bg-muted rounded-md"><X className="h-4 w-4 text-muted-foreground" /></button>
+            <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md"><X className="h-4 w-4 text-muted-foreground" /></button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
@@ -208,10 +290,10 @@ export default function Devis() {
             </div>
           </div>
 
-          {/* Photos de référence */}
+          {/* Photos */}
           <div className="mb-4">
             <label className="text-xs font-medium text-muted-foreground mb-2 block">
-              <ImageIcon className="h-3.5 w-3.5 inline mr-1" />Photos de référence (max 2) — ex: réf constructeur
+              <ImageIcon className="h-3.5 w-3.5 inline mr-1" />Photos de référence (max 2)
             </label>
             <div className="flex items-center gap-3">
               {photoPreviews.map((url, idx) => (
@@ -232,12 +314,14 @@ export default function Devis() {
             </div>
           </div>
 
+          {/* Search */}
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input type="text" placeholder="Rechercher un article..." value={searchPiece} onChange={(e) => setSearchPiece(e.target.value)}
               className="w-full h-9 rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
+          {/* Custom article */}
           <div className="flex gap-2 mb-3">
             <input type="text" placeholder="Ajouter un article personnalisé..." value={customArticle} onChange={(e) => setCustomArticle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustomArticle()}
@@ -245,6 +329,7 @@ export default function Devis() {
             <Button size="sm" variant="outline" onClick={addCustomArticle} disabled={!customArticle.trim()}><Plus className="h-4 w-4" /></Button>
           </div>
 
+          {/* Categories */}
           <div className="border border-border rounded-lg overflow-hidden mb-4 max-h-[400px] overflow-y-auto">
             {Object.entries(filteredCategories).map(([cat, pieces]) => (
               <div key={cat}>
@@ -290,6 +375,7 @@ export default function Devis() {
         </div>
       )}
 
+      {/* Quotes table */}
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement...</div>
       ) : (
@@ -304,16 +390,15 @@ export default function Devis() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Fournisseur</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Pièces</th>
                 {statusOrder.map((s) => (
-                  <th key={s} className="text-center px-2 py-3 font-medium text-muted-foreground text-xs">
-                    {statusConfig[s].label}
-                  </th>
+                  <th key={s} className="text-center px-2 py-3 font-medium text-muted-foreground text-xs">{statusConfig[s].label}</th>
                 ))}
                 <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Montant</th>
+                <th className="px-2 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {quotes.length === 0 ? (
-                <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">Aucune demande de devis</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-muted-foreground">Aucune demande de devis</td></tr>
               ) : quotes.map((d: any) => {
                 const currentIdx = statusOrder.indexOf(d.status as DevisStatus);
                 const items = d.quote_items || [];
@@ -356,6 +441,15 @@ export default function Devis() {
                     <td className="px-4 py-3 text-right font-medium text-card-foreground hidden sm:table-cell">
                       {d.total_amount ? `${Number(d.total_amount).toLocaleString()} €` : "—"}
                     </td>
+                    <td className="px-2 py-3">
+                      <button
+                        onClick={() => { if (confirm("Supprimer cette demande ?")) deleteMutation.mutate(d.id); }}
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -363,6 +457,42 @@ export default function Devis() {
           </table>
         </div>
       )}
+
+      {/* Supplier Dialog */}
+      <Dialog open={supplierDialog} onOpenChange={setSupplierDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSupplierId ? "Modifier le fournisseur" : "Nouveau fournisseur"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nom *</Label>
+              <Input value={supplierForm.name} onChange={(e) => setSupplierForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={supplierForm.email} onChange={(e) => setSupplierForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input value={supplierForm.phone} onChange={(e) => setSupplierForm((f) => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label>WhatsApp</Label>
+              <Input value={supplierForm.whatsapp} onChange={(e) => setSupplierForm((f) => ({ ...f, whatsapp: e.target.value }))} placeholder="+33..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSupplierDialog(false)}>Annuler</Button>
+            <Button
+              onClick={() => saveSupplierMutation.mutate({ id: editingSupplierId, form: supplierForm })}
+              disabled={!supplierForm.name.trim()}
+            >
+              {editingSupplierId ? "Enregistrer" : "Ajouter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

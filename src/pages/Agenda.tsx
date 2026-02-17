@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +31,7 @@ const getEventConfig = (type: string) => EVENT_TYPES.find((e) => e.value === typ
 export default function Agenda() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [form, setForm] = useState({ vehicle_id: "", event_type: "garage", event_date: "", event_time: "", client_name: "", notes: "" });
   const queryClient = useQueryClient();
@@ -82,6 +83,28 @@ export default function Agenda() {
     },
   });
 
+  const updateEvent = useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: typeof form }) => {
+      const { error } = await supabase.from("vehicle_events").update({
+        vehicle_id: payload.vehicle_id || null,
+        event_type: payload.event_type,
+        event_date: payload.event_date,
+        event_time: payload.event_time || null,
+        client_name: payload.client_name || null,
+        notes: payload.notes || null,
+      }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle_events"] });
+      queryClient.invalidateQueries({ queryKey: ["today_events"] });
+      setDialogOpen(false);
+      setEditingEvent(null);
+      setForm({ vehicle_id: "", event_type: "garage", event_date: "", event_time: "", client_name: "", notes: "" });
+      toast.success("Événement modifié");
+    },
+  });
+
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("vehicle_events").delete().eq("id", id);
@@ -90,6 +113,8 @@ export default function Agenda() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicle_events"] });
       queryClient.invalidateQueries({ queryKey: ["today_events"] });
+      setDialogOpen(false);
+      setEditingEvent(null);
       toast.success("Événement supprimé");
     },
   });
@@ -100,8 +125,22 @@ export default function Agenda() {
 
   const openAdd = (date?: Date) => {
     const d = date || new Date();
-    setForm({ ...form, event_date: format(d, "yyyy-MM-dd") });
+    setEditingEvent(null);
+    setForm({ vehicle_id: "", event_type: "garage", event_date: format(d, "yyyy-MM-dd"), event_time: "", client_name: "", notes: "" });
     setSelectedDate(d);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (ev: any) => {
+    setEditingEvent(ev);
+    setForm({
+      vehicle_id: ev.vehicle_id || "",
+      event_type: ev.event_type,
+      event_date: ev.event_date,
+      event_time: ev.event_time ? ev.event_time.slice(0, 5) : "",
+      client_name: ev.client_name || "",
+      notes: ev.notes || "",
+    });
     setDialogOpen(true);
   };
 
@@ -173,8 +212,8 @@ export default function Agenda() {
                     return (
                       <div
                         key={ev.id}
-                        className={cn("text-[10px] leading-tight px-1 py-0.5 rounded border truncate", cfg.bgLight, cfg.textColor)}
-                        onClick={(e) => e.stopPropagation()}
+                        className={cn("text-[10px] leading-tight px-1 py-0.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity", cfg.bgLight, cfg.textColor)}
+                        onClick={(e) => { e.stopPropagation(); openEdit(ev); }}
                         title={`${cfg.label} — ${ev.vehicles?.brand} ${ev.vehicles?.model} ${ev.client_name ? `— ${ev.client_name}` : ""}`}
                       >
                         <div className="flex items-center justify-between gap-0.5">
@@ -182,12 +221,6 @@ export default function Agenda() {
                             {ev.event_time ? `${ev.event_time.slice(0, 5)} ` : ""}
                             {ev.vehicles ? `${ev.vehicles.brand} ${ev.vehicles.model}` : cfg.label}
                           </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteEvent.mutate(ev.id); }}
-                            className="shrink-0 opacity-50 hover:opacity-100"
-                          >
-                            <X className="h-2.5 w-2.5" />
-                          </button>
                         </div>
                       </div>
                     );
@@ -202,17 +235,21 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Add event dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Add / Edit event dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingEvent(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nouvel événement</DialogTitle>
+            <DialogTitle>{editingEvent ? "Modifier l'événement" : "Nouvel événement"}</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               if (!form.event_date) return;
-              addEvent.mutate(form);
+              if (editingEvent) {
+                updateEvent.mutate({ id: editingEvent.id, payload: form });
+              } else {
+                addEvent.mutate(form);
+              }
             }}
             className="space-y-4"
           >
@@ -281,9 +318,18 @@ export default function Agenda() {
               <Textarea placeholder="Détails..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={addEvent.isPending}>Ajouter</Button>
+            <div className="flex justify-between gap-2">
+              {editingEvent && (
+                <Button variant="destructive" type="button" onClick={() => deleteEvent.mutate(editingEvent.id)} disabled={deleteEvent.isPending}>
+                  Supprimer
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>Annuler</Button>
+                <Button type="submit" disabled={addEvent.isPending || updateEvent.isPending}>
+                  {editingEvent ? "Enregistrer" : "Ajouter"}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>

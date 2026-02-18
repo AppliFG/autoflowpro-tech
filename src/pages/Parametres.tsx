@@ -10,8 +10,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const sections = [
-  { icon: Bell, title: "Notifications", description: "Alertes email, push et SMS" },
+// Notification preferences keys
+const notifKeys = [
+  { key: "notif_email_vente", label: "Vente confirmée", desc: "Email envoyé lors d'une vente" },
+  { key: "notif_email_reprise", label: "Nouvelle reprise", desc: "Email pour chaque demande de reprise" },
+  { key: "notif_email_stock60", label: "Stock > 60 jours", desc: "Alerte véhicule en stock depuis +60 jours" },
+  { key: "notif_email_mandat_fin", label: "Fin de mandat", desc: "Alerte mandat dépôt-vente arrivant à échéance" },
+  { key: "notif_sms_vente", label: "SMS vente", desc: "Notification SMS à chaque vente" },
+  { key: "notif_sms_rdv", label: "SMS rendez-vous", desc: "Rappel SMS avant les événements agenda" },
 ];
 
 export default function Parametres() {
@@ -44,6 +50,11 @@ export default function Parametres() {
   const [templateFacture, setTemplateFacture] = useState("FACTURE N° {{numero}}\nDate : {{date}}\n\nVendeur :\n{{agence_nom}}\n{{agence_adresse}}\nSIRET : {{agence_siret}}\nTVA : {{agence_tva}}\n\nAcheteur :\n{{client_nom}}\n{{client_adresse}}\n\nDésignation : {{marque}} {{modele}} {{version}}\nImmatriculation : {{immatriculation}}\nKilométrage : {{kilometrage}} km\nPrix TTC : {{prix_vente}} €\n\n{{mentions_legales}}");
   const [templateMandat, setTemplateMandat] = useState("MANDAT DE VENTE N° {{numero}}\nDate : {{date}}\n\nEntre :\n{{agence_nom}} (le Mandataire)\n{{agence_adresse}}\nSIRET : {{agence_siret}}\n\nEt :\n{{client_nom}} (le Mandant)\n\nVéhicule : {{marque}} {{modele}} {{version}}\nImmatriculation : {{immatriculation}}\nPrix souhaité : {{prix_vente}} €\nDurée du mandat : {{duree}} jours\n\n{{mentions_legales}}");
   const [savingTemplates, setSavingTemplates] = useState(false);
+  
+  // Notifications
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({});
+  const [savingNotifs, setSavingNotifs] = useState(false);
+  
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Users management
@@ -125,9 +136,11 @@ export default function Parametres() {
         "police_number_start", "rgpd_text",
         "agency_name", "agency_address", "agency_phone", "agency_email",
         "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url",
-        "template_annonce", "template_facture", "template_mandat"
+        "template_annonce", "template_facture", "template_mandat",
+        ...notifKeys.map(n => n.key),
       ]);
       if (data) {
+        const nPrefs: Record<string, boolean> = {};
         for (const row of data) {
           if (row.key === "police_number_start") setPoliceStart(row.value);
           if (row.key === "rgpd_text") setRgpdText(row.value);
@@ -142,7 +155,9 @@ export default function Parametres() {
           if (row.key === "template_annonce") setTemplateAnnonce(row.value);
           if (row.key === "template_facture") setTemplateFacture(row.value);
           if (row.key === "template_mandat") setTemplateMandat(row.value);
+          if (row.key.startsWith("notif_")) nPrefs[row.key] = row.value === "true";
         }
+        setNotifPrefs(nPrefs);
       }
     })();
   }, []);
@@ -165,6 +180,25 @@ export default function Parametres() {
     } finally {
       setSavingTemplates(false);
     }
+  };
+
+  const saveNotifs = async () => {
+    setSavingNotifs(true);
+    try {
+      for (const [key, val] of Object.entries(notifPrefs)) {
+        const { error } = await supabase.from("app_settings").upsert({ key, value: String(val) }, { onConflict: "key" });
+        if (error) throw error;
+      }
+      toast.success("Préférences de notifications enregistrées");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingNotifs(false);
+    }
+  };
+
+  const toggleNotif = (key: string) => {
+    setNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const changePassword = async () => {
@@ -502,20 +536,74 @@ export default function Parametres() {
           )}
         </div>
 
-        {sections.map((s) => (
-          <div key={s.title} className="flex items-center justify-between rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        {/* Notifications */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "notifications" ? null : "notifications")}
+        >
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <s.icon className="h-5 w-5" />
+                <Bell className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-card-foreground">{s.title}</h3>
-                <p className="text-xs text-muted-foreground">{s.description}</p>
+                <h3 className="font-semibold text-card-foreground">Notifications</h3>
+                <p className="text-xs text-muted-foreground">Alertes email, push et SMS</p>
               </div>
             </div>
-            <Button variant="outline" size="sm">Configurer</Button>
+            <Button variant="outline" size="sm">{activeSection === "notifications" ? "Fermer" : "Configurer"}</Button>
           </div>
-        ))}
+          {activeSection === "notifications" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div>
+                <Label className="text-sm font-semibold">Alertes Email</Label>
+                <div className="mt-2 space-y-2">
+                  {notifKeys.filter(n => n.key.startsWith("notif_email_")).map(n => (
+                    <label key={n.key} className="flex items-center justify-between rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                      <div>
+                        <p className="text-sm font-medium text-card-foreground">{n.label}</p>
+                        <p className="text-xs text-muted-foreground">{n.desc}</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={!!notifPrefs[n.key]}
+                        onChange={() => toggleNotif(n.key)}
+                        className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-semibold">Alertes SMS</Label>
+                <div className="mt-2 space-y-2">
+                  {notifKeys.filter(n => n.key.startsWith("notif_sms_")).map(n => (
+                    <label key={n.key} className="flex items-center justify-between rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                      <div>
+                        <p className="text-sm font-medium text-card-foreground">{n.label}</p>
+                        <p className="text-xs text-muted-foreground">{n.desc}</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={!!notifPrefs[n.key]}
+                        onChange={() => toggleNotif(n.key)}
+                        className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4 text-xs text-muted-foreground">
+                <p className="font-semibold text-card-foreground text-sm mb-1">💡 Info</p>
+                <p>Les notifications email utilisent l'adresse configurée dans votre profil. Les SMS nécessitent un numéro de téléphone associé à votre compte.</p>
+              </div>
+              <Button onClick={saveNotifs} disabled={savingNotifs} size="sm">
+                <Save className="h-4 w-4 mr-1.5" />
+                {savingNotifs ? "..." : "Enregistrer les préférences"}
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Livre de police */}
         <div

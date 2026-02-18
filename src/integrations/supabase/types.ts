@@ -38,6 +38,65 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_adresse: string | null
+          client_nom: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          payment_status: string
+          pdf_url: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          client_adresse?: string | null
+          client_nom: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          pdf_url?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          client_adresse?: string | null
+          client_nom?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          pdf_url?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

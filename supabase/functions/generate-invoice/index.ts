@@ -109,6 +109,8 @@ serve(async (req) => {
     for (const [key, val] of Object.entries(replacements)) {
       content = content.split(key).join(val);
     }
+    // Replace non-breaking spaces (U+00A0, U+202F) that pdf-lib can't encode
+    content = content.replace(/[\u00A0\u202F]/g, " ");
 
     // Generate PDF
     const pdfDoc = await PDFDocument.create();

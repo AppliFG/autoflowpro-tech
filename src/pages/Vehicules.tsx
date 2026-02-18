@@ -90,7 +90,7 @@ function joursColor(jours: number) {
   return "text-muted-foreground";
 }
 
-function FicheVehicule({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
+function FicheVehicule({ vehicle, onClose, onInvoice }: { vehicle: Vehicle; onClose: () => void; onInvoice: () => void }) {
   const printRef = useRef<HTMLDivElement>(null);
   const [showPrices, setShowPrices] = useState(true);
   const [activeTab, setActiveTab] = useState<"travaux" | "descriptif">("travaux");
@@ -149,8 +149,8 @@ function FicheVehicule({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
             <Button variant="outline" size="sm" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-1.5" /> Imprimer
             </Button>
-            <Button variant="outline" size="sm" onClick={() => alert("Fonctionnalité e-mail à venir avec Lovable Cloud")}>
-              <Mail className="h-4 w-4 mr-1.5" /> Envoyer
+            <Button size="sm" onClick={() => { onClose(); onInvoice(); }}>
+              <Receipt className="h-4 w-4 mr-1.5" /> Facturer
             </Button>
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function Vehicules() {
 
   return (
     <AppLayout title="Véhicules">
-      {selectedVehicle && <FicheVehicule vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} />}
+      {selectedVehicle && <FicheVehicule vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} onInvoice={() => setInvoiceVehicle(selectedVehicle)} />}
       {worksVehicle && (
         <VehicleWorksDialog
           vehicleId={worksVehicle.id}
@@ -349,7 +349,7 @@ export default function Vehicules() {
             </thead>
             <tbody>
               {filtered.map((v) => (
-                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedVehicle(v)}>
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
                   <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
                   <td className="px-4 py-2">
@@ -370,7 +370,7 @@ export default function Vehicules() {
                   <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
                   <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => {
                           setEditVehicle({

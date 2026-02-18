@@ -237,6 +237,18 @@ serve(async (req) => {
 
     const { data: urlData } = supabase.storage.from("invoices").getPublicUrl(fileName);
 
+    // Save invoice record to database
+    await supabase.from("invoices").insert({
+      invoice_number: numero,
+      vehicle_id,
+      client_nom: client_nom || "",
+      client_adresse: client_adresse || "",
+      amount: Number(vehicle.selling_price) || 0,
+      payment_status: "En attente",
+      pdf_url: urlData.publicUrl,
+      created_by: user.id,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,

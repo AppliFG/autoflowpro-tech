@@ -110,6 +110,36 @@ export default function Finance() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const handleExportCSV = () => {
+    if (invoices.length === 0) {
+      toast.error("Aucune facture à exporter");
+      return;
+    }
+    const headers = ["N° Facture", "Date", "Client", "Adresse", "Véhicule", "Montant", "Statut", "Date paiement"];
+    const rows = invoices.map((inv: any) => {
+      const vehicle = inv.vehicles;
+      return [
+        inv.invoice_number,
+        new Date(inv.created_at).toLocaleDateString("fr-FR"),
+        inv.client_nom,
+        (inv.client_adresse || "").replace(/\n/g, " "),
+        vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.registration})` : "",
+        Number(inv.amount).toLocaleString("fr-FR"),
+        inv.payment_status,
+        inv.payment_date ? new Date(inv.payment_date).toLocaleDateString("fr-FR") : "",
+      ];
+    });
+    const csvContent = "\uFEFF" + [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `factures-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export CSV téléchargé");
+  };
+
   const s = stats;
 
   return (
@@ -175,7 +205,12 @@ export default function Finance() {
             <FileText className="h-5 w-5 text-primary" />
             <h2 className="font-semibold text-card-foreground">Historique des factures</h2>
           </div>
-          <Badge variant="outline">{invoices.length} facture{invoices.length !== 1 ? "s" : ""}</Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={invoices.length === 0}>
+              <Download className="h-4 w-4 mr-1.5" /> Export CSV
+            </Button>
+            <Badge variant="outline">{invoices.length} facture{invoices.length !== 1 ? "s" : ""}</Badge>
+          </div>
         </div>
 
         {loadingInvoices ? (

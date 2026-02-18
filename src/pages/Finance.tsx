@@ -1,12 +1,14 @@
+import { useMemo } from "react";
 import AppLayout from "@/components/AppLayout";
 import KpiCard from "@/components/KpiCard";
-import { Euro, TrendingDown, TrendingUp, Wallet, FileText, Download, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Euro, TrendingDown, TrendingUp, Wallet, FileText, Download, CheckCircle2, Clock, XCircle, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const paymentStatuses = ["En attente", "Payée", "Annulée"];
 
@@ -16,21 +18,18 @@ const statusConfig: Record<string, { variant: "default" | "secondary" | "outline
   "Annulée": { variant: "destructive", icon: <XCircle className="h-3 w-3" /> },
 };
 
+const MONTH_LABELS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+
 export default function Finance() {
   const queryClient = useQueryClient();
 
-  const { data: stats } = useQuery({
-    queryKey: ["finance-stats"],
+  // Fetch vehicles with works for margin calculation
+  const { data: vehiclesData } = useQuery({
+    queryKey: ["finance-vehicles-works"],
     queryFn: async () => {
-      const { data: vehicles } = await supabase.from("vehicles").select("selling_price, purchase_price, status");
-      if (!vehicles) return { ca: 0, marge: 0, depenses: 0, tresorerie: 0 };
-
-      const vendus = vehicles.filter((v) => v.status === "Vendu");
-      const ca = vendus.reduce((s, v) => s + (Number(v.selling_price) || 0), 0);
-      const coutVendus = vendus.reduce((s, v) => s + (Number(v.purchase_price) || 0), 0);
-      const marge = ca - coutVendus;
-
-      return { ca, marge, depenses: 0, tresorerie: marge };
+      const { data: vehicles } = await supabase.from("vehicles").select("id, selling_price, purchase_price, status");
+      const { data: works } = await supabase.from("vehicle_works").select("vehicle_id, cost");
+      return { vehicles: vehicles || [], works: works || [] };
     },
   });
 
@@ -39,12 +38,62 @@ export default function Finance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoices")
-        .select("*, vehicles(brand, model, registration)")
+        .select("*, vehicles(brand, model, registration, purchase_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
   });
+
+  // KPI stats
+  const stats = useMemo(() => {
+    if (!vehiclesData) return { ca: 0, marge: 0, depenses: 0, tresorerie: 0 };
+    const { vehicles, works } = vehiclesData;
+    const vendus = vehicles.filter((v) => v.status === "vendu" || v.status === "Vendu");
+    const ca = vendus.reduce((s, v) => s + (Number(v.selling_price) || 0), 0);
+    const coutAchat = vendus.reduce((s, v) => s + (Number(v.purchase_price) || 0), 0);
+    const venduIds = new Set(vendus.map((v) => v.id));
+    const coutTravaux = works
+      .filter((w) => venduIds.has(w.vehicle_id))
+      .reduce((s, w) => s + (Number(w.cost) || 0), 0);
+    const depenses = coutAchat + coutTravaux;
+    const marge = ca - depenses;
+    return { ca, marge, depenses, tresorerie: marge };
+  }, [vehiclesData]);
+
+  // Monthly chart data from invoices (non-cancelled)
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const months: Record<string, { ca: number; cout: number }> = {};
+
+    // Initialize last 12 months
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(year, now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      months[key] = { ca: 0, cout: 0 };
+    }
+
+    for (const inv of invoices) {
+      if (inv.payment_status === "Annulée") continue;
+      const d = new Date(inv.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (months[key] !== undefined) {
+        months[key].ca += Number(inv.amount) || 0;
+        const purchasePrice = Number(inv.vehicles?.purchase_price) || 0;
+        months[key].cout += purchasePrice;
+      }
+    }
+
+    return Object.entries(months).map(([key, val]) => {
+      const [, m] = key.split("-");
+      return {
+        mois: MONTH_LABELS[parseInt(m) - 1],
+        CA: val.ca,
+        Marge: val.ca - val.cout,
+      };
+    });
+  }, [invoices]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -61,15 +110,62 @@ export default function Finance() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const s = stats || { ca: 0, marge: 0, depenses: 0, tresorerie: 0 };
+  const s = stats;
 
   return (
     <AppLayout title="Finance & Gestion">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <KpiCard title="CA Mensuel" value={`${s.ca.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
+        <KpiCard title="CA Total" value={`${s.ca.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
         <KpiCard title="Marge nette" value={`${s.marge.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={s.marge > 0 ? "success" : "default"} />
         <KpiCard title="Dépenses" value={`${s.depenses.toLocaleString("fr-FR")} €`} icon={<TrendingDown className="h-5 w-5" />} />
         <KpiCard title="Trésorerie" value={`${s.tresorerie.toLocaleString("fr-FR")} €`} icon={<Wallet className="h-5 w-5" />} />
+      </div>
+
+      {/* Monthly Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold text-card-foreground">Chiffre d'affaires mensuel</h2>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="mois" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`, "CA"]}
+                  contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                  labelStyle={{ color: "hsl(var(--card-foreground))" }}
+                />
+                <Bar dataKey="CA" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-5 w-5 text-success" />
+            <h2 className="font-semibold text-card-foreground">Marge mensuelle</h2>
+          </div>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="mois" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`, "Marge"]}
+                  contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                  labelStyle={{ color: "hsl(var(--card-foreground))" }}
+                />
+                <Bar dataKey="Marge" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {/* Invoice History */}

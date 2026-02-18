@@ -265,7 +265,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: `${agencyName} <onboarding@resend.dev>`,
+              from: `${agencyName} <facturation@autoexpo38.fr>`,
               to: [client_email],
               subject: `Facture ${numero} — ${vehicle.brand} ${vehicle.model}`,
               html: `

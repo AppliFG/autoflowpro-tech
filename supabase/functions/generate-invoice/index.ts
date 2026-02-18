@@ -251,6 +251,9 @@ serve(async (req) => {
       created_by: user.id,
     });
 
+    // Automatically set vehicle status to "vendu"
+    await supabase.from("vehicles").update({ status: "vendu" }).eq("id", vehicle_id);
+
     // Send email with invoice if client_email provided
     let emailSent = false;
     if (client_email) {

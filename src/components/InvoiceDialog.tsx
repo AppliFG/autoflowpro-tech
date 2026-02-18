@@ -18,6 +18,7 @@ interface InvoiceDialogProps {
 export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLabel }: InvoiceDialogProps) {
   const [clientNom, setClientNom] = useState("");
   const [clientAdresse, setClientAdresse] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [generating, setGenerating] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
           vehicle_id: vehicleId,
           client_nom: clientNom,
           client_adresse: clientAdresse,
+          client_email: clientEmail || undefined,
           invoice_number: invoiceNumber || undefined,
         },
       });
@@ -43,7 +45,8 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
       if (data?.error) throw new Error(data.error);
       setResultUrl(data.url);
       setResultNumber(data.invoice_number);
-      toast.success(`Facture ${data.invoice_number} générée avec succès`);
+      const emailMsg = data.email_sent ? " et envoyée par email" : "";
+      toast.success(`Facture ${data.invoice_number} générée${emailMsg} avec succès`);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de la génération");
     } finally {
@@ -54,6 +57,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
   const handleClose = () => {
     setClientNom("");
     setClientAdresse("");
+    setClientEmail("");
     setInvoiceNumber("");
     setResultUrl(null);
     setResultNumber(null);
@@ -105,6 +109,18 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
               onChange={(e) => setClientAdresse(e.target.value)}
               placeholder="12 rue de la Paix, 75001 Paris"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="clientEmail">Email de l'acheteur (envoi automatique)</Label>
+            <Input
+              id="clientEmail"
+              type="email"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              placeholder="client@example.com"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Si renseigné, la facture sera envoyée par email automatiquement.</p>
           </div>
 
           {resultUrl && (

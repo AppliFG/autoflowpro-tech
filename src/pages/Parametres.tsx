@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const sections = [
-  { icon: FileText, title: "Templates", description: "Modèles d'annonces, factures, mandats" },
   { icon: Bell, title: "Notifications", description: "Alertes email, push et SMS" },
 ];
 
@@ -39,6 +38,12 @@ export default function Parametres() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+
+  // Templates
+  const [templateAnnonce, setTemplateAnnonce] = useState("{{marque}} {{modele}} {{version}} - {{annee}} - {{kilometrage}} km\n{{carburant}} - {{couleur}}\nPrix : {{prix_vente}} €\n\n{{description}}");
+  const [templateFacture, setTemplateFacture] = useState("FACTURE N° {{numero}}\nDate : {{date}}\n\nVendeur :\n{{agence_nom}}\n{{agence_adresse}}\nSIRET : {{agence_siret}}\nTVA : {{agence_tva}}\n\nAcheteur :\n{{client_nom}}\n{{client_adresse}}\n\nDésignation : {{marque}} {{modele}} {{version}}\nImmatriculation : {{immatriculation}}\nKilométrage : {{kilometrage}} km\nPrix TTC : {{prix_vente}} €\n\n{{mentions_legales}}");
+  const [templateMandat, setTemplateMandat] = useState("MANDAT DE VENTE N° {{numero}}\nDate : {{date}}\n\nEntre :\n{{agence_nom}} (le Mandataire)\n{{agence_adresse}}\nSIRET : {{agence_siret}}\n\nEt :\n{{client_nom}} (le Mandant)\n\nVéhicule : {{marque}} {{modele}} {{version}}\nImmatriculation : {{immatriculation}}\nPrix souhaité : {{prix_vente}} €\nDurée du mandat : {{duree}} jours\n\n{{mentions_legales}}");
+  const [savingTemplates, setSavingTemplates] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Users management
@@ -119,7 +124,8 @@ export default function Parametres() {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
         "police_number_start", "rgpd_text",
         "agency_name", "agency_address", "agency_phone", "agency_email",
-        "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url"
+        "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url",
+        "template_annonce", "template_facture", "template_mandat"
       ]);
       if (data) {
         for (const row of data) {
@@ -133,10 +139,33 @@ export default function Parametres() {
           if (row.key === "agency_tva") setAgencyTva(row.value);
           if (row.key === "agency_legal_mentions") setAgencyLegalMentions(row.value);
           if (row.key === "agency_logo_url") setAgencyLogoUrl(row.value);
+          if (row.key === "template_annonce") setTemplateAnnonce(row.value);
+          if (row.key === "template_facture") setTemplateFacture(row.value);
+          if (row.key === "template_mandat") setTemplateMandat(row.value);
         }
       }
     })();
   }, []);
+
+  const saveTemplates = async () => {
+    setSavingTemplates(true);
+    try {
+      const settings = [
+        { key: "template_annonce", value: templateAnnonce },
+        { key: "template_facture", value: templateFacture },
+        { key: "template_mandat", value: templateMandat },
+      ];
+      for (const s of settings) {
+        const { error } = await supabase.from("app_settings").upsert(s, { onConflict: "key" });
+        if (error) throw error;
+      }
+      toast.success("Templates enregistrés");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingTemplates(false);
+    }
+  };
 
   const changePassword = async () => {
     if (newPassword.length < 8) {
@@ -414,6 +443,61 @@ export default function Parametres() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Templates */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "templates" ? null : "templates")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Templates</h3>
+                <p className="text-xs text-muted-foreground">Modèles d'annonces, factures, mandats</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "templates" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "templates" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-5" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-muted/50 rounded-lg p-4 text-xs text-muted-foreground space-y-1">
+                <p className="font-semibold text-card-foreground text-sm">Variables disponibles</p>
+                <p>Utilisez ces balises dans vos modèles, elles seront remplacées automatiquement :</p>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {["{{marque}}", "{{modele}}", "{{version}}", "{{annee}}", "{{kilometrage}}", "{{carburant}}", "{{couleur}}", "{{prix_vente}}", "{{prix_achat}}", "{{immatriculation}}", "{{description}}", "{{numero}}", "{{date}}", "{{client_nom}}", "{{client_adresse}}", "{{agence_nom}}", "{{agence_adresse}}", "{{agence_siret}}", "{{agence_tva}}", "{{mentions_legales}}", "{{duree}}"].map((v) => (
+                    <code key={v} className="bg-background border border-border rounded px-1.5 py-0.5 text-[10px] font-mono text-foreground">{v}</code>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold">Modèle d'annonce</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">Utilisé pour la diffusion des véhicules sur la vitrine et les plateformes.</p>
+                <Textarea rows={6} value={templateAnnonce} onChange={(e) => setTemplateAnnonce(e.target.value)} className="font-mono text-xs" />
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold">Modèle de facture</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">Structure de la facture générée pour chaque vente.</p>
+                <Textarea rows={10} value={templateFacture} onChange={(e) => setTemplateFacture(e.target.value)} className="font-mono text-xs" />
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold">Modèle de mandat de vente</Label>
+                <p className="text-xs text-muted-foreground mb-1.5">Utilisé pour les dépôts-vente et mandats de mise en vente.</p>
+                <Textarea rows={10} value={templateMandat} onChange={(e) => setTemplateMandat(e.target.value)} className="font-mono text-xs" />
+              </div>
+
+              <Button onClick={saveTemplates} disabled={savingTemplates} size="sm">
+                <Save className="h-4 w-4 mr-1.5" />
+                {savingTemplates ? "..." : "Enregistrer les templates"}
+              </Button>
             </div>
           )}
         </div>

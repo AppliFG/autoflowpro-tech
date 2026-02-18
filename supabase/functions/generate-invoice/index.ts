@@ -36,7 +36,7 @@ serve(async (req) => {
       });
     }
 
-    const { vehicle_id, client_nom, client_adresse, invoice_number } = await req.json();
+    const { vehicle_id, client_nom, client_adresse, client_email, invoice_number } = await req.json();
 
     if (!vehicle_id) {
       return new Response(JSON.stringify({ error: "vehicle_id requis" }), {
@@ -249,12 +249,54 @@ serve(async (req) => {
       created_by: user.id,
     });
 
+    // Send email with invoice if client_email provided
+    let emailSent = false;
+    if (client_email) {
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey) {
+        try {
+          const agencyName = settingsMap.agency_name || "AutoFlow Pro";
+          const emailRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: `${agencyName} <onboarding@resend.dev>`,
+              to: [client_email],
+              subject: `Facture ${numero} — ${vehicle.brand} ${vehicle.model}`,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+                  <h2 style="color:#333;">Facture ${numero}</h2>
+                  <p>Bonjour ${client_nom || ""},</p>
+                  <p>Veuillez trouver ci-joint votre facture pour le véhicule <strong>${vehicle.brand} ${vehicle.model}</strong> (${vehicle.registration}).</p>
+                  <p><strong>Montant :</strong> ${Number(vehicle.selling_price || 0).toLocaleString("fr-FR")} €</p>
+                  <p><a href="${urlData.publicUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Télécharger la facture PDF</a></p>
+                  <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
+                  <p style="font-size:12px;color:#888;">${agencyName}<br/>${settingsMap.agency_address || ""}<br/>SIRET : ${settingsMap.agency_siret || ""}</p>
+                </div>
+              `,
+            }),
+          });
+          if (emailRes.ok) {
+            emailSent = true;
+          } else {
+            console.error("Resend error:", await emailRes.text());
+          }
+        } catch (emailErr) {
+          console.error("Email send error:", emailErr);
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         invoice_number: numero,
         file_name: fileName,
         url: urlData.publicUrl,
+        email_sent: emailSent,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

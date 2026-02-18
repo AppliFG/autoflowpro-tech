@@ -1,8 +1,9 @@
 import AppLayout from "@/components/AppLayout";
 import StatusBadge, { VehicleStatus } from "@/components/StatusBadge";
 import VehicleForm from "@/components/VehicleForm";
-import { Plus, Search, Filter, Eye, Pencil, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon, Wrench } from "lucide-react";
+import { Plus, Search, Filter, Eye, Pencil, ArrowLeft, Printer, Mail, X, FileText, Image as ImageIcon, Wrench, Receipt } from "lucide-react";
 import VehicleWorksDialog from "@/components/VehicleWorksDialog";
+import InvoiceDialog from "@/components/InvoiceDialog";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -250,6 +251,7 @@ export default function Vehicules() {
   const [showForm, setShowForm] = useState(false);
   const [editVehicle, setEditVehicle] = useState<any>(null);
   const [worksVehicle, setWorksVehicle] = useState<Vehicle | null>(null);
+  const [invoiceVehicle, setInvoiceVehicle] = useState<Vehicle | null>(null);
   const queryClient = useQueryClient();
 
   const { data: vehicles = [], isLoading } = useQuery({
@@ -290,6 +292,14 @@ export default function Vehicules() {
           initialData={editVehicle}
           onClose={() => { setShowForm(false); setEditVehicle(null); }}
           onSaved={() => queryClient.invalidateQueries({ queryKey: ["vehicles-with-works"] })}
+        />
+      )}
+      {invoiceVehicle && (
+        <InvoiceDialog
+          open={!!invoiceVehicle}
+          onOpenChange={(o) => { if (!o) setInvoiceVehicle(null); }}
+          vehicleId={invoiceVehicle.id}
+          vehicleLabel={`${invoiceVehicle.marque} ${invoiceVehicle.modele} — ${invoiceVehicle.immatriculation}`}
         />
       )}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -383,6 +393,13 @@ export default function Vehicules() {
                         title="Travaux"
                       >
                         <Wrench className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setInvoiceVehicle(v)}
+                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                        title="Générer facture"
+                      >
+                        <Receipt className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setSelectedVehicle(v)}

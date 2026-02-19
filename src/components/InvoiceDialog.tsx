@@ -20,6 +20,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
   const [clientAdresse, setClientAdresse] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
   const [generating, setGenerating] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultNumber, setResultNumber] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
           client_adresse: clientAdresse,
           client_email: clientEmail || undefined,
           invoice_number: invoiceNumber || undefined,
+          deposit_amount: parseFloat(depositAmount) || 0,
         },
       });
       if (error) throw new Error(error.message);
@@ -59,6 +61,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
     setClientAdresse("");
     setClientEmail("");
     setInvoiceNumber("");
+    setDepositAmount("");
     setResultUrl(null);
     setResultNumber(null);
     onOpenChange(false);
@@ -121,6 +124,20 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
               placeholder="client@example.com"
             />
             <p className="text-xs text-muted-foreground mt-1">Si renseigné, la facture sera envoyée par email automatiquement.</p>
+          </div>
+
+          <div>
+            <Label htmlFor="depositAmount">Montant de l'acompte versé (€)</Label>
+            <Input
+              id="depositAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={depositAmount}
+              onChange={(e) => setDepositAmount(e.target.value)}
+              placeholder="0"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Laissez à 0 si aucun acompte n'a été versé.</p>
           </div>
 
           {resultUrl && (

@@ -2,6 +2,9 @@ import { useMemo } from "react";
 import AppLayout from "@/components/AppLayout";
 import KpiCard from "@/components/KpiCard";
 import { Euro, TrendingDown, TrendingUp, Wallet, FileText, Download, CheckCircle2, Clock, XCircle, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-const paymentStatuses = ["En attente", "Payée", "Annulée"];
+const paymentStatuses = ["En attente", "Acompte", "Payée", "Annulée"];
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; icon: React.ReactNode }> = {
   "En attente": { variant: "secondary", icon: <Clock className="h-3 w-3" /> },
+  "Acompte": { variant: "outline", icon: <Wallet className="h-3 w-3" /> },
   "Payée": { variant: "default", icon: <CheckCircle2 className="h-3 w-3" /> },
   "Annulée": { variant: "destructive", icon: <XCircle className="h-3 w-3" /> },
 };
@@ -95,11 +99,15 @@ export default function Finance() {
     });
   }, [invoices]);
 
+  const [depositDialogInvoice, setDepositDialogInvoice] = useState<string | null>(null);
+  const [depositAmount, setDepositAmount] = useState("");
+
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, deposit_amount }: { id: string; status: string; deposit_amount?: number }) => {
       const updates: any = { payment_status: status };
       if (status === "Payée") updates.payment_date = new Date().toISOString();
       if (status !== "Payée") updates.payment_date = null;
+      if (deposit_amount !== undefined) updates.deposit_amount = deposit_amount;
       const { error } = await supabase.from("invoices").update(updates).eq("id", id);
       if (error) throw error;
     },
@@ -231,6 +239,7 @@ export default function Finance() {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Véhicule</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Montant</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Acompte</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Paiement</th>
                   <th className="px-4 py-3"></th>
@@ -253,6 +262,11 @@ export default function Finance() {
                       <td className="px-4 py-3 text-right font-medium text-card-foreground">
                         {Number(inv.amount).toLocaleString("fr-FR")} €
                       </td>
+                      <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">
+                        {inv.payment_status === "Acompte" && Number(inv.deposit_amount) > 0
+                          ? `${Number(inv.deposit_amount).toLocaleString("fr-FR")} €`
+                          : "—"}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <Badge variant={cfg.variant} className="gap-1">
                           {cfg.icon} {inv.payment_status}
@@ -261,7 +275,14 @@ export default function Finance() {
                       <td className="px-4 py-3 text-center hidden md:table-cell">
                         <Select
                           value={inv.payment_status}
-                          onValueChange={(val) => updateStatus.mutate({ id: inv.id, status: val })}
+                          onValueChange={(val) => {
+                            if (val === "Acompte") {
+                              setDepositDialogInvoice(inv.id);
+                              setDepositAmount(String(inv.deposit_amount || ""));
+                            } else {
+                              updateStatus.mutate({ id: inv.id, status: val });
+                            }
+                          }}
                         >
                           <SelectTrigger className="w-[130px] h-8 text-xs">
                             <SelectValue />
@@ -290,6 +311,37 @@ export default function Finance() {
           </div>
         )}
       </div>
+      {/* Deposit Amount Dialog */}
+      {depositDialogInvoice && (
+        <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl border border-border shadow-xl p-6 w-full max-w-sm space-y-4">
+            <h3 className="font-semibold text-card-foreground">Montant de l'acompte</h3>
+            <div>
+              <Label htmlFor="depositAmt">Montant versé (€)</Label>
+              <Input
+                id="depositAmt"
+                type="number"
+                min="0"
+                step="0.01"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="Ex: 500"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setDepositDialogInvoice(null)}>Annuler</Button>
+              <Button size="sm" onClick={() => {
+                updateStatus.mutate({
+                  id: depositDialogInvoice,
+                  status: "Acompte",
+                  deposit_amount: parseFloat(depositAmount) || 0,
+                });
+                setDepositDialogInvoice(null);
+              }}>Valider</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

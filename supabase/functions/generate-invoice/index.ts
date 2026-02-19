@@ -36,7 +36,7 @@ serve(async (req) => {
       });
     }
 
-    const { vehicle_id, client_nom, client_adresse, client_email, invoice_number } = await req.json();
+    const { vehicle_id, client_nom, client_adresse, client_email, invoice_number, deposit_amount } = await req.json();
 
     if (!vehicle_id) {
       return new Response(JSON.stringify({ error: "vehicle_id requis" }), {
@@ -240,13 +240,17 @@ serve(async (req) => {
     const { data: urlData } = supabase.storage.from("invoices").getPublicUrl(fileName);
 
     // Save invoice record to database
+    const depositAmt = Number(deposit_amount) || 0;
+    const paymentStatus = depositAmt > 0 ? "Acompte" : "En attente";
+
     await supabase.from("invoices").insert({
       invoice_number: numero,
       vehicle_id,
       client_nom: client_nom || "",
       client_adresse: client_adresse || "",
       amount: Number(vehicle.selling_price) || 0,
-      payment_status: "En attente",
+      deposit_amount: depositAmt,
+      payment_status: paymentStatus,
       pdf_url: urlData.publicUrl,
       created_by: user.id,
     });

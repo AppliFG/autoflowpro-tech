@@ -34,7 +34,7 @@ const emptyForm: VehicleFormData = {
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];
-const statuses = ["Attente de réception", "En préparation", "En ligne", "Réservé", "Vendu", "Déposé"];
+const statuses = ["Attente de réception", "En préparation", "En ligne", "Réservé", "Vendu", "Déposé", "Dépôt-vente"];
 
 interface Props {
   initialData?: VehicleFormData | null;

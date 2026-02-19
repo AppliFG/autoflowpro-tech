@@ -1,8 +1,11 @@
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import TradeInDialog from "@/components/TradeInDialog";
 
 const statusMap: Record<string, { label: string; className: string }> = {
   Nouvelle: { label: "Nouvelle", className: "bg-warning/15 text-warning border-warning/30" },
@@ -12,6 +15,9 @@ const statusMap: Record<string, { label: string; className: string }> = {
 };
 
 export default function Reprises() {
+  const [showDialog, setShowDialog] = useState(false);
+  const queryClient = useQueryClient();
+
   const { data: reprises = [], isLoading } = useQuery({
     queryKey: ["trade-ins"],
     queryFn: async () => {
@@ -26,13 +32,25 @@ export default function Reprises() {
 
   return (
     <AppLayout title="Reprises véhicules">
+      <TradeInDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["trade-ins"] })}
+      />
+
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-sm text-muted-foreground">{reprises.length} demande{reprises.length !== 1 ? "s" : ""}</p>
+        <Button size="sm" onClick={() => setShowDialog(true)}>
+          <Plus className="h-4 w-4 mr-1.5" /> Nouvelle reprise
+        </Button>
+      </div>
+
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement...</div>
       ) : reprises.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Aucune demande de reprise</div>
       ) : (
         <div className="space-y-4">
-          <h3 className="font-semibold text-foreground">Demandes de reprise ({reprises.length})</h3>
           {reprises.map((r) => {
             const status = statusMap[r.status] || statusMap["Nouvelle"];
             return (

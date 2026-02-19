@@ -5,6 +5,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+// Helper: overlay component for Réservé / Vendu
+function VehicleImageOverlay({ src, alt, status, className = "" }: { src: string; alt: string; status: string; className?: string }) {
+  const isReserved = status === "Réservé";
+  const isSold = status === "Vendu";
+
+  return (
+    <div className={`relative overflow-hidden ${className}`}>
+      <img src={src || "/placeholder.svg"} alt={alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+      {isReserved && (
+        <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
+          <span className="bg-orange-500 text-white font-extrabold text-2xl px-6 py-2 rounded-lg -rotate-12 shadow-lg tracking-wider uppercase">
+            Réservé
+          </span>
+        </div>
+      )}
+      {isSold && (
+        <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
+          <span className="text-red-600 font-black text-5xl -rotate-25 tracking-widest uppercase drop-shadow-lg select-none"
+            style={{ textShadow: "2px 2px 8px rgba(0,0,0,0.5)", WebkitTextStroke: "2px rgba(255,255,255,0.4)" }}>
+            VENDU
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Vitrine() {
   const [selected, setSelected] = useState<any | null>(null);
   const [showReprise, setShowReprise] = useState(false);
@@ -30,7 +57,7 @@ export default function Vitrine() {
       const { data, error } = await supabase
         .from("vehicles")
         .select("*")
-        .in("status", ["En ligne", "en_ligne"])
+        .in("status", ["En ligne", "en_ligne", "Réservé", "Vendu"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -47,15 +74,29 @@ export default function Vitrine() {
     },
   });
 
+  // Filter vehicles: include Réservé always, Vendu only within 72h of updated_at
+  const displayVehicles = useMemo(() => {
+    const now = Date.now();
+    const hours72 = 72 * 60 * 60 * 1000;
+    return vehicles.filter((v) => {
+      if (v.status === "En ligne" || v.status === "en_ligne" || v.status === "Réservé") return true;
+      if (v.status === "Vendu") {
+        const updatedAt = new Date(v.updated_at).getTime();
+        return now - updatedAt < hours72;
+      }
+      return false;
+    });
+  }, [vehicles]);
+
   // Derive unique fuel types for filter dropdown
   const fuelTypes = useMemo(() => {
-    const types = new Set(vehicles.map((v) => v.fuel_type).filter(Boolean));
+    const types = new Set(displayVehicles.map((v) => v.fuel_type).filter(Boolean));
     return Array.from(types).sort() as string[];
-  }, [vehicles]);
+  }, [displayVehicles]);
 
   // Filtered vehicles
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((v) => {
+    return displayVehicles.filter((v) => {
       if (fuelFilter && v.fuel_type !== fuelFilter) return false;
       const price = v.selling_price || 0;
       if (priceMin && price < Number(priceMin)) return false;
@@ -65,7 +106,7 @@ export default function Vitrine() {
       if (kmMax && km > Number(kmMax)) return false;
       return true;
     });
-  }, [vehicles, fuelFilter, priceMin, priceMax, kmMin, kmMax]);
+  }, [displayVehicles, fuelFilter, priceMin, priceMax, kmMin, kmMax]);
 
   const resetFilters = () => {
     setFuelFilter("");
@@ -95,7 +136,6 @@ export default function Vitrine() {
     if (!isRepriseValid || submitting) return;
     setSubmitting(true);
     try {
-      // Upload photos
       const photoUrls: string[] = [];
       for (const file of reprisePhotos) {
         const path = `trade-ins/${Date.now()}-${file.name}`;
@@ -264,7 +304,6 @@ export default function Vitrine() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 items-end">
-                  {/* Fuel type */}
                   <div className="flex-1 min-w-[120px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Carburant</label>
                     <select
@@ -282,7 +321,6 @@ export default function Vitrine() {
                       ))}
                     </select>
                   </div>
-                  {/* Price range */}
                   <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Prix min (€)</label>
                     <input type="number" placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
@@ -293,7 +331,6 @@ export default function Vitrine() {
                     <input type="number" placeholder="80 000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
                       className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
-                  {/* Mileage range */}
                   <div className="flex-1 min-w-[90px]">
                     <label className="text-xs text-muted-foreground mb-1 block">Km min</label>
                     <input type="number" placeholder="0" value={kmMin} onChange={(e) => setKmMin(e.target.value)}
@@ -312,10 +349,12 @@ export default function Vitrine() {
                 {filteredVehicles.map((v) => (
                   <div key={v.id} onClick={() => setSelected(v)}
                     className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group">
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
-                      <img src={v.photo_url || "/placeholder.svg"} alt={`${v.brand} ${v.model}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
+                    <VehicleImageOverlay
+                      src={v.photo_url || "/placeholder.svg"}
+                      alt={`${v.brand} ${v.model}`}
+                      status={v.status}
+                      className="aspect-[4/3] bg-muted"
+                    />
                     <div className="p-4">
                       <h3 className="font-bold text-card-foreground text-lg">{v.brand} {v.model}</h3>
                       <p className="text-primary font-bold text-xl mt-1">{(v.selling_price || 0).toLocaleString()} €</p>
@@ -342,9 +381,12 @@ export default function Vitrine() {
       {selected && (
         <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-card rounded-2xl border border-border shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="aspect-video overflow-hidden rounded-t-2xl bg-muted">
-              <img src={selected.photo_url || "/placeholder.svg"} alt={`${selected.brand} ${selected.model}`} className="w-full h-full object-cover" />
-            </div>
+            <VehicleImageOverlay
+              src={selected.photo_url || "/placeholder.svg"}
+              alt={`${selected.brand} ${selected.model}`}
+              status={selected.status}
+              className="aspect-video rounded-t-2xl bg-muted"
+            />
             <div className="p-6">
               <h2 className="text-2xl font-bold text-card-foreground">{selected.brand} {selected.model}</h2>
               <p className="text-primary font-bold text-2xl mt-1">{(selected.selling_price || 0).toLocaleString()} €</p>

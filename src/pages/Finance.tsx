@@ -240,6 +240,7 @@ export default function Finance() {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Véhicule</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Montant</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Acompte</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Reste à payer</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Paiement</th>
                   <th className="px-4 py-3"></th>
@@ -263,9 +264,20 @@ export default function Finance() {
                         {Number(inv.amount).toLocaleString("fr-FR")} €
                       </td>
                       <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">
-                        {inv.payment_status === "Acompte" && Number(inv.deposit_amount) > 0
+                        {Number(inv.deposit_amount) > 0
                           ? `${Number(inv.deposit_amount).toLocaleString("fr-FR")} €`
                           : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium hidden md:table-cell">
+                        {(() => {
+                          const total = Number(inv.amount) || 0;
+                          const deposit = Number(inv.deposit_amount) || 0;
+                          const reste = total - deposit;
+                          if (inv.payment_status === "Payée") return <span className="text-success">0 €</span>;
+                          if (inv.payment_status === "Annulée") return <span className="text-muted-foreground">—</span>;
+                          if (deposit > 0) return <span className="text-destructive">{reste.toLocaleString("fr-FR")} €</span>;
+                          return <span className="text-destructive">{total.toLocaleString("fr-FR")} €</span>;
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <Badge variant={cfg.variant} className="gap-1">

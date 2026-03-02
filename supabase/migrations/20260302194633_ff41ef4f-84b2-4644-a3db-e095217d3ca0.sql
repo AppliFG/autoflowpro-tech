@@ -1,0 +1,1 @@
+ALTER TABLE public.suppliers RENAME COLUMN whatsapp TO telegram;

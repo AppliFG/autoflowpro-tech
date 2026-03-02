@@ -171,10 +171,10 @@ export default function Parametres() {
 
   const confirmDeleteInvoice = async () => {
     if (!selectedInvoice) return;
-    // Extract invoice number from invoice_number field (e.g., "FA-0002" -> 2)
-    const numMatch = selectedInvoice.invoice_number.match(/(\d+)/);
-    const invoiceNum = numMatch ? parseInt(numMatch[1], 10) : 0;
-    const expectedCode = `FG${String(invoiceNum).padStart(4, "0")}`;
+    // Extract last 4 digits from invoice_number (e.g., "F-2026-0219-6157" -> "6157")
+    const allDigits = selectedInvoice.invoice_number.replace(/\D/g, "");
+    const last4 = allDigits.slice(-4);
+    const expectedCode = `FG${last4}`;
     if (deleteInvoiceCode.toUpperCase() !== expectedCode) {
       toast.error(`Code incorrect. Le code attendu est au format FG suivi du numéro de facture.`);
       return;

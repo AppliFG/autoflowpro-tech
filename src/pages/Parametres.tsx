@@ -6,11 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2, Truck, History } from "lucide-react";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2, Truck, History, Plus, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const DEV_EMAIL = "applibyfg@gmail.com";
 
 // Notification preferences keys
 const notifKeys = [
@@ -90,6 +92,61 @@ export default function Parametres() {
     },
     onError: () => toast.error("Erreur lors de la suppression du fournisseur"),
   });
+
+  // Supplier form state
+  const [showSupplierForm, setShowSupplierForm] = useState(false);
+  const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
+  const [supplierName, setSupplierName] = useState("");
+  const [supplierEmail, setSupplierEmail] = useState("");
+  const [supplierPhone, setSupplierPhone] = useState("");
+  const [supplierTelegram, setSupplierTelegram] = useState("");
+  const [supplierAddress, setSupplierAddress] = useState("");
+  const [savingSupplier, setSavingSupplier] = useState(false);
+
+  const resetSupplierForm = () => {
+    setShowSupplierForm(false);
+    setEditingSupplierId(null);
+    setSupplierName("");
+    setSupplierEmail("");
+    setSupplierPhone("");
+    setSupplierTelegram("");
+    setSupplierAddress("");
+  };
+
+  const openEditSupplier = (s: any) => {
+    setEditingSupplierId(s.id);
+    setSupplierName(s.name || "");
+    setSupplierEmail(s.email || "");
+    setSupplierPhone(s.phone || "");
+    setSupplierTelegram(s.telegram || "");
+    setSupplierAddress(s.address || "");
+    setShowSupplierForm(true);
+  };
+
+  const saveSupplier = async () => {
+    if (!supplierName.trim()) { toast.error("Le nom est requis"); return; }
+    setSavingSupplier(true);
+    try {
+      const payload = { name: supplierName.trim(), email: supplierEmail || null, phone: supplierPhone || null, telegram: supplierTelegram || null, address: supplierAddress || null };
+      if (editingSupplierId) {
+        const { error } = await supabase.from("suppliers").update(payload).eq("id", editingSupplierId);
+        if (error) throw error;
+        toast.success("Fournisseur modifié");
+      } else {
+        const { error } = await supabase.from("suppliers").insert(payload);
+        if (error) throw error;
+        toast.success("Fournisseur ajouté");
+      }
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      resetSupplierForm();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingSupplier(false);
+    }
+  };
+
+  const isDevUser = userEmail === DEV_EMAIL;
 
   // Invoice history
   const { data: invoices = [], refetch: refetchInvoices } = useQuery({
@@ -778,14 +835,15 @@ export default function Parametres() {
               </div>
               <div>
                 <h3 className="font-semibold text-card-foreground">Fournisseurs</h3>
-                <p className="text-xs text-muted-foreground">Gérer vos fournisseurs de pièces</p>
+                <p className="text-xs text-muted-foreground">Ajouter, modifier ou supprimer vos fournisseurs</p>
               </div>
             </div>
             <Button variant="outline" size="sm">{activeSection === "fournisseurs" ? "Fermer" : "Gérer"}</Button>
           </div>
           {activeSection === "fournisseurs" && (
             <div className="mt-4 pt-4 border-t border-border space-y-3" onClick={(e) => e.stopPropagation()}>
-              {suppliers.length === 0 ? (
+              {/* Supplier list */}
+              {suppliers.length === 0 && !showSupplierForm ? (
                 <p className="text-sm text-muted-foreground">Aucun fournisseur enregistré.</p>
               ) : (
                 <div className="divide-y divide-border rounded-lg border border-border">
@@ -795,26 +853,66 @@ export default function Parametres() {
                         <p className="text-sm font-medium text-card-foreground">{s.name}</p>
                         <p className="text-xs text-muted-foreground">{s.email || "—"} · {s.phone || "—"}{s.telegram ? ` · Telegram: ${s.telegram}` : ""}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          if (confirm(`Supprimer le fournisseur "${s.name}" ?`)) deleteSupplierMutation.mutate(s.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-primary" onClick={() => openEditSupplier(s)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => { if (confirm(`Supprimer le fournisseur "${s.name}" ?`)) deleteSupplierMutation.mutate(s.id); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">💡 Pour ajouter ou modifier un fournisseur, rendez-vous dans la section <strong>Devis</strong>.</p>
+
+              {/* Add/Edit form */}
+              {showSupplierForm ? (
+                <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
+                  <Label className="text-sm font-semibold">{editingSupplierId ? "Modifier le fournisseur" : "Nouveau fournisseur"}</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Nom *</Label>
+                      <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Nom du fournisseur" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Email</Label>
+                      <Input type="email" value={supplierEmail} onChange={(e) => setSupplierEmail(e.target.value)} placeholder="email@fournisseur.com" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Téléphone</Label>
+                      <Input value={supplierPhone} onChange={(e) => setSupplierPhone(e.target.value)} placeholder="01 23 45 67 89" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Telegram Chat ID</Label>
+                      <Input value={supplierTelegram} onChange={(e) => setSupplierTelegram(e.target.value)} placeholder="Ex: 7219387456" />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Envoyez /start au bot puis @userinfobot pour obtenir l'ID</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Adresse</Label>
+                    <Input value={supplierAddress} onChange={(e) => setSupplierAddress(e.target.value)} placeholder="Adresse du fournisseur" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={saveSupplier} disabled={savingSupplier} size="sm">
+                      <Save className="h-4 w-4 mr-1.5" />
+                      {savingSupplier ? "..." : editingSupplierId ? "Modifier" : "Ajouter"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={resetSupplierForm}>Annuler</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => { resetSupplierForm(); setShowSupplierForm(true); }}>
+                  <Plus className="h-4 w-4 mr-1.5" /> Ajouter un fournisseur
+                </Button>
+              )}
             </div>
           )}
         </div>
 
-        {/* Historique des factures */}
+        {/* Historique des factures - DEV only */}
+        {isDevUser && (
         <div
           className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveSection(activeSection === "historique" ? null : "historique")}
@@ -826,7 +924,7 @@ export default function Parametres() {
               </div>
               <div>
                 <h3 className="font-semibold text-card-foreground">Historique des factures</h3>
-                <p className="text-xs text-muted-foreground">Consulter et supprimer des factures (avec code)</p>
+                <p className="text-xs text-muted-foreground">Consulter et supprimer des factures (compte DEV)</p>
               </div>
             </div>
             <Button variant="outline" size="sm">{activeSection === "historique" ? "Fermer" : "Consulter"}</Button>
@@ -864,6 +962,7 @@ export default function Parametres() {
             </div>
           )}
         </div>
+        )}
 
 
         <div

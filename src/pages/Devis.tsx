@@ -32,8 +32,8 @@ const PIECES_CATEGORIES = {
   "Divers": ["Injecteur", "Turbo", "Joint cache culbuteur", "Joint de culasse", "Vanne EGR", "Attelage"],
 };
 
-type SupplierForm = { name: string; email: string; phone: string; whatsapp: string };
-const emptySupplier: SupplierForm = { name: "", email: "", phone: "", whatsapp: "" };
+type SupplierForm = { name: string; email: string; phone: string; telegram: string };
+const emptySupplier: SupplierForm = { name: "", email: "", phone: "", telegram: "" };
 
 export default function Devis() {
   const queryClient = useQueryClient();
@@ -103,7 +103,7 @@ export default function Devis() {
 
   // Create quote mutation
   const createMutation = useMutation({
-    mutationFn: async ({ vehicleId, supplierId, pieces, sendVia, photos }: { vehicleId: string; supplierId: string; pieces: string[]; sendVia: "email" | "whatsapp"; photos: File[] }) => {
+    mutationFn: async ({ vehicleId, supplierId, pieces, sendVia, photos }: { vehicleId: string; supplierId: string; pieces: string[]; sendVia: "email" | "telegram"; photos: File[] }) => {
       const photoUrls: string[] = [];
       for (const file of photos) {
         const ext = file.name.split(".").pop();
@@ -131,8 +131,14 @@ export default function Devis() {
       if (veh && sup) {
         const photoText = photoUrls.length > 0 ? `\n\nPhotos de référence :\n${photoUrls.join("\n")}` : "";
         const msg = `Bonjour,\nDemande de devis pour ${veh.brand} ${veh.model} (${veh.registration}) :\n${selectedPieces.map((p) => `- ${p}`).join("\n")}${photoText}\nMerci.`;
-        if (sendVia === "whatsapp" && sup.whatsapp) {
-          window.open(`https://wa.me/${sup.whatsapp.replace("+", "")}?text=${encodeURIComponent(msg)}`, "_blank");
+        if (sendVia === "telegram" && sup.telegram) {
+          // Send via Telegram bot
+          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+          fetch(`https://${projectId}.supabase.co/functions/v1/send-telegram`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: sup.telegram, text: msg }),
+          }).catch(() => toast.error("Erreur envoi Telegram"));
         } else if (sup.email) {
           const subject = encodeURIComponent(`Demande de devis - ${veh.brand} ${veh.model} (${veh.registration})`);
           window.open(`mailto:${sup.email}?subject=${subject}&body=${encodeURIComponent(msg)}`, "_blank");
@@ -217,14 +223,14 @@ export default function Devis() {
     }
   };
 
-  const createDemande = (sendVia: "email" | "whatsapp") => {
+  const createDemande = (sendVia: "email" | "telegram") => {
     if (!newVehicle || !newFournisseur || selectedPieces.length === 0) return;
     createMutation.mutate({ vehicleId: newVehicle, supplierId: newFournisseur, pieces: selectedPieces, sendVia, photos: photoFiles });
   };
 
   const openEditSupplier = (s: any) => {
     setEditingSupplierId(s.id);
-    setSupplierForm({ name: s.name, email: s.email || "", phone: s.phone || "", whatsapp: s.whatsapp || "" });
+    setSupplierForm({ name: s.name, email: s.email || "", phone: s.phone || "", telegram: s.telegram || "" });
     setSupplierDialog(true);
   };
 
@@ -363,8 +369,8 @@ export default function Devis() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{selectedPieces.length} pièce(s) sélectionnée(s)</p>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => createDemande("whatsapp")} disabled={!newVehicle || !newFournisseur}>
-                  <MessageCircle className="h-4 w-4 mr-1.5" /> WhatsApp
+                <Button size="sm" variant="outline" onClick={() => createDemande("telegram")} disabled={!newVehicle || !newFournisseur}>
+                  <MessageCircle className="h-4 w-4 mr-1.5" /> Telegram
                 </Button>
                 <Button size="sm" onClick={() => createDemande("email")} disabled={!newVehicle || !newFournisseur}>
                   <Send className="h-4 w-4 mr-1.5" /> Email
@@ -478,8 +484,8 @@ export default function Devis() {
               <Input value={supplierForm.phone} onChange={(e) => setSupplierForm((f) => ({ ...f, phone: e.target.value }))} />
             </div>
             <div>
-              <Label>WhatsApp</Label>
-              <Input value={supplierForm.whatsapp} onChange={(e) => setSupplierForm((f) => ({ ...f, whatsapp: e.target.value }))} placeholder="+33..." />
+              <Label>Telegram (Chat ID)</Label>
+              <Input value={supplierForm.telegram} onChange={(e) => setSupplierForm((f) => ({ ...f, telegram: e.target.value }))} placeholder="Ex: 123456789" />
             </div>
           </div>
           <DialogFooter>

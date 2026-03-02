@@ -8,7 +8,7 @@ const extensions = [
   { id: 3, nom: "Connecteur LaCentrale", prix: "19 €/mois", description: "Publication automatique sur LaCentrale" },
   { id: 4, nom: "Signature électronique", prix: "9 €/mois", description: "Signature numérique des mandats et bons" },
   { id: 5, nom: "Exports comptables", prix: "14 €/mois", description: "Export vers logiciels comptables" },
-  { id: 6, nom: "SMS & WhatsApp", prix: "29 €/mois", description: "Notifications et relances par SMS" },
+  { id: 6, nom: "SMS & Telegram", prix: "29 €/mois", description: "Notifications et relances par SMS et Telegram" },
   { id: 7, nom: "IA Assistant", prix: "39 €/mois", description: "Rédaction d'annonces et réponses IA" },
   { id: 8, nom: "White-label", prix: "49 €/mois", description: "Logo, domaine et couleurs personnalisés" },
 ];

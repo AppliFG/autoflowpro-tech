@@ -5,10 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2, Truck, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Notification preferences keys
 const notifKeys = [
@@ -21,6 +23,7 @@ const notifKeys = [
 ];
 
 export default function Parametres() {
+  const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [policeStart, setPoliceStart] = useState("1");
   const [rgpdText, setRgpdText] = useState(
@@ -65,6 +68,74 @@ export default function Parametres() {
   const [inviteRole, setInviteRole] = useState<string>("commercial");
   const [inviting, setInviting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Suppliers
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("suppliers").select("*").order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const deleteSupplierMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast.success("Fournisseur supprimé");
+    },
+    onError: () => toast.error("Erreur lors de la suppression du fournisseur"),
+  });
+
+  // Invoice history
+  const { data: invoices = [], refetch: refetchInvoices } = useQuery({
+    queryKey: ["invoices-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("invoices").select("*, vehicles(brand, model, registration)").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const [deleteInvoiceCode, setDeleteInvoiceCode] = useState("");
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+
+  const openDeleteInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setDeleteInvoiceCode("");
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteInvoice = async () => {
+    if (!selectedInvoice) return;
+    // Extract invoice number from invoice_number field (e.g., "FA-0002" -> 2)
+    const numMatch = selectedInvoice.invoice_number.match(/(\d+)/);
+    const invoiceNum = numMatch ? parseInt(numMatch[1], 10) : 0;
+    const expectedCode = `FG${String(invoiceNum).padStart(4, "0")}`;
+    if (deleteInvoiceCode.toUpperCase() !== expectedCode) {
+      toast.error(`Code incorrect. Le code attendu est au format FG suivi du numéro de facture.`);
+      return;
+    }
+    setDeletingInvoiceId(selectedInvoice.id);
+    try {
+      const { error } = await supabase.from("invoices").delete().eq("id", selectedInvoice.id);
+      if (error) throw error;
+      toast.success("Facture supprimée de l'historique");
+      refetchInvoices();
+      setShowDeleteDialog(false);
+      setSelectedInvoice(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setDeletingInvoiceId(null);
+    }
+  };
 
   const roleLabels: Record<string, string> = {
     admin: "Admin",
@@ -695,7 +766,106 @@ export default function Parametres() {
           )}
         </div>
 
-        {/* Sécurité */}
+        {/* Fournisseurs */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "fournisseurs" ? null : "fournisseurs")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Truck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Fournisseurs</h3>
+                <p className="text-xs text-muted-foreground">Gérer vos fournisseurs de pièces</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "fournisseurs" ? "Fermer" : "Gérer"}</Button>
+          </div>
+          {activeSection === "fournisseurs" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-3" onClick={(e) => e.stopPropagation()}>
+              {suppliers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun fournisseur enregistré.</p>
+              ) : (
+                <div className="divide-y divide-border rounded-lg border border-border">
+                  {suppliers.map((s: any) => (
+                    <div key={s.id} className="flex items-center justify-between p-3">
+                      <div>
+                        <p className="text-sm font-medium text-card-foreground">{s.name}</p>
+                        <p className="text-xs text-muted-foreground">{s.email || "—"} · {s.phone || "—"}{s.telegram ? ` · Telegram: ${s.telegram}` : ""}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          if (confirm(`Supprimer le fournisseur "${s.name}" ?`)) deleteSupplierMutation.mutate(s.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">💡 Pour ajouter ou modifier un fournisseur, rendez-vous dans la section <strong>Devis</strong>.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Historique des factures */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "historique" ? null : "historique")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <History className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Historique des factures</h3>
+                <p className="text-xs text-muted-foreground">Consulter et supprimer des factures (avec code)</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "historique" ? "Fermer" : "Consulter"}</Button>
+          </div>
+          {activeSection === "historique" && (
+            <div className="mt-4 pt-4 border-t border-border space-y-3" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                <p>⚠️ La suppression d'une facture nécessite un code de sécurité : <strong>FG</strong> suivi du numéro de facture (ex : <code className="bg-background border border-border rounded px-1 py-0.5">FG0002</code> pour la facture n°2).</p>
+              </div>
+              {invoices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune facture dans l'historique.</p>
+              ) : (
+                <div className="divide-y divide-border rounded-lg border border-border max-h-[400px] overflow-y-auto">
+                  {invoices.map((inv: any) => (
+                    <div key={inv.id} className="flex items-center justify-between p-3">
+                      <div>
+                        <p className="text-sm font-medium text-card-foreground">{inv.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {inv.client_nom} — {inv.vehicles ? `${inv.vehicles.brand} ${inv.vehicles.model}` : "—"} — {Number(inv.amount).toLocaleString()} €
+                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(inv.created_at).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => openDeleteInvoice(inv)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+
         <div
           className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveSection(activeSection === "securite" ? null : "securite")}
@@ -769,6 +939,36 @@ export default function Parametres() {
           )}
         </div>
       </div>
+
+      {/* Delete invoice dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer une facture</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Pour confirmer la suppression de la facture <strong>{selectedInvoice?.invoice_number}</strong>, entrez le code de sécurité :
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Format : <strong>FG</strong> suivi du numéro de facture sur 4 chiffres (ex : FG0002)
+            </p>
+            <Input
+              placeholder="Ex: FG0002"
+              value={deleteInvoiceCode}
+              onChange={(e) => setDeleteInvoiceCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && confirmDeleteInvoice()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Annuler</Button>
+            <Button variant="destructive" onClick={confirmDeleteInvoice} disabled={!deleteInvoiceCode || !!deletingInvoiceId}>
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {deletingInvoiceId ? "Suppression..." : "Supprimer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

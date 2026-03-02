@@ -194,6 +194,18 @@ export default function Devis() {
     onError: () => toast.error("Erreur"),
   });
 
+  const deleteSupplierMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      toast.success("Fournisseur supprimé");
+    },
+    onError: () => toast.error("Erreur lors de la suppression"),
+  });
+
   const resetForm = () => {
     setShowNew(false);
     setSelectedPieces([]);
@@ -264,9 +276,16 @@ export default function Devis() {
                 <p className="text-sm font-medium text-card-foreground">{s.name}</p>
                 <p className="text-xs text-muted-foreground">{s.email || "—"} · {s.phone || "—"}</p>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => openEditSupplier(s)}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
+      <div className="flex items-center gap-1">
+                <Button size="sm" variant="ghost" onClick={() => openEditSupplier(s)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => {
+                  if (confirm(`Supprimer le fournisseur "${s.name}" ?`)) deleteSupplierMutation.mutate(s.id);
+                }}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           ))}
           {suppliers.length === 0 && <p className="text-sm text-muted-foreground py-2">Aucun fournisseur</p>}
@@ -290,7 +309,7 @@ export default function Devis() {
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Fournisseur</label>
               <select value={newFournisseur} onChange={(e) => setNewFournisseur(e.target.value)} className="w-full h-9 rounded-lg border border-input bg-card px-3 text-sm text-foreground">
-                <option value="">Sélectionner...</option>
+                <option value="">Sélectionner un fournisseur...</option>
                 {suppliers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
             </div>

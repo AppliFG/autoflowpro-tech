@@ -109,7 +109,7 @@ Retourne UNIQUEMENT ce JSON (pas de markdown) :
             ],
           },
         ],
-        max_tokens: 1000,
+        max_tokens: 4000,
       }),
     });
 

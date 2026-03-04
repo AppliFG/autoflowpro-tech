@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Download, Trash2, Eye, Plus, Filter, FileText, Image as ImageIcon,
   Send, RefreshCw, Car, Building, Briefcase, MoreHorizontal, Pencil,
+  Upload, CheckCircle, Loader2, ChevronDown, ChevronUp, Copy, ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -69,6 +70,11 @@ export default function Importation() {
   const [showAdd, setShowAdd] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [showTelegramGuide, setShowTelegramGuide] = useState(false);
+
+  // File upload state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Form state
   const [formCategory, setFormCategory] = useState("Divers");
@@ -84,7 +90,6 @@ export default function Importation() {
   useEffect(() => {
     fetchExpenses();
     fetchVehicles();
-    // Build webhook URL
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     setWebhookUrl(`https://${projectId}.supabase.co/functions/v1/telegram-webhook`);
   }, []);
@@ -145,6 +150,26 @@ export default function Importation() {
     setFormSupplier("");
     setFormInvoiceNumber("");
     setFormNotes("");
+    setUploadFile(null);
+  };
+
+  const handleFileUpload = async (file: File): Promise<{ url: string; type: string } | null> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+    const storagePath = `uploads/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const contentType = file.type || (ext === "pdf" ? "application/pdf" : `image/${ext}`);
+
+    const { error } = await supabase.storage
+      .from("expense-documents")
+      .upload(storagePath, file, { contentType, upsert: false });
+
+    if (error) {
+      toast({ title: "Erreur upload", description: error.message, variant: "destructive" });
+      return null;
+    }
+
+    const { data } = supabase.storage.from("expense-documents").getPublicUrl(storagePath);
+    const fileType = ext === "pdf" ? "pdf" : "photo";
+    return { url: data.publicUrl, type: fileType };
   };
 
   const openEditDialog = (expense: Expense) => {
@@ -161,37 +186,59 @@ export default function Importation() {
   };
 
   const handleSave = async () => {
-    const payload = {
-      category: formCategory,
-      subcategory: formSubcategory || null,
-      description: formDescription || null,
-      amount: Number(formAmount) || 0,
-      expense_date: formDate,
-      vehicle_id: formVehicleId || null,
-      supplier_name: formSupplier || null,
-      invoice_number: formInvoiceNumber || null,
-      notes: formNotes || null,
-    };
+    setUploading(true);
+    try {
+      let fileUrl: string | null = null;
+      let fileType: string | null = null;
 
-    if (editExpense) {
-      const { error } = await supabase.from("expenses").update(payload).eq("id", editExpense.id);
-      if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Dépense mise à jour" });
-        setEditExpense(null);
-        fetchExpenses();
+      // Upload file if present
+      if (uploadFile) {
+        const result = await handleFileUpload(uploadFile);
+        if (result) {
+          fileUrl = result.url;
+          fileType = result.type;
+        }
       }
-    } else {
-      const { error } = await supabase.from("expenses").insert({ ...payload, source: "manual" } as any);
-      if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Dépense ajoutée" });
-        setShowAdd(false);
-        resetForm();
-        fetchExpenses();
+
+      const payload: any = {
+        category: formCategory,
+        subcategory: formSubcategory || null,
+        description: formDescription || null,
+        amount: Number(formAmount) || 0,
+        expense_date: formDate,
+        vehicle_id: formVehicleId || null,
+        supplier_name: formSupplier || null,
+        invoice_number: formInvoiceNumber || null,
+        notes: formNotes || null,
+      };
+
+      if (fileUrl) {
+        payload.file_url = fileUrl;
+        payload.file_type = fileType;
       }
+
+      if (editExpense) {
+        const { error } = await supabase.from("expenses").update(payload).eq("id", editExpense.id);
+        if (error) {
+          toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Dépense mise à jour" });
+          setEditExpense(null);
+          fetchExpenses();
+        }
+      } else {
+        const { error } = await supabase.from("expenses").insert({ ...payload, source: "manual" } as any);
+        if (error) {
+          toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        } else {
+          toast({ title: "Dépense ajoutée" });
+          setShowAdd(false);
+          resetForm();
+          fetchExpenses();
+        }
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -297,6 +344,33 @@ export default function Importation() {
         <label className="text-sm font-medium mb-1 block">Notes</label>
         <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Notes supplémentaires..." rows={2} />
       </div>
+
+      {/* File upload */}
+      <div>
+        <label className="text-sm font-medium mb-1 block">Document (PDF, image)</label>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm w-full">
+            <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground truncate">
+              {uploadFile ? uploadFile.name : "Choisir un fichier..."}
+            </span>
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setUploadFile(f);
+              }}
+            />
+          </label>
+          {uploadFile && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setUploadFile(null)}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -344,23 +418,74 @@ export default function Importation() {
 
         {/* Telegram Setup Info */}
         <Card className="border-dashed">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Send className="h-4 w-4" /> Configuration Telegram
+          <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowTelegramGuide(!showTelegramGuide)}>
+            <CardTitle className="text-sm flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4" /> Configuration Telegram — Guide pas à pas
+              </div>
+              {showTelegramGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-xs space-y-2">
-            <p>Pour importer automatiquement vos factures depuis Telegram :</p>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>Ouvrez votre bot Telegram et envoyez <code>/start</code></li>
-              <li>Envoyez une photo ou un fichier PDF de votre facture</li>
-              <li>L'IA analyse automatiquement le document et l'ajoute ici</li>
-            </ol>
-            <div className="flex items-center gap-2 mt-2 p-2 bg-muted rounded text-[11px] break-all">
-              <span className="font-medium shrink-0">Webhook URL :</span>
-              <code className="text-muted-foreground">{webhookUrl}</code>
-            </div>
-          </CardContent>
+          {showTelegramGuide && (
+            <CardContent className="text-xs space-y-4">
+              {/* Étape 1 */}
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">📌 Étape 1 : Créer votre bot Telegram</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
+                  <li>Ouvrez Telegram sur votre téléphone ou PC</li>
+                  <li>Recherchez <code className="bg-muted px-1 rounded">@BotFather</code> et ouvrez la conversation</li>
+                  <li>Envoyez la commande <code className="bg-muted px-1 rounded">/newbot</code></li>
+                  <li>Choisissez un nom (ex: <em>AutoFlow Factures</em>)</li>
+                  <li>Choisissez un username (ex: <em>autoflow_factures_bot</em>) — doit finir par <code>bot</code></li>
+                  <li>BotFather vous donne un <strong>Token API</strong> (ex: <code>123456:ABC-DEF...</code>)</li>
+                  <li>Copiez ce token — vous en aurez besoin à l'étape 3</li>
+                </ol>
+              </div>
+
+              {/* Étape 2 */}
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">📌 Étape 2 : Configurer le Webhook</p>
+                <p className="text-muted-foreground ml-2">
+                  Ouvrez votre navigateur et collez cette URL en remplaçant <code>VOTRE_TOKEN</code> par le token de l'étape 1 :
+                </p>
+                <div className="bg-muted p-2 rounded text-[11px] break-all ml-2 space-y-2">
+                  <code>https://api.telegram.org/bot<span className="text-primary font-bold">VOTRE_TOKEN</span>/setWebhook?url={webhookUrl}</code>
+                </div>
+                <p className="text-muted-foreground ml-2 mt-1">
+                  Vous devez voir <code>{`{"ok":true,"result":true}`}</code> — le webhook est actif ✅
+                </p>
+              </div>
+
+              {/* Étape 3 */}
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">📌 Étape 3 : Enregistrer le Token dans l'application</p>
+                <p className="text-muted-foreground ml-2">
+                  Le token Telegram est déjà configuré dans les secrets du projet sous le nom <code>TELEGRAM_BOT_TOKEN</code>. 
+                  Si vous changez de bot, demandez à mettre à jour ce secret.
+                </p>
+              </div>
+
+              {/* Étape 4 */}
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">📌 Étape 4 : Tester !</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
+                  <li>Ouvrez votre bot dans Telegram</li>
+                  <li>Envoyez <code className="bg-muted px-1 rounded">/start</code></li>
+                  <li>Prenez une photo d'une facture et envoyez-la au bot</li>
+                  <li>L'IA analyse le document et crée automatiquement la dépense ici</li>
+                  <li>💡 Ajoutez une légende (ex: <em>"carburant Clio"</em>) pour aider le tri</li>
+                </ol>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 p-2 bg-muted rounded text-[11px] break-all">
+                <span className="font-medium shrink-0">Webhook URL :</span>
+                <code className="text-muted-foreground flex-1">{webhookUrl}</code>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => { navigator.clipboard.writeText(webhookUrl); toast({ title: "URL copiée !" }); }}>
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         {/* Filters */}
@@ -502,7 +627,9 @@ export default function Importation() {
             <ExpenseFormFields />
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAdd(false)}>Annuler</Button>
-              <Button onClick={handleSave}>Ajouter</Button>
+              <Button onClick={handleSave} disabled={uploading}>
+                {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Upload...</> : "Ajouter"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -533,7 +660,9 @@ export default function Importation() {
             <ExpenseFormFields />
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditExpense(null)}>Annuler</Button>
-              <Button onClick={handleSave}>Enregistrer</Button>
+              <Button onClick={handleSave} disabled={uploading}>
+                {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Upload...</> : "Enregistrer"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

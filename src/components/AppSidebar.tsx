@@ -22,6 +22,7 @@ import {
   Globe,
   LogOut,
   CalendarDays,
+  FileDown,
 } from "lucide-react";
 
 type AppRole = "admin" | "commercial" | "comptable";
@@ -43,6 +44,7 @@ const navItems: NavItem[] = [
   { icon: ArrowLeftRight, label: "Reprises", path: "/reprises", roles: ["admin", "commercial"] },
   { icon: Megaphone, label: "Diffusion", path: "/diffusion", roles: ["admin", "commercial"] },
   { icon: FileText, label: "Devis", path: "/devis", roles: ["admin", "commercial", "comptable"] },
+  { icon: FileDown, label: "Importation", path: "/importation", roles: ["admin", "comptable"] },
   { icon: Receipt, label: "Finance", path: "/finance", roles: ["admin", "comptable"] },
   { icon: Package, label: "Stock", path: "/stock" },
   { icon: Building2, label: "Agences", path: "/agences", roles: ["admin"] },

@@ -38,6 +38,77 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          ai_extracted_data: Json | null
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_date: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          source: string
+          subcategory: string | null
+          supplier_name: string | null
+          telegram_file_id: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          ai_extracted_data?: Json | null
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          source?: string
+          subcategory?: string | null
+          supplier_name?: string | null
+          telegram_file_id?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          ai_extracted_data?: Json | null
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          source?: string
+          subcategory?: string | null
+          supplier_name?: string | null
+          telegram_file_id?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number

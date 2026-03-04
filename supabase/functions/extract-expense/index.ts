@@ -130,8 +130,11 @@ Retourne UNIQUEMENT ce JSON (pas de markdown) :
     }
 
     const aiData = await aiRes.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    let content = aiData.choices?.[0]?.message?.content || "";
     console.log("AI extraction result:", content);
+
+    // Strip markdown code blocks if present
+    content = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -141,7 +144,16 @@ Retourne UNIQUEMENT ce JSON (pas de markdown) :
       });
     }
 
-    const extracted = JSON.parse(jsonMatch[0]);
+    let extracted;
+    try {
+      extracted = JSON.parse(jsonMatch[0]);
+    } catch (parseErr) {
+      console.error("JSON parse error:", parseErr, "Raw:", jsonMatch[0]);
+      return new Response(JSON.stringify({ error: "Erreur de parsing des données extraites" }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Match vehicle by plate
     let matchedVehicleId: string | null = null;

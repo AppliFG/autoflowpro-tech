@@ -20,6 +20,7 @@ import Parametres from "./pages/Parametres";
 import Devis from "./pages/Devis";
 import Agenda from "./pages/Agenda";
 import Vitrine from "./pages/Vitrine";
+import Importation from "./pages/Importation";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/devis" element={<ProtectedRoute allowedRoles={["admin", "commercial", "comptable"]}><Devis /></ProtectedRoute>} />
 
             {/* Admin + Comptable */}
+            <Route path="/importation" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><Importation /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><Finance /></ProtectedRoute>} />
 
             {/* Admin only */}

@@ -414,10 +414,10 @@ export default function Importation() {
       {formCategory === "Véhicule" && (
         <div>
           <label className="text-sm font-medium mb-1 block">🚗 Véhicule associé</label>
-          <Select value={formVehicleId} onValueChange={setFormVehicleId}>
+          <Select value={formVehicleId || "none"} onValueChange={(v) => setFormVehicleId(v === "none" ? "" : v)}>
             <SelectTrigger><SelectValue placeholder="Sélectionner un véhicule..." /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Aucun</SelectItem>
+              <SelectItem value="none">Aucun</SelectItem>
               {vehicles.map((v) => (
                 <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} ({v.registration})</SelectItem>
               ))}

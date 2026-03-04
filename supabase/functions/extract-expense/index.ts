@@ -133,22 +133,37 @@ Retourne UNIQUEMENT ce JSON (pas de markdown) :
     let content = aiData.choices?.[0]?.message?.content || "";
     console.log("AI extraction result:", content);
 
-    // Strip markdown code blocks if present
-    content = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return new Response(JSON.stringify({ error: "Impossible d'extraire les données" }), {
-        status: 422,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
+    // Robust JSON extraction from LLM response
     let extracted;
     try {
-      extracted = JSON.parse(jsonMatch[0]);
+      // Remove markdown code blocks
+      let cleaned = content
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+
+      // Find JSON boundaries
+      const jsonStart = cleaned.search(/\{/);
+      const jsonEnd = cleaned.lastIndexOf("}");
+
+      if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error("No JSON object found in response");
+      }
+
+      cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+
+      try {
+        extracted = JSON.parse(cleaned);
+      } catch (_e) {
+        // Fix common issues: trailing commas, control characters
+        cleaned = cleaned
+          .replace(/,\s*}/g, "}")
+          .replace(/,\s*]/g, "]")
+          .replace(/[\x00-\x1F\x7F]/g, "");
+        extracted = JSON.parse(cleaned);
+      }
     } catch (parseErr) {
-      console.error("JSON parse error:", parseErr, "Raw:", jsonMatch[0]);
+      console.error("JSON parse error:", parseErr, "Raw content:", content);
       return new Response(JSON.stringify({ error: "Erreur de parsing des données extraites" }), {
         status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

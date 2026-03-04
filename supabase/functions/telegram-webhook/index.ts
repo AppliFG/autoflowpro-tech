@@ -7,6 +7,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const AI_PROMPT = `Tu es un assistant comptable expert. Analyse cette facture, ticket, reçu ou note de frais et extrais les informations suivantes.
+
+RÈGLES IMPORTANTES :
+- Si c'est une facture liée à un véhicule (garage, pièces auto, carburant, contrôle technique, carte grise, assurance auto, lavage), catégorise en "Véhicule" et cherche l'immatriculation
+- Si c'est une facture d'énergie (EDF, Engie, électricité, gaz), eau, loyer, internet, travaux, ménage, assurance habitation → "Bâtiment"
+- Si c'est une facture de comptable, assurance professionnelle, téléphone, abonnement logiciel, fournitures bureau, marketing, juridique → "Société"
+- Sinon → "Divers"
+
+Extrais au format JSON strict (pas de markdown, juste le JSON) :
+{
+  "category": "Véhicule" | "Bâtiment" | "Société" | "Divers",
+  "subcategory": "sous-catégorie appropriée",
+  "amount": nombre (montant TTC total),
+  "description": "description courte et claire de la dépense",
+  "supplier_name": "nom du fournisseur/prestataire",
+  "invoice_number": "numéro de facture si visible, sinon null",
+  "expense_date": "YYYY-MM-DD",
+  "registration": "plaque d'immatriculation si mentionnée, sinon null",
+  "articles": ["liste des articles/prestations"],
+  "vat_amount": nombre ou null,
+  "payment_method": "mode de paiement si visible, sinon null"
+}`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,12 +63,13 @@ serve(async (req) => {
     if (message.text === "/start") {
       await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId,
         "🚗 <b>AutoFlow Pro - Import de documents</b>\n\n" +
-        "Envoyez-moi une <b>photo</b> ou un <b>fichier</b> (facture, ticket, reçu) et je l'analyserai automatiquement.\n\n" +
-        "📋 <b>Catégories disponibles :</b>\n" +
-        "• Véhicule (frais liés à un véhicule)\n" +
-        "• Bâtiment (loyer, charges, travaux)\n" +
-        "• Société (assurances, comptable, divers)\n\n" +
-        "💡 Ajoutez une légende à votre photo pour préciser la catégorie ou le véhicule."
+        "Envoyez-moi une <b>photo</b> ou un <b>fichier PDF</b> (facture, ticket, reçu) et je l'analyserai automatiquement par IA.\n\n" +
+        "📋 <b>Ce que j'extrais automatiquement :</b>\n" +
+        "• Fournisseur, montant TTC, date\n" +
+        "• Catégorie (Véhicule, Bâtiment, Société, Divers)\n" +
+        "• Plaque d'immatriculation si c'est pour un véhicule\n" +
+        "• Articles et numéro de facture\n\n" +
+        "💡 Ajoutez une légende pour préciser (ex: <i>\"carburant Clio\"</i>)."
       );
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,16 +82,17 @@ serve(async (req) => {
     let caption = message.caption || "";
 
     if (message.photo && message.photo.length > 0) {
-      // Get highest resolution photo
       fileId = message.photo[message.photo.length - 1].file_id;
       fileType = "photo";
     } else if (message.document) {
       fileId = message.document.file_id;
-      fileType = message.document.mime_type?.includes("pdf") ? "pdf" : "document";
+      const mime = message.document.mime_type || "";
+      if (mime.includes("pdf")) fileType = "pdf";
+      else if (mime.includes("image")) fileType = "photo";
+      else fileType = "document";
     } else if (message.text && message.text !== "/start") {
-      // Text message - might be a correction or note
       await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId,
-        "📷 Envoyez-moi une <b>photo</b> ou un <b>fichier</b> pour l'importer dans AutoFlow Pro."
+        "📷 Envoyez-moi une <b>photo</b> ou un <b>fichier PDF</b> pour l'importer."
       );
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -79,6 +104,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Notify user that processing has started
+    await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, "⏳ Analyse du document en cours...");
 
     // Download file from Telegram
     const fileInfoRes = await fetch(
@@ -116,77 +144,93 @@ serve(async (req) => {
 
     const publicUrl = publicUrlData.publicUrl;
 
-    // AI extraction if available
+    // AI extraction for BOTH photos AND PDFs
     let extractedData: any = null;
     let category = "Divers";
+    let subcategory: string | null = null;
     let amount = 0;
     let description = caption || "Document importé via Telegram";
     let supplierName = "";
     let invoiceNumber = "";
     let expenseDate = new Date().toISOString().split("T")[0];
+    let vehicleId: string | null = null;
 
-    if (LOVABLE_API_KEY && fileType === "photo") {
+    if (LOVABLE_API_KEY) {
       try {
-        // Convert to base64 for AI analysis
-        const base64 = btoa(String.fromCharCode(...fileBytes));
-        const mimeType = `image/${ext === "jpg" ? "jpeg" : ext}`;
+        let aiContent: any[];
+
+        if (fileType === "pdf") {
+          // For PDFs, send text prompt with URL
+          aiContent = [
+            {
+              type: "text",
+              text: `${AI_PROMPT}\n\nLe document est un PDF accessible à cette URL : ${publicUrl}\n${caption ? `Contexte : ${caption}` : ""}`,
+            },
+          ];
+        } else {
+          // For images, send as base64
+          const base64 = btoa(String.fromCharCode(...fileBytes));
+          const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+
+          aiContent = [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${base64}` },
+            },
+            {
+              type: "text",
+              text: `${AI_PROMPT}\n${caption ? `Contexte : ${caption}` : ""}`,
+            },
+          ];
+        }
 
         const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "image_url",
-                    image_url: { url: `data:${mimeType};base64,${base64}` },
-                  },
-                  {
-                    type: "text",
-                    text: `Analyse cette facture/ticket/reçu et extrais les informations suivantes au format JSON strict (pas de markdown, juste le JSON) :
-{
-  "category": "Véhicule" ou "Bâtiment" ou "Société" ou "Divers",
-  "amount": nombre (montant TTC principal),
-  "description": "description courte de la dépense",
-  "supplier_name": "nom du fournisseur/prestataire",
-  "invoice_number": "numéro de facture si visible",
-  "expense_date": "YYYY-MM-DD",
-  "vehicle_info": "immatriculation ou marque/modèle du véhicule si mentionné, sinon null",
-  "subcategory": "sous-catégorie (ex: Carburant, Pièces, Loyer, Assurance, Entretien, Électricité, Téléphone, etc.)"
-}
-${caption ? `Contexte additionnel : ${caption}` : ""}`,
-                  },
-                ],
-              },
-            ],
-            max_tokens: 500,
+            messages: [{ role: "user", content: aiContent }],
+            max_tokens: 800,
           }),
         });
 
         if (aiRes.ok) {
           const aiData = await aiRes.json();
           const content = aiData.choices?.[0]?.message?.content || "";
-          // Parse JSON from response (handle potential markdown wrapping)
           const jsonMatch = content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             extractedData = JSON.parse(jsonMatch[0]);
             category = extractedData.category || "Divers";
+            subcategory = extractedData.subcategory || null;
             amount = Number(extractedData.amount) || 0;
             description = extractedData.description || description;
             supplierName = extractedData.supplier_name || "";
             invoiceNumber = extractedData.invoice_number || "";
             expenseDate = extractedData.expense_date || expenseDate;
+
+            // Match vehicle by registration
+            if (extractedData.registration) {
+              const normalizedReg = extractedData.registration.replace(/[\s-]/g, "").toUpperCase();
+              const { data: vehicles } = await supabase.from("vehicles").select("id, registration, brand, model");
+              if (vehicles) {
+                const match = vehicles.find((v: any) =>
+                  v.registration.replace(/[\s-]/g, "").toUpperCase() === normalizedReg
+                );
+                if (match) {
+                  vehicleId = match.id;
+                  extractedData.matched_vehicle = `${match.brand} ${match.model} (${match.registration})`;
+                }
+              }
+            }
           }
+        } else {
+          console.error("AI error:", aiRes.status, await aiRes.text());
         }
       } catch (aiError) {
         console.error("AI extraction error:", aiError);
-        // Continue without AI data
       }
     }
 
@@ -195,10 +239,11 @@ ${caption ? `Contexte additionnel : ${caption}` : ""}`,
       .from("expenses")
       .insert({
         category,
-        subcategory: extractedData?.subcategory || null,
+        subcategory,
         description,
         amount,
         expense_date: expenseDate,
+        vehicle_id: vehicleId,
         supplier_name: supplierName,
         invoice_number: invoiceNumber,
         file_url: publicUrl,
@@ -217,16 +262,24 @@ ${caption ? `Contexte additionnel : ${caption}` : ""}`,
     }
 
     // Send confirmation to Telegram
-    let confirmMsg = `✅ <b>Document importé avec succès !</b>\n\n`;
-    confirmMsg += `📁 Catégorie : <b>${category}</b>\n`;
-    if (extractedData?.subcategory) confirmMsg += `📌 Sous-catégorie : ${extractedData.subcategory}\n`;
-    if (amount > 0) confirmMsg += `💰 Montant : <b>${amount.toFixed(2)} €</b>\n`;
+    let confirmMsg = `✅ <b>Document analysé et importé !</b>\n\n`;
+    confirmMsg += `📁 Catégorie : <b>${category}</b>`;
+    if (subcategory) confirmMsg += ` → ${subcategory}`;
+    confirmMsg += `\n`;
+    if (amount > 0) confirmMsg += `💰 Montant TTC : <b>${amount.toFixed(2)} €</b>\n`;
     if (supplierName) confirmMsg += `🏢 Fournisseur : ${supplierName}\n`;
     if (invoiceNumber) confirmMsg += `📄 N° facture : ${invoiceNumber}\n`;
     confirmMsg += `📅 Date : ${expenseDate}\n`;
     if (description) confirmMsg += `📝 ${description}\n`;
-    if (extractedData?.vehicle_info) confirmMsg += `🚗 Véhicule : ${extractedData.vehicle_info}\n`;
-    confirmMsg += `\n💡 Vous pouvez modifier les détails dans AutoFlow Pro → Importation`;
+    if (extractedData?.registration) {
+      confirmMsg += `🚗 Immatriculation : ${extractedData.registration}`;
+      if (extractedData.matched_vehicle) confirmMsg += ` → <b>${extractedData.matched_vehicle}</b>`;
+      confirmMsg += `\n`;
+    }
+    if (extractedData?.articles?.length > 0) {
+      confirmMsg += `📋 Articles : ${extractedData.articles.join(", ")}\n`;
+    }
+    confirmMsg += `\n💡 Modifiable dans AutoFlow Pro → Importation`;
 
     await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, confirmMsg);
 
@@ -236,14 +289,13 @@ ${caption ? `Contexte additionnel : ${caption}` : ""}`,
   } catch (error) {
     console.error("Webhook error:", error);
 
-    // Try to notify user of error
     try {
       const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
       const update = await req.clone().json().catch(() => null);
       const chatId = update?.message?.chat?.id;
       if (TELEGRAM_BOT_TOKEN && chatId) {
         await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId,
-          "❌ Erreur lors du traitement du document. Veuillez réessayer."
+          "❌ Erreur lors du traitement. Réessayez ou vérifiez le document."
         );
       }
     } catch (_) {}

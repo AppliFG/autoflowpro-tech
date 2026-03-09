@@ -132,19 +132,19 @@ export default function Dashboard() {
 
       {/* KPIs */}
       {visibility.kpis && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} />
-          <KpiCard title="Valeur stock (vente)" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
-          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "default"} />
-          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" />
+        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible mb-8">
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} /></div>
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Valeur stock (vente)" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} /></div>
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "default"} /></div>
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" /></div>
         </div>
       )}
 
       {visibility.kpis2 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Car className="h-5 w-5" />} subtitle="Mandats actifs" />
-          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" />
-          <KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} />
+        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible mb-8">
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Car className="h-5 w-5" />} subtitle="Mandats actifs" /></div>
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" /></div>
+          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} /></div>
         </div>
       )}
     </AppLayout>

@@ -49,7 +49,45 @@ export default function CRM() {
         </Button>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      {/* Mobile: stacked columns */}
+      <div className="sm:hidden space-y-4">
+        {columns.map((col) => {
+          const colProspects = prospects.filter((p: any) => p.status === col.id);
+          if (colProspects.length === 0) return null;
+          return (
+            <div key={col.id}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${col.color}`} />
+                <h3 className="text-sm font-semibold text-foreground">{col.title}</h3>
+                <span className="ml-auto text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{colProspects.length}</span>
+              </div>
+              <div className="space-y-2">
+                {colProspects.map((p: any) => (
+                  <div key={p.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <div className="flex items-start justify-between">
+                      <p className="font-medium text-sm text-card-foreground">{p.full_name}</p>
+                      <Badge variant="outline" className="text-[10px] shrink-0">{col.title}</Badge>
+                    </div>
+                    {p.vehicle_interest && (
+                      <p className="text-xs text-muted-foreground mt-1">{p.vehicle_interest}</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                      {p.phone && <a href={`tel:${p.phone}`} className="text-primary">{p.phone}</a>}
+                      {p.email && <span className="truncate">{p.email}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {prospects.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">Aucun prospect</div>
+        )}
+      </div>
+
+      {/* Desktop: kanban columns */}
+      <div className="hidden sm:flex gap-4 overflow-x-auto pb-4">
         {columns.map((col) => {
           const colProspects = prospects.filter((p: any) => p.status === col.id);
           return (

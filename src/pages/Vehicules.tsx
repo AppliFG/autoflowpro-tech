@@ -124,33 +124,33 @@ function FicheVehicule({ vehicle, onClose, onInvoice }: { vehicle: Vehicle; onCl
   const totalTravaux = vehicle.travaux.reduce((s, t) => s + t.cout, 0);
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl border border-border shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl w-full sm:max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted transition-colors">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted transition-colors shrink-0">
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <img src={vehicle.photo} alt="" className="h-12 w-16 object-cover rounded-lg" />
-            <div>
-              <h2 className="font-bold text-lg text-card-foreground">{vehicle.marque} {vehicle.modele}</h2>
-              <p className="text-sm text-muted-foreground">
+            <img src={vehicle.photo} alt="" className="h-10 w-14 sm:h-12 sm:w-16 object-cover rounded-lg shrink-0" />
+            <div className="min-w-0">
+              <h2 className="font-bold text-base sm:text-lg text-card-foreground truncate">{vehicle.marque} {vehicle.modele}</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {vehicle.policeNumber ? <span className="font-semibold text-primary">N° {vehicle.policeNumber}</span> : null}
-                {vehicle.policeNumber ? " · " : ""}{vehicle.immatriculation} · {vehicle.annee} · {vehicle.km.toLocaleString()} km
+                {vehicle.policeNumber ? " · " : ""}{vehicle.immatriculation} · {vehicle.annee}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <label className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
               <input type="checkbox" checked={showPrices} onChange={(e) => setShowPrices(e.target.checked)} className="rounded" />
               Tarifs
             </label>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Button variant="outline" size="sm" onClick={handlePrint} className="hidden sm:flex">
               <Printer className="h-4 w-4 mr-1.5" /> Imprimer
             </Button>
             <Button size="sm" onClick={() => { onClose(); onInvoice(); }}>
-              <Receipt className="h-4 w-4 mr-1.5" /> Facturer
+              <Receipt className="h-4 w-4 sm:mr-1.5" /> <span className="hidden sm:inline">Facturer</span>
             </Button>
           </div>
         </div>
@@ -328,93 +328,107 @@ export default function Vehicules() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Aucun véhicule trouvé</div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Police</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((v) => (
-                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedVehicle(v)}>
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
-                  <td className="px-4 py-2">
-                    <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
-                      <p className="text-xs text-muted-foreground">{v.annee}</p>
+        <>
+          {/* Mobile Card List */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((v) => (
+              <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3" onClick={() => setSelectedVehicle(v)}>
+                <div className="flex items-start gap-3">
+                  <img src={v.photo} alt="" className="h-14 w-20 object-cover rounded-lg bg-muted flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-card-foreground truncate">{v.marque} {v.modele}</p>
+                      <StatusBadge status={v.status} />
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
-                  <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
-                  <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => {
-                          setEditVehicle({
-                            id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele,
-                            version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel",
-                            color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "",
-                            status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation",
-                            description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo,
-                          });
-                          setShowForm(true);
-                        }}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Modifier"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setWorksVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Travaux"
-                      >
-                        <Wrench className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setInvoiceVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Générer facture"
-                      >
-                        <Receipt className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setSelectedVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Voir fiche"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {v.policeNumber ? <span className="font-semibold text-primary">N°{v.policeNumber} · </span> : ""}{v.immatriculation} · {v.annee}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{v.km.toLocaleString()} km · {v.carburant}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Achat</p>
+                    <p className="text-xs font-semibold text-card-foreground">{v.prixAchat.toLocaleString()} €</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Vente</p>
+                    <p className="text-xs font-semibold text-card-foreground">{v.prixVente.toLocaleString()} €</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Marge</p>
+                    <p className={`text-xs font-semibold ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                  <span className={`text-xs ${joursColor(v.jours)}`}>{v.jours}j en stock</span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Wrench className="h-4 w-4" /></button>
+                    <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Receipt className="h-4 w-4" /></button>
+                    <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Eye className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Police</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((v) => (
+                  <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedVehicle(v)}>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
+                    <td className="px-4 py-2">
+                      <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
+                        <p className="text-xs text-muted-foreground">{v.annee}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
+                    <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
+                    <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Modifier"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Travaux"><Wrench className="h-4 w-4" /></button>
+                        <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Générer facture"><Receipt className="h-4 w-4" /></button>
+                        <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Voir fiche"><Eye className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </AppLayout>
   );

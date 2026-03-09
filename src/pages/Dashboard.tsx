@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
+import OnboardingWizard from "@/components/OnboardingWizard";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import KpiCard from "@/components/KpiCard";
 import TodayAgendaWidget from "@/components/TodayAgendaWidget";
 import UpcomingEventsAlert from "@/components/UpcomingEventsAlert";
@@ -33,6 +35,7 @@ function loadVisibility(): Record<SectionKey, boolean> {
 }
 
 export default function Dashboard() {
+  const { needsOnboarding, checking, markComplete } = useOnboardingCheck();
   const [visibility, setVisibility] = useState<Record<SectionKey, boolean>>(loadVisibility);
   const [stats, setStats] = useState({
     vehiclesInStock: 0,
@@ -92,6 +95,18 @@ export default function Dashboard() {
     setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const margin = stats.totalSellingPrice - stats.totalPurchasePrice;
+
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={markComplete} />;
+  }
 
   return (
     <AppLayout title="Tableau de bord">

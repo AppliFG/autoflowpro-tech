@@ -77,6 +77,7 @@ export default function Importation() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [showTelegramGuide, setShowTelegramGuide] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // File upload & AI
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -187,11 +188,9 @@ export default function Importation() {
     return { url: data.publicUrl, type: fileType };
   };
 
-  // AI extraction from uploaded file
   const handleAIExtract = async (file: File) => {
     setExtracting(true);
     try {
-      // First upload the file to get a URL
       const result = await handleFileUpload(file);
       if (!result) {
         setExtracting(false);
@@ -211,7 +210,6 @@ export default function Importation() {
         return;
       }
 
-      // Fill form with extracted data
       if (data.category) setFormCategory(data.category);
       if (data.subcategory) setFormSubcategory(data.subcategory);
       if (data.description) setFormDescription(data.description);
@@ -222,9 +220,7 @@ export default function Importation() {
       if (data.vehicle_id) setFormVehicleId(data.vehicle_id);
       if (data.line_items) setFormLineItems(data.line_items);
 
-      // Store file info for later save
-      setUploadFile(null); // Already uploaded
-      // We store the URL in a temporary way
+      setUploadFile(null);
       (window as any).__lastUploadedFile = result;
 
       toast({ title: "✅ Extraction réussie !", description: `${data.supplier_name || "Document"} — ${data.amount ? data.amount.toFixed(2) + " €" : ""}` });
@@ -255,7 +251,6 @@ export default function Importation() {
       let fileUrl: string | null = null;
       let fileType: string | null = null;
 
-      // Check if we already uploaded via AI extraction
       const alreadyUploaded = (window as any).__lastUploadedFile;
       if (alreadyUploaded) {
         fileUrl = alreadyUploaded.url;
@@ -348,12 +343,11 @@ export default function Importation() {
 
   const ExpenseFormFields = ({ showFileUpload = true }: { showFileUpload?: boolean }) => (
     <div className="grid gap-4">
-      {/* File upload with AI extraction */}
       {showFileUpload && (
         <div className="space-y-2">
           <label className="text-sm font-medium mb-1 block">📄 Document (PDF, image) — Extraction IA automatique</label>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border border-input bg-background hover:bg-accent text-sm flex-1">
+            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border border-input bg-background hover:bg-accent/50 text-sm flex-1 min-w-0">
               <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-muted-foreground truncate">
                 {uploadFile ? uploadFile.name : "Choisir un fichier..."}
@@ -375,7 +369,7 @@ export default function Importation() {
             {extracting && (
               <div className="flex items-center gap-1.5 text-xs text-primary shrink-0">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Analyse IA...</span>
+                <span className="hidden sm:inline">Analyse IA...</span>
               </div>
             )}
             {uploadFile && !extracting && (
@@ -390,7 +384,7 @@ export default function Importation() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium mb-1 block">Catégorie</label>
           <Select value={formCategory} onValueChange={(v) => { setFormCategory(v); setFormSubcategory(""); }}>
@@ -426,7 +420,7 @@ export default function Importation() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium mb-1 block">Montant TTC (€)</label>
           <Input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} placeholder="0.00" />
@@ -442,7 +436,7 @@ export default function Importation() {
         <Input value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Description de la dépense..." />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium mb-1 block">Fournisseur</label>
           <div className="space-y-1">
@@ -470,7 +464,6 @@ export default function Importation() {
         <Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Notes supplémentaires..." rows={2} />
       </div>
 
-      {/* Line items from AI */}
       {formLineItems.length > 0 && (
         <div className="space-y-1">
           <label className="text-sm font-medium flex items-center gap-1">
@@ -490,149 +483,136 @@ export default function Importation() {
     </div>
   );
 
+  // Mobile expense card
+  const ExpenseCard = ({ expense }: { expense: Expense }) => (
+    <div className="rounded-xl border bg-card p-4 space-y-3">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge variant="outline" className={`text-[10px] shrink-0 ${categoryColor(expense.category)}`}>
+            {expense.category}
+          </Badge>
+          {expense.subcategory && (
+            <span className="text-[10px] text-muted-foreground truncate">{expense.subcategory}</span>
+          )}
+        </div>
+        <span className="text-base font-bold shrink-0 ml-2">{expense.amount.toFixed(2)} €</span>
+      </div>
+      <div className="space-y-1">
+        {expense.description && (
+          <p className="text-sm text-foreground truncate">{expense.description}</p>
+        )}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {expense.expense_date && (
+            <span>{format(new Date(expense.expense_date), "dd/MM/yyyy", { locale: fr })}</span>
+          )}
+          {expense.supplier_name && <span>{expense.supplier_name}</span>}
+          {getVehicleLabel(expense.vehicle_id) && (
+            <span className="truncate">{getVehicleLabel(expense.vehicle_id)}</span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-2">
+          <Badge variant={expense.source === "telegram" ? "default" : "secondary"} className="text-[10px]">
+            {expense.source === "telegram" ? "📱 Telegram" : "✏️ Manuel"}
+          </Badge>
+          {expense.file_url && (
+            <button onClick={() => setPreviewUrl(expense.file_url)} className="text-muted-foreground hover:text-foreground">
+              {expense.file_type === "pdf" ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(expense)}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(expense.id)}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Importation & Charges</h1>
-            <p className="text-muted-foreground text-sm">
-              Scraping IA automatique des factures via Telegram ou upload PC
+            <h1 className="text-xl sm:text-2xl font-bold">Importation & Charges</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Extraction IA des factures via Telegram ou upload
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={fetchExpenses}>
-              <RefreshCw className="h-4 w-4 mr-1" /> Actualiser
+              <RefreshCw className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Actualiser</span>
             </Button>
             <Button size="sm" onClick={() => { resetForm(); setShowAdd(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> Ajouter
+              <Plus className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Ajouter</span>
             </Button>
           </div>
         </div>
 
-        {/* Totals */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-xl font-bold">{totals.total.toFixed(2)} €</p>
-              <p className="text-xs text-muted-foreground">{filteredExpenses.length} dépenses</p>
+        {/* Totals - horizontal scroll on mobile */}
+        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-5 sm:overflow-visible">
+          <Card className="min-w-[140px] shrink-0 sm:min-w-0">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
+              <p className="text-lg sm:text-xl font-bold">{totals.total.toFixed(2)} €</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{filteredExpenses.length} dépenses</p>
             </CardContent>
           </Card>
           {CATEGORIES.map((cat) => (
-            <Card key={cat}>
-              <CardContent className="p-4">
+            <Card key={cat} className="min-w-[120px] shrink-0 sm:min-w-0">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-1.5">
                   {categoryIcon(cat)}
-                  <p className="text-xs text-muted-foreground">{cat}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{cat}</p>
                 </div>
-                <p className="text-lg font-bold">{(totals.byCategory[cat] || 0).toFixed(2)} €</p>
+                <p className="text-base sm:text-lg font-bold">{(totals.byCategory[cat] || 0).toFixed(2)} €</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Telegram Setup Guide */}
+        {/* Telegram Guide */}
         <Card className="border-dashed">
           <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowTelegramGuide(!showTelegramGuide)}>
-            <CardTitle className="text-sm flex items-center justify-between">
+            <CardTitle className="text-xs sm:text-sm flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Send className="h-4 w-4" /> 📱 Configuration Telegram — Guide complet pas à pas
+                <Send className="h-4 w-4" /> 📱 Configuration Telegram
               </div>
               {showTelegramGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </CardTitle>
           </CardHeader>
           {showTelegramGuide && (
-            <CardContent className="text-xs space-y-5">
-              {/* Étape 1 */}
+            <CardContent className="text-xs space-y-4">
               <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
                 <p className="font-semibold text-sm">📌 Étape 1 : Créer votre bot avec @BotFather</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground ml-2">
-                  <li>Ouvrez <strong>Telegram</strong> sur votre téléphone ou PC</li>
-                  <li>Dans la barre de recherche en haut, tapez <code className="bg-muted px-1.5 py-0.5 rounded font-mono">@BotFather</code></li>
-                  <li>Cliquez sur le résultat avec le ✓ bleu (compte vérifié officiel)</li>
-                  <li>Cliquez sur <strong>« Démarrer »</strong> ou tapez <code className="bg-muted px-1.5 py-0.5 rounded font-mono">/start</code></li>
-                  <li>Tapez <code className="bg-muted px-1.5 py-0.5 rounded font-mono">/newbot</code> et envoyez</li>
-                  <li>BotFather demande : <em>"Alright, a new bot. How are we going to call it?"</em></li>
-                  <li>Tapez un nom lisible, par exemple : <code className="bg-muted px-1.5 py-0.5 rounded font-mono">AutoFlow Factures</code></li>
-                  <li>BotFather demande un <strong>username</strong> (doit finir par <code>bot</code>)</li>
-                  <li>Tapez par exemple : <code className="bg-muted px-1.5 py-0.5 rounded font-mono">autoflow_factures_bot</code></li>
-                  <li>🎉 BotFather vous répond avec un <strong>Token API</strong> qui ressemble à :</li>
+                <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
+                  <li>Ouvrez <strong>Telegram</strong></li>
+                  <li>Recherchez <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">@BotFather</code></li>
+                  <li>Tapez <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">/newbot</code></li>
+                  <li>Copiez le <strong>Token API</strong></li>
                 </ol>
-                <div className="bg-background border rounded p-2 font-mono text-[11px] ml-4">
-                  <code>7123456789:AAH1bGciOiJIUzI1NiIsInR5cCI6...</code>
-                </div>
-                <div className="flex items-start gap-2 ml-2 mt-1 p-2 bg-amber-50 dark:bg-amber-950/30 rounded text-amber-800 dark:text-amber-200">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span><strong>IMPORTANT :</strong> Copiez et gardez ce token précieusement. Ne le partagez avec personne ! Vous en aurez besoin à l'étape 3.</span>
-                </div>
               </div>
-
-              {/* Étape 2 */}
               <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
                 <p className="font-semibold text-sm">📌 Étape 2 : Obtenir votre Chat ID</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground ml-2">
-                  <li>Dans Telegram, recherchez <code className="bg-muted px-1.5 py-0.5 rounded font-mono">@userinfobot</code></li>
-                  <li>Cliquez sur <strong>« Démarrer »</strong></li>
-                  <li>Le bot vous répond immédiatement avec votre <strong>ID numérique</strong></li>
-                  <li>Notez ce numéro (ex: <code>123456789</code>) — c'est votre Chat ID</li>
-                </ol>
-                <p className="text-muted-foreground ml-2 mt-1 text-[10px]">
-                  💡 Ce Chat ID est aussi utile pour recevoir des notifications (factures, devis) sur votre Telegram.
-                </p>
+                <p className="text-muted-foreground">Recherchez <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">@userinfobot</code> et notez votre ID.</p>
               </div>
-
-              {/* Étape 3 */}
               <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                <p className="font-semibold text-sm">📌 Étape 3 : Enregistrer le Token</p>
-                <p className="text-muted-foreground ml-2">
-                  Le token de votre bot doit être enregistré comme secret <code className="bg-muted px-1.5 py-0.5 rounded">TELEGRAM_BOT_TOKEN</code> dans le backend.
-                  Ce secret est déjà configuré — si vous changez de bot, demandez la mise à jour.
-                </p>
-              </div>
-
-              {/* Étape 4 */}
-              <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                <p className="font-semibold text-sm">📌 Étape 4 : Activer le Webhook</p>
-                <p className="text-muted-foreground ml-2">
-                  Ouvrez votre navigateur (Chrome, Safari...) et collez cette URL <strong>en remplaçant</strong> <code>VOTRE_TOKEN</code> par le token copié à l'étape 1 :
-                </p>
-                <div className="bg-background border rounded p-2.5 text-[11px] break-all ml-2 font-mono">
-                  https://api.telegram.org/bot<span className="text-primary font-bold">VOTRE_TOKEN</span>/setWebhook?url={webhookUrl}
+                <p className="font-semibold text-sm">📌 Étape 3 : Activer le Webhook</p>
+                <div className="bg-background border rounded p-2 text-[10px] break-all font-mono">
+                  https://api.telegram.org/bot<span className="text-primary font-bold">TOKEN</span>/setWebhook?url={webhookUrl}
                 </div>
-                <p className="text-muted-foreground ml-2 mt-1">
-                  <strong>Exemple concret :</strong>
-                </p>
-                <div className="bg-background border rounded p-2.5 text-[10px] break-all ml-2 font-mono text-muted-foreground">
-                  https://api.telegram.org/bot<span className="text-primary">7123456789:AAH1bGci...</span>/setWebhook?url={webhookUrl}
-                </div>
-                <p className="text-muted-foreground ml-2 mt-1">
-                  ✅ Vous devez voir dans votre navigateur : <code className="bg-muted px-1.5 py-0.5 rounded">{`{"ok":true,"result":true,"description":"Webhook was set"}`}</code>
-                </p>
               </div>
-
-              {/* Étape 5 */}
-              <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                <p className="font-semibold text-sm">📌 Étape 5 : Tester !</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground ml-2">
-                  <li>Retournez dans Telegram, recherchez le nom de votre bot (ex: <code>@autoflow_factures_bot</code>)</li>
-                  <li>Cliquez sur <strong>« Démarrer »</strong> ou envoyez <code className="bg-muted px-1.5 py-0.5 rounded font-mono">/start</code></li>
-                  <li>Le bot doit répondre avec le message d'accueil AutoFlow Pro</li>
-                  <li>📸 <strong>Prenez une photo d'une facture</strong> avec votre téléphone et envoyez-la</li>
-                  <li>⏳ Le bot analyse le document avec l'IA (5-15 secondes)</li>
-                  <li>✅ Le bot confirme avec les données extraites (fournisseur, montant, catégorie...)</li>
-                  <li>La dépense apparaît automatiquement dans ce tableau ci-dessous</li>
-                </ol>
-                <p className="text-muted-foreground ml-2 mt-2">
-                  💡 <strong>Astuce :</strong> Ajoutez une légende à votre photo pour préciser le contexte.<br/>
-                  Exemples : <em>"carburant Clio AA-123-BB"</em>, <em>"électricité local"</em>, <em>"comptable trimestre"</em>
-                </p>
-              </div>
-
-              {/* Webhook URL */}
-              <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg text-[11px] break-all">
-                <span className="font-medium shrink-0">🔗 Webhook URL :</span>
-                <code className="text-muted-foreground flex-1 font-mono">{webhookUrl}</code>
+              <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg text-[10px] break-all">
+                <span className="font-medium shrink-0">🔗 Webhook :</span>
+                <code className="text-muted-foreground flex-1 font-mono truncate">{webhookUrl}</code>
                 <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(webhookUrl); toast({ title: "URL copiée !" }); }}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
@@ -642,51 +622,81 @@ export default function Importation() {
         </Card>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-1.5">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filtres :</span>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="sm:hidden" onClick={() => setShowFilters(!showFilters)}>
+              <Filter className="h-4 w-4 mr-1" />
+              Filtres
+              {(filterCategory !== "all" || filterSource !== "all" || filterVehicle !== "all") && (
+                <span className="ml-1 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Button>
+            <Input
+              className="h-9 flex-1 sm:w-[200px] sm:flex-none text-xs"
+              placeholder="Rechercher..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="hidden sm:flex items-center gap-2">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterSource} onValueChange={setFilterSource}>
+                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="Source" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  <SelectItem value="telegram">Telegram</SelectItem>
+                  <SelectItem value="manual">Manuel</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+                <SelectTrigger className="w-[180px] h-9 text-xs"><SelectValue placeholder="Véhicule" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} ({v.registration})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[140px] h-9 text-xs">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterSource} onValueChange={setFilterSource}>
-            <SelectTrigger className="w-[130px] h-9 text-xs">
-              <SelectValue placeholder="Source" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              <SelectItem value="telegram">Telegram</SelectItem>
-              <SelectItem value="manual">Manuel</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterVehicle} onValueChange={setFilterVehicle}>
-            <SelectTrigger className="w-[180px] h-9 text-xs">
-              <SelectValue placeholder="Véhicule" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {vehicles.map((v) => (
-                <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} ({v.registration})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            className="h-9 w-[200px] text-xs"
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          {/* Mobile filters dropdown */}
+          {showFilters && (
+            <div className="flex flex-col gap-2 sm:hidden p-3 rounded-lg border bg-card">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterSource} onValueChange={setFilterSource}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Source" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes sources</SelectItem>
+                  <SelectItem value="telegram">Telegram</SelectItem>
+                  <SelectItem value="manual">Manuel</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Véhicule" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous véhicules</SelectItem>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} ({v.registration})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        {/* Table */}
-        <div className="rounded-lg border bg-card">
+        {/* Desktop Table */}
+        <div className="hidden sm:block rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -746,9 +756,7 @@ export default function Importation() {
                     <TableCell className="text-xs max-w-[200px] truncate">{expense.description || "-"}</TableCell>
                     <TableCell className="text-xs">{expense.supplier_name || "-"}</TableCell>
                     <TableCell className="text-xs">{getVehicleLabel(expense.vehicle_id) || "-"}</TableCell>
-                    <TableCell className="text-right font-medium text-xs">
-                      {expense.amount.toFixed(2)} €
-                    </TableCell>
+                    <TableCell className="text-right font-medium text-xs">{expense.amount.toFixed(2)} €</TableCell>
                     <TableCell>
                       <Badge variant={expense.source === "telegram" ? "default" : "secondary"} className="text-[10px]">
                         {expense.source === "telegram" ? "📱 TG" : "✏️ Manuel"}
@@ -771,14 +779,31 @@ export default function Importation() {
           </Table>
         </div>
 
+        {/* Mobile Card List */}
+        <div className="sm:hidden space-y-3">
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-1" /> Chargement...
+            </div>
+          ) : filteredExpenses.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucune dépense trouvée
+            </div>
+          ) : (
+            filteredExpenses.map((expense) => (
+              <ExpenseCard key={expense.id} expense={expense} />
+            ))
+          )}
+        </div>
+
         {/* Add Dialog */}
         <Dialog open={showAdd} onOpenChange={setShowAdd}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>Ajouter une dépense</DialogTitle>
             </DialogHeader>
             <ExpenseFormFields />
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setShowAdd(false)}>Annuler</Button>
               <Button onClick={handleSave} disabled={uploading || extracting}>
                 {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Enregistrement...</> : "Ajouter"}
@@ -789,7 +814,7 @@ export default function Importation() {
 
         {/* Edit Dialog */}
         <Dialog open={!!editExpense} onOpenChange={(open) => !open && setEditExpense(null)}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>Modifier la dépense</DialogTitle>
             </DialogHeader>
@@ -805,7 +830,7 @@ export default function Importation() {
               </div>
             )}
             <ExpenseFormFields showFileUpload={!editExpense?.file_url} />
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setEditExpense(null)}>Annuler</Button>
               <Button onClick={handleSave} disabled={uploading || extracting}>
                 {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Enregistrement...</> : "Enregistrer"}
@@ -816,13 +841,13 @@ export default function Importation() {
 
         {/* Preview Dialog */}
         <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl mx-2 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>Aperçu du document</DialogTitle>
             </DialogHeader>
             {previewUrl && (
               previewUrl.toLowerCase().includes(".pdf") ? (
-                <iframe src={previewUrl} className="w-full h-[500px] rounded" />
+                <iframe src={previewUrl} className="w-full h-[400px] sm:h-[500px] rounded" />
               ) : (
                 <img src={previewUrl} alt="Document" className="w-full rounded" />
               )

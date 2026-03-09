@@ -328,93 +328,107 @@ export default function Vehicules() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Aucun véhicule trouvé</div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Police</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((v) => (
-                <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedVehicle(v)}>
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
-                  <td className="px-4 py-2">
-                    <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
-                      <p className="text-xs text-muted-foreground">{v.annee}</p>
+        <>
+          {/* Mobile Card List */}
+          <div className="sm:hidden space-y-3">
+            {filtered.map((v) => (
+              <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3" onClick={() => setSelectedVehicle(v)}>
+                <div className="flex items-start gap-3">
+                  <img src={v.photo} alt="" className="h-14 w-20 object-cover rounded-lg bg-muted flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-card-foreground truncate">{v.marque} {v.modele}</p>
+                      <StatusBadge status={v.status} />
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
-                  <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
-                  <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
-                  <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => {
-                          setEditVehicle({
-                            id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele,
-                            version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel",
-                            color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "",
-                            status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation",
-                            description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo,
-                          });
-                          setShowForm(true);
-                        }}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Modifier"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setWorksVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Travaux"
-                      >
-                        <Wrench className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setInvoiceVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Générer facture"
-                      >
-                        <Receipt className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setSelectedVehicle(v)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-                        title="Voir fiche"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {v.policeNumber ? <span className="font-semibold text-primary">N°{v.policeNumber} · </span> : ""}{v.immatriculation} · {v.annee}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{v.km.toLocaleString()} km · {v.carburant}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Achat</p>
+                    <p className="text-xs font-semibold text-card-foreground">{v.prixAchat.toLocaleString()} €</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Vente</p>
+                    <p className="text-xs font-semibold text-card-foreground">{v.prixVente.toLocaleString()} €</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Marge</p>
+                    <p className={`text-xs font-semibold ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                  <span className={`text-xs ${joursColor(v.jours)}`}>{v.jours}j en stock</span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Wrench className="h-4 w-4" /></button>
+                    <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Receipt className="h-4 w-4" /></button>
+                    <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Eye className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Police</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Immat.</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Photo</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Véhicule</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Km</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Carburant</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prix achat</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Coût revient</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Prix vente</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Marge</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Jours</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((v) => (
+                  <tr key={v.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedVehicle(v)}>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{v.policeNumber ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-card-foreground">{v.immatriculation}</td>
+                    <td className="px-4 py-2">
+                      <img src={v.photo} alt="" className="h-10 w-14 object-cover rounded-md bg-muted" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-medium text-card-foreground">{v.marque} {v.modele}</p>
+                        <p className="text-xs text-muted-foreground">{v.annee}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{v.km.toLocaleString()} km</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{v.carburant}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.prixAchat.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{v.coutRevient.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-right font-medium text-card-foreground">{v.prixVente.toLocaleString()} €</td>
+                    <td className={`px-4 py-3 text-right ${margeColor(v.marge)}`}>{v.marge.toLocaleString()} €</td>
+                    <td className="px-4 py-3 text-center"><StatusBadge status={v.status} /></td>
+                    <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Modifier"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Travaux"><Wrench className="h-4 w-4" /></button>
+                        <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Générer facture"><Receipt className="h-4 w-4" /></button>
+                        <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Voir fiche"><Eye className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </AppLayout>
   );

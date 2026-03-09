@@ -230,61 +230,47 @@ export default function Finance() {
             <p className="text-xs mt-1">Générez une facture depuis la page Véhicules.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Facture</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Véhicule</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Montant</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Acompte</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Reste à payer</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Paiement</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv: any) => {
-                  const cfg = statusConfig[inv.payment_status] || statusConfig["En attente"];
-                  const vehicle = inv.vehicles;
-                  return (
-                    <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{inv.invoice_number}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(inv.created_at).toLocaleDateString("fr-FR")}
-                      </td>
-                      <td className="px-4 py-3 text-card-foreground">{inv.client_nom}</td>
-                      <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                        {vehicle ? `${vehicle.brand} ${vehicle.model}` : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-card-foreground">
-                        {Number(inv.amount).toLocaleString("fr-FR")} €
-                      </td>
-                      <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">
-                        {Number(inv.deposit_amount) > 0
-                          ? `${Number(inv.deposit_amount).toLocaleString("fr-FR")} €`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium hidden md:table-cell">
-                        {(() => {
-                          const total = Number(inv.amount) || 0;
-                          const deposit = Number(inv.deposit_amount) || 0;
-                          const reste = total - deposit;
-                          if (inv.payment_status === "Payée") return <span className="text-success">0 €</span>;
-                          if (inv.payment_status === "Annulée") return <span className="text-muted-foreground">—</span>;
-                          if (deposit > 0) return <span className="text-destructive">{reste.toLocaleString("fr-FR")} €</span>;
-                          return <span className="text-destructive">{total.toLocaleString("fr-FR")} €</span>;
-                        })()}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge variant={cfg.variant} className="gap-1">
-                          {cfg.icon} {inv.payment_status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center hidden md:table-cell">
+          <>
+            {/* Mobile Card List */}
+            <div className="sm:hidden space-y-3 p-4">
+              {invoices.map((inv: any) => {
+                const cfg = statusConfig[inv.payment_status] || statusConfig["En attente"];
+                const vehicle = inv.vehicles;
+                const total = Number(inv.amount) || 0;
+                const deposit = Number(inv.deposit_amount) || 0;
+                return (
+                  <div key={inv.id} className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-mono text-xs font-semibold text-primary">{inv.invoice_number}</p>
+                        <p className="font-medium text-sm text-card-foreground mt-0.5">{inv.client_nom}</p>
+                      </div>
+                      <Badge variant={cfg.variant} className="gap-1 shrink-0">
+                        {cfg.icon} {inv.payment_status}
+                      </Badge>
+                    </div>
+                    {vehicle && (
+                      <p className="text-xs text-muted-foreground">{vehicle.brand} {vehicle.model} — {vehicle.registration}</p>
+                    )}
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-muted/50 rounded-lg py-1.5">
+                        <p className="text-[10px] text-muted-foreground">Montant</p>
+                        <p className="text-xs font-semibold text-card-foreground">{total.toLocaleString("fr-FR")} €</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg py-1.5">
+                        <p className="text-[10px] text-muted-foreground">Acompte</p>
+                        <p className="text-xs font-semibold text-card-foreground">{deposit > 0 ? `${deposit.toLocaleString("fr-FR")} €` : "—"}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg py-1.5">
+                        <p className="text-[10px] text-muted-foreground">Reste</p>
+                        <p className={`text-xs font-semibold ${inv.payment_status === "Payée" ? "text-success" : "text-destructive"}`}>
+                          {inv.payment_status === "Payée" ? "0 €" : `${(total - deposit).toLocaleString("fr-FR")} €`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-xs text-muted-foreground">{new Date(inv.created_at).toLocaleDateString("fr-FR")}</span>
+                      <div className="flex items-center gap-2">
                         <Select
                           value={inv.payment_status}
                           onValueChange={(val) => {
@@ -296,7 +282,7 @@ export default function Finance() {
                             }
                           }}
                         >
-                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                          <SelectTrigger className="w-[110px] h-7 text-[11px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -305,22 +291,95 @@ export default function Finance() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </td>
-                      <td className="px-4 py-3">
                         {inv.pdf_url && (
                           <Button asChild variant="ghost" size="sm">
-                            <a href={inv.pdf_url} target="_blank" rel="noopener noreferrer" title="Télécharger">
-                              <Download className="h-4 w-4" />
-                            </a>
+                            <a href={inv.pdf_url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
                           </Button>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">N° Facture</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Client</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Véhicule</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Montant</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Acompte</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Reste à payer</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground">Statut</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Paiement</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((inv: any) => {
+                    const cfg = statusConfig[inv.payment_status] || statusConfig["En attente"];
+                    const vehicle = inv.vehicles;
+                    return (
+                      <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{inv.invoice_number}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{new Date(inv.created_at).toLocaleDateString("fr-FR")}</td>
+                        <td className="px-4 py-3 text-card-foreground">{inv.client_nom}</td>
+                        <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{vehicle ? `${vehicle.brand} ${vehicle.model}` : "—"}</td>
+                        <td className="px-4 py-3 text-right font-medium text-card-foreground">{Number(inv.amount).toLocaleString("fr-FR")} €</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground hidden md:table-cell">{Number(inv.deposit_amount) > 0 ? `${Number(inv.deposit_amount).toLocaleString("fr-FR")} €` : "—"}</td>
+                        <td className="px-4 py-3 text-right font-medium hidden md:table-cell">
+                          {(() => {
+                            const total = Number(inv.amount) || 0;
+                            const deposit = Number(inv.deposit_amount) || 0;
+                            const reste = total - deposit;
+                            if (inv.payment_status === "Payée") return <span className="text-success">0 €</span>;
+                            if (inv.payment_status === "Annulée") return <span className="text-muted-foreground">—</span>;
+                            if (deposit > 0) return <span className="text-destructive">{reste.toLocaleString("fr-FR")} €</span>;
+                            return <span className="text-destructive">{total.toLocaleString("fr-FR")} €</span>;
+                          })()}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge variant={cfg.variant} className="gap-1">{cfg.icon} {inv.payment_status}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-center hidden md:table-cell">
+                          <Select
+                            value={inv.payment_status}
+                            onValueChange={(val) => {
+                              if (val === "Acompte") {
+                                setDepositDialogInvoice(inv.id);
+                                setDepositAmount(String(inv.deposit_amount || ""));
+                              } else {
+                                updateStatus.mutate({ id: inv.id, status: val });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {paymentStatuses.map((s) => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-4 py-3">
+                          {inv.pdf_url && (
+                            <Button asChild variant="ghost" size="sm">
+                              <a href={inv.pdf_url} target="_blank" rel="noopener noreferrer" title="Télécharger"><Download className="h-4 w-4" /></a>
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
       {/* Deposit Amount Dialog */}

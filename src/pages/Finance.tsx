@@ -152,11 +152,11 @@ export default function Finance() {
 
   return (
     <AppLayout title="Finance & Gestion">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <KpiCard title="CA Total" value={`${s.ca.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
-        <KpiCard title="Marge nette" value={`${s.marge.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={s.marge > 0 ? "success" : "default"} />
-        <KpiCard title="Dépenses" value={`${s.depenses.toLocaleString("fr-FR")} €`} icon={<TrendingDown className="h-5 w-5" />} />
-        <KpiCard title="Trésorerie" value={`${s.tresorerie.toLocaleString("fr-FR")} €`} icon={<Wallet className="h-5 w-5" />} />
+      <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible mb-8">
+        <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="CA Total" value={`${s.ca.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} /></div>
+        <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Marge nette" value={`${s.marge.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={s.marge > 0 ? "success" : "default"} /></div>
+        <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Dépenses" value={`${s.depenses.toLocaleString("fr-FR")} €`} icon={<TrendingDown className="h-5 w-5" />} /></div>
+        <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Trésorerie" value={`${s.tresorerie.toLocaleString("fr-FR")} €`} icon={<Wallet className="h-5 w-5" />} /></div>
       </div>
 
       {/* Monthly Charts */}

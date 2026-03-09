@@ -124,33 +124,33 @@ function FicheVehicule({ vehicle, onClose, onInvoice }: { vehicle: Vehicle; onCl
   const totalTravaux = vehicle.travaux.reduce((s, t) => s + t.cout, 0);
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl border border-border shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl border border-border shadow-xl w-full sm:max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted transition-colors">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-muted transition-colors shrink-0">
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <img src={vehicle.photo} alt="" className="h-12 w-16 object-cover rounded-lg" />
-            <div>
-              <h2 className="font-bold text-lg text-card-foreground">{vehicle.marque} {vehicle.modele}</h2>
-              <p className="text-sm text-muted-foreground">
+            <img src={vehicle.photo} alt="" className="h-10 w-14 sm:h-12 sm:w-16 object-cover rounded-lg shrink-0" />
+            <div className="min-w-0">
+              <h2 className="font-bold text-base sm:text-lg text-card-foreground truncate">{vehicle.marque} {vehicle.modele}</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {vehicle.policeNumber ? <span className="font-semibold text-primary">N° {vehicle.policeNumber}</span> : null}
-                {vehicle.policeNumber ? " · " : ""}{vehicle.immatriculation} · {vehicle.annee} · {vehicle.km.toLocaleString()} km
+                {vehicle.policeNumber ? " · " : ""}{vehicle.immatriculation} · {vehicle.annee}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <label className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
               <input type="checkbox" checked={showPrices} onChange={(e) => setShowPrices(e.target.checked)} className="rounded" />
               Tarifs
             </label>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Button variant="outline" size="sm" onClick={handlePrint} className="hidden sm:flex">
               <Printer className="h-4 w-4 mr-1.5" /> Imprimer
             </Button>
             <Button size="sm" onClick={() => { onClose(); onInvoice(); }}>
-              <Receipt className="h-4 w-4 mr-1.5" /> Facturer
+              <Receipt className="h-4 w-4 sm:mr-1.5" /> <span className="hidden sm:inline">Facturer</span>
             </Button>
           </div>
         </div>

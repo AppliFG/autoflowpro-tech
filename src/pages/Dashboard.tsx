@@ -96,6 +96,18 @@ export default function Dashboard() {
 
   const margin = stats.totalSellingPrice - stats.totalPurchasePrice;
 
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={markComplete} />;
+  }
+
   return (
     <AppLayout title="Tableau de bord">
       {/* Section visibility toggle */}

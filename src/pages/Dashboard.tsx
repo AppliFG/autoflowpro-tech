@@ -35,6 +35,7 @@ function loadVisibility(): Record<SectionKey, boolean> {
 }
 
 export default function Dashboard() {
+  const { needsOnboarding, checking, markComplete } = useOnboardingCheck();
   const [visibility, setVisibility] = useState<Record<SectionKey, boolean>>(loadVisibility);
   const [stats, setStats] = useState({
     vehiclesInStock: 0,

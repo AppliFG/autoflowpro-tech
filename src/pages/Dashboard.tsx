@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
+import OnboardingWizard from "@/components/OnboardingWizard";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import KpiCard from "@/components/KpiCard";
 import TodayAgendaWidget from "@/components/TodayAgendaWidget";
 import UpcomingEventsAlert from "@/components/UpcomingEventsAlert";

@@ -19,6 +19,7 @@ import {
   LogOut,
   CalendarDays,
   FileDown,
+  Download,
 } from "lucide-react";
 
 type AppRole = "admin" | "commercial" | "comptable";

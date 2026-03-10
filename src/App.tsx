@@ -22,6 +22,7 @@ import Agenda from "./pages/Agenda";
 import Vitrine from "./pages/Vitrine";
 import Importation from "./pages/Importation";
 import Login from "./pages/Login";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

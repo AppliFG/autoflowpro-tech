@@ -38,6 +38,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/vitrine" element={<Vitrine />} />
+            <Route path="/install" element={<Install />} />
 
             {/* Protected routes - all roles */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

@@ -48,6 +48,7 @@ const navItems: NavItem[] = [
   { icon: CreditCard, label: "Abonnement", path: "/abonnement", roles: ["admin"] },
   { icon: Puzzle, label: "Extensions", path: "/extensions", roles: ["admin"] },
   { icon: Settings, label: "Paramètres", path: "/parametres", roles: ["admin"] },
+  { icon: Download, label: "Installer l'app", path: "/install" },
 ];
 
 interface AppSidebarContentProps {

@@ -1,6 +1,6 @@
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, Info } from "lucide-react";
+import { Plus, Info, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -40,9 +40,9 @@ export default function DepotVente() {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">{depos.length} mandats actifs</p>
+        <p className="text-sm text-muted-foreground">{depos.length} mandat{depos.length !== 1 ? "s" : ""} actif{depos.length !== 1 ? "s" : ""}</p>
         <Button size="sm" onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-1.5" /> Nouveau mandat
+          <Plus className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">Nouveau mandat</span><span className="sm:hidden">Ajouter</span>
         </Button>
       </div>
 
@@ -57,11 +57,27 @@ export default function DepotVente() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {depos.map((v) => (
-            <div key={v.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
-              <h3 className="font-semibold text-card-foreground">{v.brand} {v.model}</h3>
-              <p className="text-sm text-muted-foreground">{v.registration} · {Number(v.selling_price || 0).toLocaleString()} €</p>
+            <div key={v.id} className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-card-foreground text-sm sm:text-base truncate">{v.brand} {v.model}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{v.registration}</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-primary shrink-0">
+                  <Tag className="h-3.5 w-3.5" />
+                  {Number(v.selling_price || 0).toLocaleString()} €
+                </div>
+              </div>
+              {(v.year || v.mileage || v.fuel_type) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  {v.year && <span>{v.year}</span>}
+                  {v.mileage && <span>{Number(v.mileage).toLocaleString()} km</span>}
+                  {v.fuel_type && <span>{v.fuel_type}</span>}
+                  {v.color && <span>{v.color}</span>}
+                </div>
+              )}
             </div>
           ))}
         </div>

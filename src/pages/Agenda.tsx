@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday, isTomorrow, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const EVENT_TYPES = [
   { value: "garage", label: "Au garage", color: "bg-red-500", textColor: "text-red-700", bgLight: "bg-red-50 border-red-200" },
@@ -29,6 +30,7 @@ const EVENT_TYPES = [
 const getEventConfig = (type: string) => EVENT_TYPES.find((e) => e.value === type) || EVENT_TYPES[0];
 
 export default function Agenda() {
+  const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
@@ -170,8 +172,8 @@ export default function Agenda() {
   }, [upcomingEvents]);
 
   const days = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [currentMonth]);
-  const startDay = getDay(monthStart); // 0=Sun
-  const paddingDays = startDay === 0 ? 6 : startDay - 1; // Mon=0
+  const startDay = getDay(monthStart);
+  const paddingDays = startDay === 0 ? 6 : startDay - 1;
 
   const openAdd = (date?: Date) => {
     const d = date || new Date();
@@ -196,6 +198,17 @@ export default function Agenda() {
 
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
+  // Group events by date for mobile list view
+  const groupedEvents = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    events.forEach((ev: any) => {
+      const key = ev.event_date;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(ev);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [events]);
+
   return (
     <AppLayout title="Agenda">
       <div className="mb-4 flex items-center justify-between">
@@ -203,87 +216,151 @@ export default function Agenda() {
           <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-lg font-semibold capitalize min-w-[180px] text-center">
+          <h2 className="text-base sm:text-lg font-semibold capitalize min-w-[140px] sm:min-w-[180px] text-center">
             {format(currentMonth, "MMMM yyyy", { locale: fr })}
           </h2>
           <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button onClick={() => openAdd()}>
-          <Plus className="h-4 w-4 mr-1" /> Ajouter
+        <Button size="sm" onClick={() => openAdd()}>
+          <Plus className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Ajouter</span>
         </Button>
       </div>
 
       {/* Légende */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
         {EVENT_TYPES.map((t) => (
-          <div key={t.value} className="flex items-center gap-1.5 text-xs">
-            <span className={`h-3 w-3 rounded-sm ${t.color}`} />
+          <div key={t.value} className="flex items-center gap-1.5 text-[11px] sm:text-xs">
+            <span className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-sm ${t.color}`} />
             <span className="text-muted-foreground">{t.label}</span>
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7">
-          {dayNames.map((d) => (
-            <div key={d} className="border-b border-border px-2 py-2 text-center text-xs font-semibold text-muted-foreground bg-muted/30">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {Array.from({ length: paddingDays }).map((_, i) => (
-            <div key={`pad-${i}`} className="min-h-[100px] border-b border-r border-border bg-muted/10" />
-          ))}
-          {days.map((day) => {
-            const dayEvents = events.filter((e: any) => isSameDay(new Date(e.event_date), day));
-            const today = isToday(day);
-            return (
-              <div
-                key={day.toISOString()}
-                className={cn(
-                  "min-h-[100px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/20 transition-colors",
-                  today && "bg-primary/5"
-                )}
-                onClick={() => openAdd(day)}
-              >
-                <div className={cn(
-                  "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
-                  today && "bg-primary text-primary-foreground"
-                )}>
-                  {format(day, "d")}
-                </div>
-                <div className="space-y-0.5">
-                  {dayEvents.slice(0, 3).map((ev: any) => {
-                    const cfg = getEventConfig(ev.event_type);
-                    return (
-                      <div
-                        key={ev.id}
-                        className={cn("text-[10px] leading-tight px-1 py-0.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity", cfg.bgLight, cfg.textColor)}
-                        onClick={(e) => { e.stopPropagation(); openEdit(ev); }}
-                        title={`${cfg.label} — ${ev.vehicles?.brand} ${ev.vehicles?.model} ${ev.client_name ? `— ${ev.client_name}` : ""}`}
-                      >
-                        <div className="flex items-center justify-between gap-0.5">
-                          <span className="truncate font-medium">
-                            {ev.event_time ? `${ev.event_time.slice(0, 5)} ` : ""}
-                            {ev.vehicles ? `${ev.vehicles.brand} ${ev.vehicles.model}` : cfg.label}
-                          </span>
+      {/* Mobile: liste de cartes par jour */}
+      {isMobile ? (
+        <div className="space-y-3">
+          {groupedEvents.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">Aucun événement ce mois-ci</div>
+          ) : (
+            groupedEvents.map(([dateStr, dayEvents]) => {
+              const date = new Date(dateStr);
+              const today = isToday(date);
+              return (
+                <div key={dateStr}>
+                  <div className={cn(
+                    "text-xs font-semibold mb-2 px-1",
+                    today ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {today ? "Aujourd'hui" : format(date, "EEEE d MMMM", { locale: fr })}
+                  </div>
+                  <div className="space-y-2">
+                    {dayEvents.map((ev: any) => {
+                      const cfg = getEventConfig(ev.event_type);
+                      return (
+                        <div
+                          key={ev.id}
+                          className={cn("rounded-xl border p-3 shadow-sm cursor-pointer active:scale-[0.98] transition-transform", cfg.bgLight)}
+                          onClick={() => openEdit(ev)}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className={cn("h-2.5 w-2.5 rounded-full", cfg.color)} />
+                              <span className={cn("text-xs font-semibold", cfg.textColor)}>{cfg.label}</span>
+                            </div>
+                            {ev.event_time && (
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {ev.event_time.slice(0, 5)}
+                              </span>
+                            )}
+                          </div>
+                          {ev.vehicles && (
+                            <p className="text-sm font-medium text-card-foreground">
+                              {ev.vehicles.brand} {ev.vehicles.model}
+                            </p>
+                          )}
+                          {ev.client_name && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{ev.client_name}</p>
+                          )}
                         </div>
-                      </div>
-                    );
-                  })}
-                  {dayEvents.length > 3 && (
-                    <div className="text-[10px] text-muted-foreground px-1">+{dayEvents.length - 3} autre(s)</div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
+          {/* FAB add button on mobile */}
+          <Button
+            className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-lg z-30"
+            onClick={() => openAdd()}
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
         </div>
-      </div>
+      ) : (
+        /* Desktop: Calendar grid */
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="grid grid-cols-7">
+            {dayNames.map((d) => (
+              <div key={d} className="border-b border-border px-2 py-2 text-center text-xs font-semibold text-muted-foreground bg-muted/30">
+                {d}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {Array.from({ length: paddingDays }).map((_, i) => (
+              <div key={`pad-${i}`} className="min-h-[100px] border-b border-r border-border bg-muted/10" />
+            ))}
+            {days.map((day) => {
+              const dayEvents = events.filter((e: any) => isSameDay(new Date(e.event_date), day));
+              const today = isToday(day);
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={cn(
+                    "min-h-[100px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/20 transition-colors",
+                    today && "bg-primary/5"
+                  )}
+                  onClick={() => openAdd(day)}
+                >
+                  <div className={cn(
+                    "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
+                    today && "bg-primary text-primary-foreground"
+                  )}>
+                    {format(day, "d")}
+                  </div>
+                  <div className="space-y-0.5">
+                    {dayEvents.slice(0, 3).map((ev: any) => {
+                      const cfg = getEventConfig(ev.event_type);
+                      return (
+                        <div
+                          key={ev.id}
+                          className={cn("text-[10px] leading-tight px-1 py-0.5 rounded border truncate cursor-pointer hover:opacity-80 transition-opacity", cfg.bgLight, cfg.textColor)}
+                          onClick={(e) => { e.stopPropagation(); openEdit(ev); }}
+                          title={`${cfg.label} — ${ev.vehicles?.brand} ${ev.vehicles?.model} ${ev.client_name ? `— ${ev.client_name}` : ""}`}
+                        >
+                          <div className="flex items-center justify-between gap-0.5">
+                            <span className="truncate font-medium">
+                              {ev.event_time ? `${ev.event_time.slice(0, 5)} ` : ""}
+                              {ev.vehicles ? `${ev.vehicles.brand} ${ev.vehicles.model}` : cfg.label}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {dayEvents.length > 3 && (
+                      <div className="text-[10px] text-muted-foreground px-1">+{dayEvents.length - 3} autre(s)</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit event dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingEvent(null); }}>

@@ -1,10 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppMode } from "@/hooks/useHostname";
 import {
   LayoutDashboard,
   Car,
   Receipt,
   FileDown,
+  Users,
+  CalendarDays,
+  ArrowLeftRight,
   Menu,
 } from "lucide-react";
 import { useState } from "react";
@@ -18,12 +22,21 @@ const mainTabs = [
   { icon: Receipt, label: "Finance", path: "/finance" },
 ];
 
+const crmTabs = [
+  { icon: Users, label: "Prospects", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/agenda" },
+  { icon: ArrowLeftRight, label: "Reprises", path: "/reprises" },
+];
+
 export default function MobileBottomNav() {
   const location = useLocation();
   const { role } = useAuth();
+  const mode = useAppMode();
   const [open, setOpen] = useState(false);
 
-  const filteredTabs = mainTabs.filter((tab) => {
+  const sourceTabs = mode === 'crm' ? crmTabs : mainTabs;
+
+  const filteredTabs = sourceTabs.filter((tab) => {
     if (tab.path === "/importation" && role && !["admin", "comptable"].includes(role)) return false;
     if (tab.path === "/finance" && role && !["admin", "comptable"].includes(role)) return false;
     return true;

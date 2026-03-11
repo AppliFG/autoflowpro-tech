@@ -97,8 +97,8 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight">AutoFlow Pro</h1>
-            <p className="text-[10px] opacity-70">Gestion VO & Dépôt-vente</p>
+            <h1 className="text-base font-bold tracking-tight">{mode === 'crm' ? 'AutoFlow CRM' : 'AutoFlow Pro'}</h1>
+            <p className="text-[10px] opacity-70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
           </div>
         )}
       </div>

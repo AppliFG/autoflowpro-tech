@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppMode } from "@/hooks/useHostname";
 import {
   LayoutDashboard,
   Car,
@@ -49,6 +50,12 @@ const navItems: NavItem[] = [
   { icon: Puzzle, label: "Extensions", path: "/extensions", roles: ["admin"] },
   { icon: Settings, label: "Paramètres", path: "/parametres", roles: ["admin"] },
   { icon: Download, label: "Installer l'app", path: "/install" },
+];
+
+const crmNavItems: NavItem[] = [
+  { icon: Users, label: "Prospects", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/agenda", roles: ["admin", "commercial"] },
+  { icon: ArrowLeftRight, label: "Reprises", path: "/reprises", roles: ["admin", "commercial"] },
 ];
 
 interface AppSidebarContentProps {

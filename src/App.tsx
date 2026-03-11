@@ -33,6 +33,8 @@ const CrmRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><CRM /></ProtectedRoute>} />
     <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><CRM /></ProtectedRoute>} />
+    <Route path="/agenda" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Agenda /></ProtectedRoute>} />
+    <Route path="/reprises" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Reprises /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

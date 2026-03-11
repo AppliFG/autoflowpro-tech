@@ -79,7 +79,10 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
     navigate("/login");
   };
 
-  const filteredNavItems = navItems.filter((item) => {
+  const mode = useAppMode();
+  const sourceItems = mode === 'crm' ? crmNavItems : navItems;
+
+  const filteredNavItems = sourceItems.filter((item) => {
     if (!item.roles) return true;
     if (!role) return false;
     return item.roles.includes(role);

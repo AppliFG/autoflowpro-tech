@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppMode } from "@/hooks/useHostname";
 import {
   LayoutDashboard,
   Car,
@@ -51,6 +52,12 @@ const navItems: NavItem[] = [
   { icon: Download, label: "Installer l'app", path: "/install" },
 ];
 
+const crmNavItems: NavItem[] = [
+  { icon: Users, label: "Prospects", path: "/" },
+  { icon: CalendarDays, label: "Agenda", path: "/agenda", roles: ["admin", "commercial"] },
+  { icon: ArrowLeftRight, label: "Reprises", path: "/reprises", roles: ["admin", "commercial"] },
+];
+
 interface AppSidebarContentProps {
   collapsed?: boolean;
   onNavigate?: () => void;
@@ -72,7 +79,10 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
     navigate("/login");
   };
 
-  const filteredNavItems = navItems.filter((item) => {
+  const mode = useAppMode();
+  const sourceItems = mode === 'crm' ? crmNavItems : navItems;
+
+  const filteredNavItems = sourceItems.filter((item) => {
     if (!item.roles) return true;
     if (!role) return false;
     return item.roles.includes(role);
@@ -87,8 +97,8 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight">AutoFlow Pro</h1>
-            <p className="text-[10px] opacity-70">Gestion VO & Dépôt-vente</p>
+            <h1 className="text-base font-bold tracking-tight">{mode === 'crm' ? 'AutoFlow CRM' : 'AutoFlow Pro'}</h1>
+            <p className="text-[10px] opacity-70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
           </div>
         )}
       </div>

@@ -86,6 +86,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
         { key: "agency_legal_mentions", value: legalMentions },
         { key: "police_number_start", value: policeStart },
         { key: "onboarding_completed", value: "true" },
+        { key: "install_date", value: new Date().toISOString() },
       ];
       for (const s of settings) {
         const { error } = await supabase.from("app_settings").upsert(s, { onConflict: "key" });

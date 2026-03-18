@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import TrialExpiredGate from "@/components/TrialExpiredGate";
 import Dashboard from "./pages/Dashboard";
 import Vehicules from "./pages/Vehicules";
 import DepotVente from "./pages/DepotVente";

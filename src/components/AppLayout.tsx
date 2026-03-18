@@ -39,7 +39,10 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         </header>
 
         {/* Main content - bottom padding for mobile nav */}
-        <main className="p-4 sm:p-6 pb-20 lg:pb-6 animate-fade-in">{children}</main>
+        <main className="p-4 sm:p-6 pb-20 lg:pb-6 animate-fade-in">
+          <TrialBanner />
+          {children}
+        </main>
       </div>
     </div>
   );

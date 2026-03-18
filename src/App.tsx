@@ -47,30 +47,32 @@ const AppRoutes = () => (
     <Route path="/vitrine" element={<Vitrine />} />
     <Route path="/install" element={<Install />} />
 
-    {/* Protected routes - all roles */}
-    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/vehicules" element={<ProtectedRoute><Vehicules /></ProtectedRoute>} />
-    <Route path="/stock" element={<ProtectedRoute><Stock /></ProtectedRoute>} />
-    <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+    {/* Subscription page - always accessible */}
+    <Route path="/abonnement" element={<ProtectedRoute allowedRoles={["admin"]}><Abonnement /></ProtectedRoute>} />
+
+    {/* Protected routes wrapped in trial gate */}
+    <Route path="/" element={<ProtectedRoute><TrialExpiredGate><Dashboard /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/vehicules" element={<ProtectedRoute><TrialExpiredGate><Vehicules /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/stock" element={<ProtectedRoute><TrialExpiredGate><Stock /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/agenda" element={<ProtectedRoute><TrialExpiredGate><Agenda /></TrialExpiredGate></ProtectedRoute>} />
 
     {/* Admin + Commercial */}
-    <Route path="/depot-vente" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><DepotVente /></ProtectedRoute>} />
-    <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><CRM /></ProtectedRoute>} />
-    <Route path="/reprises" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Reprises /></ProtectedRoute>} />
-    <Route path="/diffusion" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><Diffusion /></ProtectedRoute>} />
+    <Route path="/depot-vente" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><TrialExpiredGate><DepotVente /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><TrialExpiredGate><CRM /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/reprises" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><TrialExpiredGate><Reprises /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/diffusion" element={<ProtectedRoute allowedRoles={["admin", "commercial"]}><TrialExpiredGate><Diffusion /></TrialExpiredGate></ProtectedRoute>} />
 
     {/* Admin + Commercial + Comptable */}
-    <Route path="/devis" element={<ProtectedRoute allowedRoles={["admin", "commercial", "comptable"]}><Devis /></ProtectedRoute>} />
+    <Route path="/devis" element={<ProtectedRoute allowedRoles={["admin", "commercial", "comptable"]}><TrialExpiredGate><Devis /></TrialExpiredGate></ProtectedRoute>} />
 
     {/* Admin + Comptable */}
-    <Route path="/importation" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><Importation /></ProtectedRoute>} />
-    <Route path="/finance" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><Finance /></ProtectedRoute>} />
+    <Route path="/importation" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><TrialExpiredGate><Importation /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/finance" element={<ProtectedRoute allowedRoles={["admin", "comptable"]}><TrialExpiredGate><Finance /></TrialExpiredGate></ProtectedRoute>} />
 
     {/* Admin only */}
-    <Route path="/agences" element={<ProtectedRoute allowedRoles={["admin"]}><Agences /></ProtectedRoute>} />
-    <Route path="/abonnement" element={<ProtectedRoute allowedRoles={["admin"]}><Abonnement /></ProtectedRoute>} />
-    <Route path="/extensions" element={<ProtectedRoute allowedRoles={["admin"]}><Extensions /></ProtectedRoute>} />
-    <Route path="/parametres" element={<ProtectedRoute allowedRoles={["admin"]}><Parametres /></ProtectedRoute>} />
+    <Route path="/agences" element={<ProtectedRoute allowedRoles={["admin"]}><TrialExpiredGate><Agences /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/extensions" element={<ProtectedRoute allowedRoles={["admin"]}><TrialExpiredGate><Extensions /></TrialExpiredGate></ProtectedRoute>} />
+    <Route path="/parametres" element={<ProtectedRoute allowedRoles={["admin"]}><TrialExpiredGate><Parametres /></TrialExpiredGate></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />
   </Routes>

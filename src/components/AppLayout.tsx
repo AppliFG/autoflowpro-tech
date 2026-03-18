@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import AppSidebar from "./AppSidebar";
 import MobileBottomNav from "./MobileBottomNav";
+import TrialBanner from "./TrialBanner";
 import { Search, Bell } from "lucide-react";
 
 interface AppLayoutProps {

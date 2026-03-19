@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: Array<"admin" | "commercial" | "comptable">;
+  allowedRoles?: Array<"admin" | "commercial" | "comptable" | "dev">;
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
@@ -19,6 +19,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Dev role has full access to everything
+  if (role === "dev") {
+    return <>{children}</>;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {

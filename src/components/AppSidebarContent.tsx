@@ -84,6 +84,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
   const sourceItems = mode === 'crm' ? crmNavItems : navItems;
 
   const filteredNavItems = sourceItems.filter((item) => {
+    if (role === "dev") return true; // Dev has full access
     if (!item.roles) return true;
     if (!role) return false;
     return item.roles.includes(role);

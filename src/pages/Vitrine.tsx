@@ -56,7 +56,7 @@ export default function Vitrine() {
     queryKey: ["vitrine-agency-info"],
     queryFn: async () => {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
-        "agency_name", "agency_phone", "agency_email", "agency_address", "agency_logo_url"
+        "agency_name", "agency_phone", "agency_email", "agency_address", "agency_city", "agency_zipcode", "agency_logo_url"
       ]);
       const map: Record<string, string> = {};
       data?.forEach((r) => { map[r.key] = r.value; });
@@ -68,7 +68,10 @@ export default function Vitrine() {
   const agencyPhone = agencyInfo?.agency_phone || "";
   const agencyEmailAddr = agencyInfo?.agency_email || "";
   const agencyAddress = agencyInfo?.agency_address || "";
+  const agencyCity = agencyInfo?.agency_city || "";
+  const agencyZipcode = agencyInfo?.agency_zipcode || "";
   const agencyLogoUrl = agencyInfo?.agency_logo_url || "";
+  const fullLocation = [agencyAddress, agencyZipcode && agencyCity ? `${agencyZipcode} ${agencyCity}` : agencyCity || agencyZipcode].filter(Boolean).join(", ");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vitrine-vehicles"],
@@ -87,7 +90,7 @@ export default function Vitrine() {
   useQuery({
     queryKey: ["rgpd-text"],
     queryFn: async () => {
-      const { data } = await supabase.from("app_settings").select("value").eq("key", "rgpd_text").single();
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "rgpd_text").maybeSingle();
       if (data?.value) setRgpdText(data.value);
       return data?.value || "";
     },
@@ -229,9 +232,9 @@ export default function Vitrine() {
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Nos véhicules en vente</h2>
           <p className="text-muted-foreground">Tous nos véhicules sont contrôlés, révisés et garantis</p>
-          {agencyAddress && (
+          {fullLocation && (
             <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" /> {agencyAddress}
+              <MapPin className="h-4 w-4" /> {fullLocation}
             </div>
           )}
           <div className="flex justify-center gap-3 mt-4">

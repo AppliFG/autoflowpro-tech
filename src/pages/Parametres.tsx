@@ -33,6 +33,8 @@ export default function Parametres() {
   );
   const [agencyName, setAgencyName] = useState("");
   const [agencyAddress, setAgencyAddress] = useState("");
+  const [agencyCity, setAgencyCity] = useState("");
+  const [agencyZipcode, setAgencyZipcode] = useState("");
   const [agencyPhone, setAgencyPhone] = useState("");
   const [agencyEmail, setAgencyEmail] = useState("");
   const [agencySiret, setAgencySiret] = useState("");
@@ -262,7 +264,7 @@ export default function Parametres() {
     (async () => {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
         "police_number_start", "rgpd_text",
-        "agency_name", "agency_address", "agency_phone", "agency_email",
+        "agency_name", "agency_address", "agency_city", "agency_zipcode", "agency_phone", "agency_email",
         "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url",
         "template_annonce", "template_facture", "template_mandat",
         ...notifKeys.map(n => n.key),
@@ -274,6 +276,8 @@ export default function Parametres() {
           if (row.key === "rgpd_text") setRgpdText(row.value);
           if (row.key === "agency_name") setAgencyName(row.value);
           if (row.key === "agency_address") setAgencyAddress(row.value);
+          if (row.key === "agency_city") setAgencyCity(row.value);
+          if (row.key === "agency_zipcode") setAgencyZipcode(row.value);
           if (row.key === "agency_phone") setAgencyPhone(row.value);
           if (row.key === "agency_email") setAgencyEmail(row.value);
           if (row.key === "agency_siret") setAgencySiret(row.value);
@@ -412,6 +416,8 @@ export default function Parametres() {
       const settings = [
         { key: "agency_name", value: agencyName },
         { key: "agency_address", value: agencyAddress },
+        { key: "agency_city", value: agencyCity },
+        { key: "agency_zipcode", value: agencyZipcode },
         { key: "agency_phone", value: agencyPhone },
         { key: "agency_email", value: agencyEmail },
         { key: "agency_siret", value: agencySiret },
@@ -498,8 +504,18 @@ export default function Parametres() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="agencyAddress">Adresse complète</Label>
-                <Textarea id="agencyAddress" rows={2} value={agencyAddress} onChange={(e) => setAgencyAddress(e.target.value)} placeholder="12 rue du Commerce, 75015 Paris" />
+                <Label htmlFor="agencyAddress">Adresse (rue)</Label>
+                <Input id="agencyAddress" value={agencyAddress} onChange={(e) => setAgencyAddress(e.target.value)} placeholder="12 rue du Commerce" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="agencyZipcode">Code postal</Label>
+                  <Input id="agencyZipcode" value={agencyZipcode} onChange={(e) => setAgencyZipcode(e.target.value)} placeholder="75015" />
+                </div>
+                <div>
+                  <Label htmlFor="agencyCity">Ville</Label>
+                  <Input id="agencyCity" value={agencyCity} onChange={(e) => setAgencyCity(e.target.value)} placeholder="Paris" />
+                </div>
               </div>
               <div>
                 <Label htmlFor="agencyLegal">Mentions légales</Label>

@@ -100,10 +100,18 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
 
       // Upload photo if new file selected
       if (photoFile) {
-        const ext = photoFile.name.split(".").pop();
+        const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `vehicles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("vehicle-photos").upload(path, photoFile);
-        if (upErr) throw upErr;
+        const { error: upErr } = await supabase.storage
+          .from("vehicle-photos")
+          .upload(path, photoFile, {
+            contentType: photoFile.type,
+            upsert: false,
+          });
+        if (upErr) {
+          console.error("Upload error:", upErr);
+          throw new Error(`Erreur upload photo: ${upErr.message}`);
+        }
         const { data: urlData } = supabase.storage.from("vehicle-photos").getPublicUrl(path);
         photoUrl = urlData.publicUrl;
       }

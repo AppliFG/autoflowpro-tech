@@ -68,7 +68,10 @@ export default function Vitrine() {
   const agencyPhone = agencyInfo?.agency_phone || "";
   const agencyEmailAddr = agencyInfo?.agency_email || "";
   const agencyAddress = agencyInfo?.agency_address || "";
+  const agencyCity = agencyInfo?.agency_city || "";
+  const agencyZipcode = agencyInfo?.agency_zipcode || "";
   const agencyLogoUrl = agencyInfo?.agency_logo_url || "";
+  const fullLocation = [agencyAddress, agencyZipcode && agencyCity ? `${agencyZipcode} ${agencyCity}` : agencyCity || agencyZipcode].filter(Boolean).join(", ");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vitrine-vehicles"],

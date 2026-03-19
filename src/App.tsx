@@ -25,6 +25,7 @@ import Importation from "./pages/Importation";
 import Login from "./pages/Login";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 import { useAppMode } from "./hooks/useHostname";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const AppRoutes = () => (
   <Routes>
     {/* Public routes */}
     <Route path="/login" element={<Login />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/vitrine" element={<Vitrine />} />
     <Route path="/install" element={<Install />} />
 

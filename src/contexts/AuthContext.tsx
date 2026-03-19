@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<AppRole>(null);
   const [roleLoading, setRoleLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
+  const fetchRole = async (userId: string, retries = 3) => {
     setRoleLoading(true);
     try {
       const { data } = await supabase
@@ -39,12 +39,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .select("role")
         .eq("user_id", userId)
         .single();
-      setRole((data?.role as AppRole) ?? null);
-    } catch {
+      if (data?.role) {
+        setRole(data.role as AppRole);
+        setRoleLoading(false);
+        return;
+      }
+      // Role might not be assigned yet (trigger delay), retry
+      if (retries > 0) {
+        setTimeout(() => fetchRole(userId, retries - 1), 1000);
+        return;
+      }
       setRole(null);
-    } finally {
-      setRoleLoading(false);
+    } catch {
+      if (retries > 0) {
+        setTimeout(() => fetchRole(userId, retries - 1), 1000);
+        return;
+      }
+      setRole(null);
     }
+    setRoleLoading(false);
   };
 
   useEffect(() => {

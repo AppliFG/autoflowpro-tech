@@ -416,6 +416,8 @@ export default function Parametres() {
       const settings = [
         { key: "agency_name", value: agencyName },
         { key: "agency_address", value: agencyAddress },
+        { key: "agency_city", value: agencyCity },
+        { key: "agency_zipcode", value: agencyZipcode },
         { key: "agency_phone", value: agencyPhone },
         { key: "agency_email", value: agencyEmail },
         { key: "agency_siret", value: agencySiret },

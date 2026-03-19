@@ -33,6 +33,8 @@ export default function Parametres() {
   );
   const [agencyName, setAgencyName] = useState("");
   const [agencyAddress, setAgencyAddress] = useState("");
+  const [agencyCity, setAgencyCity] = useState("");
+  const [agencyZipcode, setAgencyZipcode] = useState("");
   const [agencyPhone, setAgencyPhone] = useState("");
   const [agencyEmail, setAgencyEmail] = useState("");
   const [agencySiret, setAgencySiret] = useState("");

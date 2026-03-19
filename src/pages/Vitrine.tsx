@@ -90,7 +90,7 @@ export default function Vitrine() {
   useQuery({
     queryKey: ["rgpd-text"],
     queryFn: async () => {
-      const { data } = await supabase.from("app_settings").select("value").eq("key", "rgpd_text").single();
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "rgpd_text").maybeSingle();
       if (data?.value) setRgpdText(data.value);
       return data?.value || "";
     },

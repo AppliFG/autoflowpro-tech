@@ -72,6 +72,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
     admin: "Admin",
     commercial: "Commercial",
     comptable: "Comptable",
+    dev: "Dev",
   };
 
   const handleSignOut = async () => {

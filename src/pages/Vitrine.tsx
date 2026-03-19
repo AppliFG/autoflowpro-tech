@@ -195,32 +195,48 @@ export default function Vitrine() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="relative bg-gradient-to-r from-foreground via-foreground/95 to-foreground/85 text-background overflow-hidden">
+        {/* Decorative automotive elements */}
+        <div className="absolute inset-0 opacity-[0.04]">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-primary blur-3xl translate-x-1/3 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full bg-primary blur-2xl translate-y-1/2" />
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             {agencyLogoUrl ? (
-              <img src={agencyLogoUrl} alt={agencyName} className="h-10 w-10 rounded-xl object-cover" />
+              <img src={agencyLogoUrl} alt={agencyName} className="h-12 w-12 rounded-xl object-cover ring-2 ring-primary/30" />
             ) : (
-              <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center font-bold text-lg">
-                {agencyName.substring(0, 2).toUpperCase()}
+              <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center font-bold text-lg text-primary-foreground shadow-lg shadow-primary/30">
+                <Car className="h-6 w-6" />
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold">{agencyName}</h1>
-              <p className="text-xs opacity-80">Véhicules d'occasion sélectionnés</p>
+              <h1 className="text-xl font-bold tracking-tight">{agencyName}</h1>
+              {(agencyCity || agencyZipcode) && (
+                <p className="text-xs text-background/60 flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  {[agencyZipcode, agencyCity].filter(Boolean).join(" ")}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button onClick={() => navigate("/")}
-              className="flex items-center gap-1.5 text-sm hover:opacity-80 bg-primary-foreground/15 px-3 py-1.5 rounded-lg transition-colors">
+              className="flex items-center gap-1.5 text-sm hover:text-primary bg-background/10 hover:bg-background/20 px-3 py-2 rounded-lg transition-all backdrop-blur-sm">
               <ArrowLeft className="h-4 w-4" /> Accueil
             </button>
-            <div className="hidden sm:flex items-center gap-4 text-sm">
+            <div className="hidden sm:flex items-center gap-3">
               {agencyPhone && (
-                <a href={`tel:${agencyPhone}`} className="flex items-center gap-1.5 hover:opacity-80"><Phone className="h-4 w-4" /> {agencyPhone}</a>
+                <a href={`tel:${agencyPhone}`} className="flex items-center gap-1.5 text-sm bg-primary text-primary-foreground px-3 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                  <Phone className="h-4 w-4" /> {agencyPhone}
+                </a>
               )}
               {agencyEmailAddr && (
-                <a href={`mailto:${agencyEmailAddr}`} className="flex items-center gap-1.5 hover:opacity-80"><Mail className="h-4 w-4" /> Contact</a>
+                <a href={`mailto:${agencyEmailAddr}`} className="flex items-center gap-1.5 text-sm bg-background/10 hover:bg-background/20 px-3 py-2 rounded-lg transition-colors backdrop-blur-sm">
+                  <Mail className="h-4 w-4" /> Contact
+                </a>
               )}
             </div>
           </div>

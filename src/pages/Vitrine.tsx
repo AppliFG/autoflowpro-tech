@@ -232,9 +232,9 @@ export default function Vitrine() {
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Nos véhicules en vente</h2>
           <p className="text-muted-foreground">Tous nos véhicules sont contrôlés, révisés et garantis</p>
-          {agencyAddress && (
+          {fullLocation && (
             <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" /> {agencyAddress}
+              <MapPin className="h-4 w-4" /> {fullLocation}
             </div>
           )}
           <div className="flex justify-center gap-3 mt-4">

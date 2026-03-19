@@ -200,13 +200,18 @@ export default function Parametres() {
     admin: "Admin",
     commercial: "Commercial",
     comptable: "Comptable",
+    dev: "Dev",
   };
 
-  const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
+  const roleBadgeVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
     admin: "default",
     commercial: "secondary",
     comptable: "outline",
+    dev: "destructive",
   };
+
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [changingRoleUserId, setChangingRoleUserId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -257,6 +262,41 @@ export default function Parametres() {
       toast.error(err.message);
     } finally {
       setInviting(false);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.")) return;
+    setDeletingUserId(userId);
+    try {
+      const resp = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userId },
+      });
+      if (resp.error) throw new Error(resp.error.message);
+      if (resp.data?.error) throw new Error(resp.data.error);
+      toast.success("Utilisateur supprimé");
+      loadTeamUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  const changeUserRole = async (userId: string, newRole: string) => {
+    setChangingRoleUserId(userId);
+    try {
+      const resp = await supabase.functions.invoke("update-user-role", {
+        body: { user_id: userId, role: newRole },
+      });
+      if (resp.error) throw new Error(resp.error.message);
+      if (resp.data?.error) throw new Error(resp.data.error);
+      toast.success("Rôle mis à jour");
+      loadTeamUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setChangingRoleUserId(null);
     }
   };
 
@@ -568,13 +608,44 @@ export default function Parametres() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {u.role && (
-                            <Badge variant={roleBadgeVariant[u.role] || "outline"}>
-                              {roleLabels[u.role] || u.role}
-                            </Badge>
+                          {/* Role change dropdown (admin/dev only, not for self) */}
+                          {(isAdmin || isDevUser) && u.user_id !== currentUserId ? (
+                            <Select
+                              value={u.role || ""}
+                              onValueChange={(val) => changeUserRole(u.user_id, val)}
+                              disabled={changingRoleUserId === u.user_id}
+                            >
+                              <SelectTrigger className="w-[130px] h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="commercial">Commercial</SelectItem>
+                                <SelectItem value="comptable">Comptable</SelectItem>
+                                {isDevUser && <SelectItem value="dev">Dev</SelectItem>}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            u.role && (
+                              <Badge variant={roleBadgeVariant[u.role] || "outline"}>
+                                {roleLabels[u.role] || u.role}
+                              </Badge>
+                            )
                           )}
                           {u.user_id === currentUserId && (
                             <Badge variant="outline" className="text-xs">Vous</Badge>
+                          )}
+                          {/* Delete button (admin/dev only, not for self) */}
+                          {(isAdmin || isDevUser) && u.user_id !== currentUserId && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deleteUser(u.user_id)}
+                              disabled={deletingUserId === u.user_id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -587,7 +658,7 @@ export default function Parametres() {
               </div>
 
               {/* Invite form (admin only) */}
-              {isAdmin && (
+              {(isAdmin || isDevUser) && (
                 <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
                   <Label className="text-sm font-semibold flex items-center gap-1.5">
                     <UserPlus className="h-4 w-4" /> Inviter un utilisateur
@@ -612,6 +683,7 @@ export default function Parametres() {
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="commercial">Commercial</SelectItem>
                         <SelectItem value="comptable">Comptable</SelectItem>
+                        {isDevUser && <SelectItem value="dev">Dev</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>

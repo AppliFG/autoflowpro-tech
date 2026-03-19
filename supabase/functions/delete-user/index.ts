@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-    // Verify caller is admin
+    // Verify caller
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -26,48 +26,31 @@ Deno.serve(async (req) => {
     if (userError || !user) throw new Error("Non autorisé");
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    
-    // Check caller is admin
+
+    // Check caller is admin or dev
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
       .single();
 
-    if (!callerRole) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
-    if (!["admin", "dev"].includes(callerRole.role)) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
-
-    const { email, full_name, role } = await req.json();
-    if (!email || !role) throw new Error("Email et rôle requis");
-
-    const validRoles = ["admin", "commercial", "comptable", "dev"];
-    if (!validRoles.includes(role)) throw new Error("Rôle invalide");
-
-    // Check if user already exists
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
-    
-    if (existingUser) {
-      throw new Error("Un utilisateur avec cet email existe déjà");
+    if (!callerRole || !["admin", "dev"].includes(callerRole.role)) {
+      throw new Error("Seuls les administrateurs peuvent supprimer des utilisateurs");
     }
 
-    // Invite user via Supabase Auth
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: full_name || email },
-    });
+    const { user_id } = await req.json();
+    if (!user_id) throw new Error("user_id requis");
 
-    if (inviteError) throw inviteError;
+    // Prevent self-deletion
+    if (user_id === user.id) {
+      throw new Error("Vous ne pouvez pas supprimer votre propre compte");
+    }
 
-    // Assign role
-    const { error: roleError } = await adminClient.from("user_roles").insert({
-      user_id: inviteData.user.id,
-      role,
-    });
+    // Delete from auth (cascades to profiles and user_roles)
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
+    if (deleteError) throw deleteError;
 
-    if (roleError) throw roleError;
-
-    return new Response(JSON.stringify({ success: true, user_id: inviteData.user.id }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {

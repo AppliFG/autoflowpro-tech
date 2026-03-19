@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-    // Verify caller is admin
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -26,48 +25,37 @@ Deno.serve(async (req) => {
     if (userError || !user) throw new Error("Non autorisé");
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    
-    // Check caller is admin
+
+    // Check caller is admin or dev
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
       .single();
 
-    if (!callerRole) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
-    if (!["admin", "dev"].includes(callerRole.role)) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
+    if (!callerRole || !["admin", "dev"].includes(callerRole.role)) {
+      throw new Error("Seuls les administrateurs peuvent modifier les rôles");
+    }
 
-    const { email, full_name, role } = await req.json();
-    if (!email || !role) throw new Error("Email et rôle requis");
+    const { user_id, role } = await req.json();
+    if (!user_id || !role) throw new Error("user_id et role requis");
 
     const validRoles = ["admin", "commercial", "comptable", "dev"];
     if (!validRoles.includes(role)) throw new Error("Rôle invalide");
 
-    // Check if user already exists
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
-    
-    if (existingUser) {
-      throw new Error("Un utilisateur avec cet email existe déjà");
+    // Only dev can assign dev role
+    if (role === "dev" && callerRole.role !== "dev") {
+      throw new Error("Seul un développeur peut attribuer le rôle dev");
     }
 
-    // Invite user via Supabase Auth
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: full_name || email },
-    });
+    const { error } = await adminClient
+      .from("user_roles")
+      .update({ role })
+      .eq("user_id", user_id);
 
-    if (inviteError) throw inviteError;
+    if (error) throw error;
 
-    // Assign role
-    const { error: roleError } = await adminClient.from("user_roles").insert({
-      user_id: inviteData.user.id,
-      role,
-    });
-
-    if (roleError) throw roleError;
-
-    return new Response(JSON.stringify({ success: true, user_id: inviteData.user.id }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {

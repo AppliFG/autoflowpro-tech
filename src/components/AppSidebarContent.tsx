@@ -23,7 +23,7 @@ import {
   Download,
 } from "lucide-react";
 
-type AppRole = "admin" | "commercial" | "comptable";
+type AppRole = "admin" | "commercial" | "comptable" | "dev";
 
 interface NavItem {
   icon: any;
@@ -72,6 +72,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
     admin: "Admin",
     commercial: "Commercial",
     comptable: "Comptable",
+    dev: "Dev",
   };
 
   const handleSignOut = async () => {
@@ -83,6 +84,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
   const sourceItems = mode === 'crm' ? crmNavItems : navItems;
 
   const filteredNavItems = sourceItems.filter((item) => {
+    if (role === "dev") return true; // Dev has full access
     if (!item.roles) return true;
     if (!role) return false;
     return item.roles.includes(role);

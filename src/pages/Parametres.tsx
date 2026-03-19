@@ -200,13 +200,18 @@ export default function Parametres() {
     admin: "Admin",
     commercial: "Commercial",
     comptable: "Comptable",
+    dev: "Dev",
   };
 
-  const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
+  const roleBadgeVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
     admin: "default",
     commercial: "secondary",
     comptable: "outline",
+    dev: "destructive",
   };
+
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [changingRoleUserId, setChangingRoleUserId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

@@ -56,7 +56,7 @@ export default function Vitrine() {
     queryKey: ["vitrine-agency-info"],
     queryFn: async () => {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
-        "agency_name", "agency_phone", "agency_email", "agency_address", "agency_logo_url"
+        "agency_name", "agency_phone", "agency_email", "agency_address", "agency_city", "agency_zipcode", "agency_logo_url"
       ]);
       const map: Record<string, string> = {};
       data?.forEach((r) => { map[r.key] = r.value; });

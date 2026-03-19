@@ -195,9 +195,15 @@ export default function Vitrine() {
       <header className="bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center font-bold text-lg">AF</div>
+            {agencyLogoUrl ? (
+              <img src={agencyLogoUrl} alt={agencyName} className="h-10 w-10 rounded-xl object-cover" />
+            ) : (
+              <div className="h-10 w-10 rounded-xl bg-primary-foreground/20 flex items-center justify-center font-bold text-lg">
+                {agencyName.substring(0, 2).toUpperCase()}
+              </div>
+            )}
             <div>
-              <h1 className="text-xl font-bold">AutoFlow Pro</h1>
+              <h1 className="text-xl font-bold">{agencyName}</h1>
               <p className="text-xs opacity-80">Véhicules d'occasion sélectionnés</p>
             </div>
           </div>
@@ -207,8 +213,12 @@ export default function Vitrine() {
               <ArrowLeft className="h-4 w-4" /> Accueil
             </button>
             <div className="hidden sm:flex items-center gap-4 text-sm">
-              <a href="tel:0472460432" className="flex items-center gap-1.5 hover:opacity-80"><Phone className="h-4 w-4" /> 04 72 46 04 32</a>
-              <a href="mailto:contact@autoflow.fr" className="flex items-center gap-1.5 hover:opacity-80"><Mail className="h-4 w-4" /> Contact</a>
+              {agencyPhone && (
+                <a href={`tel:${agencyPhone}`} className="flex items-center gap-1.5 hover:opacity-80"><Phone className="h-4 w-4" /> {agencyPhone}</a>
+              )}
+              {agencyEmailAddr && (
+                <a href={`mailto:${agencyEmailAddr}`} className="flex items-center gap-1.5 hover:opacity-80"><Mail className="h-4 w-4" /> Contact</a>
+              )}
             </div>
           </div>
         </div>
@@ -219,9 +229,11 @@ export default function Vitrine() {
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Nos véhicules en vente</h2>
           <p className="text-muted-foreground">Tous nos véhicules sont contrôlés, révisés et garantis</p>
-          <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" /> Tignieu-Jameyzieu 38230
-          </div>
+          {agencyAddress && (
+            <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" /> {agencyAddress}
+            </div>
+          )}
           <div className="flex justify-center gap-3 mt-4">
             <button onClick={() => setShowReprise(!showReprise)}
               className="bg-accent text-accent-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">

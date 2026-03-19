@@ -23,7 +23,7 @@ import {
   Download,
 } from "lucide-react";
 
-type AppRole = "admin" | "commercial" | "comptable";
+type AppRole = "admin" | "commercial" | "comptable" | "dev";
 
 interface NavItem {
   icon: any;

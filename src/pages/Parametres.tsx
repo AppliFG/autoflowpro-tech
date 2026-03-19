@@ -265,6 +265,41 @@ export default function Parametres() {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.")) return;
+    setDeletingUserId(userId);
+    try {
+      const resp = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userId },
+      });
+      if (resp.error) throw new Error(resp.error.message);
+      if (resp.data?.error) throw new Error(resp.data.error);
+      toast.success("Utilisateur supprimé");
+      loadTeamUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  const changeUserRole = async (userId: string, newRole: string) => {
+    setChangingRoleUserId(userId);
+    try {
+      const resp = await supabase.functions.invoke("update-user-role", {
+        body: { user_id: userId, role: newRole },
+      });
+      if (resp.error) throw new Error(resp.error.message);
+      if (resp.data?.error) throw new Error(resp.data.error);
+      toast.success("Rôle mis à jour");
+      loadTeamUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setChangingRoleUserId(null);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [

@@ -264,7 +264,7 @@ export default function Parametres() {
     (async () => {
       const { data } = await supabase.from("app_settings").select("key, value").in("key", [
         "police_number_start", "rgpd_text",
-        "agency_name", "agency_address", "agency_phone", "agency_email",
+        "agency_name", "agency_address", "agency_city", "agency_zipcode", "agency_phone", "agency_email",
         "agency_siret", "agency_tva", "agency_legal_mentions", "agency_logo_url",
         "template_annonce", "template_facture", "template_mandat",
         ...notifKeys.map(n => n.key),

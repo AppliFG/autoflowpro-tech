@@ -608,13 +608,44 @@ export default function Parametres() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {u.role && (
-                            <Badge variant={roleBadgeVariant[u.role] || "outline"}>
-                              {roleLabels[u.role] || u.role}
-                            </Badge>
+                          {/* Role change dropdown (admin/dev only, not for self) */}
+                          {(isAdmin || isDevUser) && u.user_id !== currentUserId ? (
+                            <Select
+                              value={u.role || ""}
+                              onValueChange={(val) => changeUserRole(u.user_id, val)}
+                              disabled={changingRoleUserId === u.user_id}
+                            >
+                              <SelectTrigger className="w-[130px] h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="commercial">Commercial</SelectItem>
+                                <SelectItem value="comptable">Comptable</SelectItem>
+                                {isDevUser && <SelectItem value="dev">Dev</SelectItem>}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            u.role && (
+                              <Badge variant={roleBadgeVariant[u.role] || "outline"}>
+                                {roleLabels[u.role] || u.role}
+                              </Badge>
+                            )
                           )}
                           {u.user_id === currentUserId && (
                             <Badge variant="outline" className="text-xs">Vous</Badge>
+                          )}
+                          {/* Delete button (admin/dev only, not for self) */}
+                          {(isAdmin || isDevUser) && u.user_id !== currentUserId && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deleteUser(u.user_id)}
+                              disabled={deletingUserId === u.user_id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       </div>

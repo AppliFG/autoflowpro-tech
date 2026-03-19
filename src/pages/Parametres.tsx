@@ -683,6 +683,7 @@ export default function Parametres() {
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="commercial">Commercial</SelectItem>
                         <SelectItem value="comptable">Comptable</SelectItem>
+                        {isDevUser && <SelectItem value="dev">Dev</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>

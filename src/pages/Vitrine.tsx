@@ -51,6 +51,25 @@ export default function Vitrine() {
   const [kmMin, setKmMin] = useState("");
   const [kmMax, setKmMax] = useState("");
 
+  // Fetch agency info from app_settings
+  const { data: agencyInfo } = useQuery({
+    queryKey: ["vitrine-agency-info"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("key, value").in("key", [
+        "agency_name", "agency_phone", "agency_email", "agency_address", "agency_logo_url"
+      ]);
+      const map: Record<string, string> = {};
+      data?.forEach((r) => { map[r.key] = r.value; });
+      return map;
+    },
+  });
+
+  const agencyName = agencyInfo?.agency_name || "AutoFlow Pro";
+  const agencyPhone = agencyInfo?.agency_phone || "";
+  const agencyEmailAddr = agencyInfo?.agency_email || "";
+  const agencyAddress = agencyInfo?.agency_address || "";
+  const agencyLogoUrl = agencyInfo?.agency_logo_url || "";
+
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vitrine-vehicles"],
     queryFn: async () => {

@@ -658,7 +658,7 @@ export default function Parametres() {
               </div>
 
               {/* Invite form (admin only) */}
-              {isAdmin && (
+              {(isAdmin || isDevUser) && (
                 <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
                   <Label className="text-sm font-semibold flex items-center gap-1.5">
                     <UserPlus className="h-4 w-4" /> Inviter un utilisateur

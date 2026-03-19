@@ -36,11 +36,12 @@ Deno.serve(async (req) => {
       .single();
 
     if (!callerRole) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
+    if (!["admin", "dev"].includes(callerRole.role)) throw new Error("Seuls les administrateurs peuvent inviter des utilisateurs");
 
     const { email, full_name, role } = await req.json();
     if (!email || !role) throw new Error("Email et rôle requis");
 
-    const validRoles = ["admin", "commercial", "comptable"];
+    const validRoles = ["admin", "commercial", "comptable", "dev"];
     if (!validRoles.includes(role)) throw new Error("Rôle invalide");
 
     // Check if user already exists

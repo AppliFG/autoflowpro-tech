@@ -101,8 +101,8 @@ const Login = () => {
           {isForgotPassword ? (
             resetSent ? (
               <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-green-600" />
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-primary" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Un email de réinitialisation a été envoyé à <strong>{email}</strong>.

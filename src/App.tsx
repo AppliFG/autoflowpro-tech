@@ -45,6 +45,7 @@ const AppRoutes = () => (
   <Routes>
     {/* Public routes */}
     <Route path="/login" element={<Login />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/vitrine" element={<Vitrine />} />
     <Route path="/install" element={<Install />} />
 

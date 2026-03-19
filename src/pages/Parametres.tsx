@@ -276,6 +276,8 @@ export default function Parametres() {
           if (row.key === "rgpd_text") setRgpdText(row.value);
           if (row.key === "agency_name") setAgencyName(row.value);
           if (row.key === "agency_address") setAgencyAddress(row.value);
+          if (row.key === "agency_city") setAgencyCity(row.value);
+          if (row.key === "agency_zipcode") setAgencyZipcode(row.value);
           if (row.key === "agency_phone") setAgencyPhone(row.value);
           if (row.key === "agency_email") setAgencyEmail(row.value);
           if (row.key === "agency_siret") setAgencySiret(row.value);

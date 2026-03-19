@@ -3,7 +3,7 @@ import AppLayout from "@/components/AppLayout";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import KpiCard from "@/components/KpiCard";
-import TodayAgendaWidget from "@/components/TodayAgendaWidget";
+import WeekAgendaWidget from "@/components/WeekAgendaWidget";
 import UpcomingEventsAlert from "@/components/UpcomingEventsAlert";
 import { Car, Euro, TrendingUp, Users, Clock, AlertTriangle, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 const SECTIONS_CONFIG = [
   { key: "kpis", label: "KPIs principaux" },
   { key: "kpis2", label: "KPIs secondaires" },
-  { key: "agenda", label: "Rappels & Agenda" },
+  { key: "agenda", label: "Agenda semaine" },
+  { key: "alerts", label: "Rappels" },
 ] as const;
 
 type SectionKey = (typeof SECTIONS_CONFIG)[number]["key"];
 
 const DEFAULT_VISIBILITY: Record<SectionKey, boolean> = {
-  kpis: true, kpis2: true, agenda: true,
+  kpis: true, kpis2: true, agenda: true, alerts: true,
 };
 
 const STORAGE_KEY = "dashboard_sections_visibility";
@@ -53,14 +54,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
-      // Fetch vehicles
       const { data: vehicles } = await supabase.from("vehicles").select("*");
       if (!vehicles) return;
 
       const inStock = vehicles.filter(v => v.status === "En stock");
       const totalSelling = inStock.reduce((s, v) => s + (Number(v.selling_price) || 0), 0);
       const totalPurchase = inStock.reduce((s, v) => s + (Number(v.purchase_price) || 0), 0);
-      const margin = totalSelling - totalPurchase;
 
       const now = new Date();
       const daysInStock = inStock.map(v => {
@@ -69,10 +68,8 @@ export default function Dashboard() {
       });
       const avgDays = daysInStock.length > 0 ? Math.round(daysInStock.reduce((a, b) => a + b, 0) / daysInStock.length) : 0;
       const oldStock = daysInStock.filter(d => d > 60).length;
-
       const depos = vehicles.filter(v => v.status === "Dépôt-vente");
 
-      // Fetch trade_ins count this month
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const { count: leadsCount } = await supabase
         .from("trade_ins")
@@ -111,15 +108,15 @@ export default function Dashboard() {
   return (
     <AppLayout title="Tableau de bord">
       {/* Section visibility toggle */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-6">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2 rounded-xl shadow-sm">
               <Settings2 className="h-4 w-4" />
               Sections
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-64">
+          <PopoverContent align="end" className="w-64 rounded-xl">
             <p className="text-sm font-semibold mb-3">Afficher / Masquer</p>
             <div className="space-y-3">
               {SECTIONS_CONFIG.map((s) => (
@@ -137,29 +134,36 @@ export default function Dashboard() {
         </Popover>
       </div>
 
-      {/* Rappels + Agenda du jour */}
-      {visibility.agenda && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      {/* Rappels */}
+      {visibility.alerts && (
+        <div className="mb-6">
           <UpcomingEventsAlert />
-          <TodayAgendaWidget />
         </div>
       )}
 
-      {/* KPIs */}
+      {/* KPIs principaux */}
       {visibility.kpis && (
-        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible mb-8">
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} /></div>
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Valeur stock (vente)" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} /></div>
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "default"} /></div>
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" /></div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} />
+          <KpiCard title="Valeur stock" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
+          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "default"} />
+          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" />
         </div>
       )}
 
+      {/* KPIs secondaires */}
       {visibility.kpis2 && (
-        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible mb-8">
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Car className="h-5 w-5" />} subtitle="Mandats actifs" /></div>
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" /></div>
-          <div className="min-w-[160px] shrink-0 sm:min-w-0"><KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} /></div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Car className="h-5 w-5" />} subtitle="Mandats actifs" />
+          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" />
+          <KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} />
+        </div>
+      )}
+
+      {/* Agenda semaine */}
+      {visibility.agenda && (
+        <div className="mb-6">
+          <WeekAgendaWidget />
         </div>
       )}
     </AppLayout>

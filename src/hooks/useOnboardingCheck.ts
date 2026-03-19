@@ -9,12 +9,14 @@ export function useOnboardingCheck() {
 
   useEffect(() => {
     if (authLoading || roleLoading || !session) {
-      setChecking(false);
+      if (!authLoading && !roleLoading && !session) {
+        setChecking(false);
+      }
       return;
     }
 
-    // Only admins trigger onboarding
-    if (role !== "admin") {
+    // Non-admin users skip onboarding
+    if (role && role !== "admin") {
       setNeedsOnboarding(false);
       setChecking(false);
       return;

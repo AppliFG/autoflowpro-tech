@@ -504,8 +504,18 @@ export default function Parametres() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="agencyAddress">Adresse complète</Label>
-                <Textarea id="agencyAddress" rows={2} value={agencyAddress} onChange={(e) => setAgencyAddress(e.target.value)} placeholder="12 rue du Commerce, 75015 Paris" />
+                <Label htmlFor="agencyAddress">Adresse (rue)</Label>
+                <Input id="agencyAddress" value={agencyAddress} onChange={(e) => setAgencyAddress(e.target.value)} placeholder="12 rue du Commerce" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="agencyZipcode">Code postal</Label>
+                  <Input id="agencyZipcode" value={agencyZipcode} onChange={(e) => setAgencyZipcode(e.target.value)} placeholder="75015" />
+                </div>
+                <div>
+                  <Label htmlFor="agencyCity">Ville</Label>
+                  <Input id="agencyCity" value={agencyCity} onChange={(e) => setAgencyCity(e.target.value)} placeholder="Paris" />
+                </div>
               </div>
               <div>
                 <Label htmlFor="agencyLegal">Mentions légales</Label>

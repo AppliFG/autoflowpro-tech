@@ -137,6 +137,43 @@ export default function Install() {
           </div>
         )}
 
+        {/* Documentation PDFs */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Documentation</h2>
+          <div className="grid grid-cols-1 gap-3">
+            <a
+              href="/AutoFlowPro_Guide_Installation.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-card-foreground text-sm">Guide d'installation & d'utilisation</p>
+                <p className="text-xs text-muted-foreground mt-0.5">PDF — Installation pas à pas, modules, rôles</p>
+              </div>
+              <Download className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </a>
+            <a
+              href="/AutoFlowPro_Brochure_Commerciale.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                <Megaphone className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <p className="font-medium text-card-foreground text-sm">Brochure commerciale</p>
+                <p className="text-xs text-muted-foreground mt-0.5">PDF — Présentation, tarifs, fonctionnalités</p>
+              </div>
+              <Download className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+            </a>
+          </div>
+        </div>
+
         {/* Benefits */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Avantages</h3>

@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          install_date: string
+          logo_url: string | null
+          name: string
+          owner_user_id: string | null
+          phone: string | null
+          siret: string | null
+          subscription_active: boolean
+          subscription_plan: string | null
+          subscription_started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          install_date?: string
+          logo_url?: string | null
+          name: string
+          owner_user_id?: string | null
+          phone?: string | null
+          siret?: string | null
+          subscription_active?: boolean
+          subscription_plan?: string | null
+          subscription_started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          install_date?: string
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string | null
+          phone?: string | null
+          siret?: string | null
+          subscription_active?: boolean
+          subscription_plan?: string | null
+          subscription_started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string

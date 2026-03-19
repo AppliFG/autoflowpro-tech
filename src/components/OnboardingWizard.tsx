@@ -76,6 +76,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     }
     setSaving(true);
     try {
+      const installDateISO = new Date().toISOString();
       const settings = [
         { key: "agency_name", value: agencyName.trim() },
         { key: "agency_address", value: address },
@@ -86,12 +87,25 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
         { key: "agency_legal_mentions", value: legalMentions },
         { key: "police_number_start", value: policeStart },
         { key: "onboarding_completed", value: "true" },
-        { key: "install_date", value: new Date().toISOString() },
+        { key: "install_date", value: installDateISO },
       ];
       for (const s of settings) {
         const { error } = await supabase.from("app_settings").upsert(s, { onConflict: "key" });
         if (error) throw error;
       }
+
+      // Create agency record for admin tracking
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("agencies").insert({
+        name: agencyName.trim(),
+        email: email || null,
+        phone: phone || null,
+        address: address || null,
+        siret: siret || null,
+        logo_url: logoUrl,
+        owner_user_id: user?.id || null,
+        install_date: installDateISO,
+      });
       toast.success("Configuration terminée ! Bienvenue 🎉");
       onComplete();
     } catch (err: any) {

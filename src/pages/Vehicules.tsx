@@ -66,7 +66,7 @@ function mapVehicle(v: any, works: any[]): Vehicle {
     photoUrls: v.photo_urls || (v.photo_url ? [v.photo_url] : []),
     marque: v.brand,
     modele: v.model,
-    modele: v.model,
+    annee: v.year || 0,
     annee: v.year || 0,
     km: v.mileage || 0,
     carburant: v.fuel_type || "",

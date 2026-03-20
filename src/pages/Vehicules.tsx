@@ -35,6 +35,7 @@ interface Vehicle {
   status: VehicleStatus;
   jours: number;
   description: string;
+  photoUrls: string[];
 }
 
 const statusDbToUi: Record<string, VehicleStatus> = {

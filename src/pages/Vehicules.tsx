@@ -67,7 +67,7 @@ function mapVehicle(v: any, works: any[]): Vehicle {
     marque: v.brand,
     modele: v.model,
     annee: v.year || 0,
-    annee: v.year || 0,
+    km: v.mileage || 0,
     km: v.mileage || 0,
     carburant: v.fuel_type || "",
     prixAchat,

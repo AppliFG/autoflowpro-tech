@@ -575,6 +575,7 @@ export type Database = {
           mileage: number | null
           model: string
           photo_url: string | null
+          photo_urls: string[] | null
           police_number: number | null
           purchase_price: number | null
           registration: string
@@ -594,6 +595,7 @@ export type Database = {
           mileage?: number | null
           model: string
           photo_url?: string | null
+          photo_urls?: string[] | null
           police_number?: number | null
           purchase_price?: number | null
           registration: string
@@ -613,6 +615,7 @@ export type Database = {
           mileage?: number | null
           model?: string
           photo_url?: string | null
+          photo_urls?: string[] | null
           police_number?: number | null
           purchase_price?: number | null
           registration?: string

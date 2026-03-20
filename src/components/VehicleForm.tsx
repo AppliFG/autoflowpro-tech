@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,13 +24,14 @@ interface VehicleFormData {
   status: string;
   description: string;
   photo_url: string | null;
+  photo_urls?: string[];
 }
 
 const emptyForm: VehicleFormData = {
   police_number: "",
   registration: "", brand: "", model: "", version: "", year: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
-  status: "En préparation", description: "", photo_url: null,
+  status: "En préparation", description: "", photo_url: null, photo_urls: [],
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];
@@ -44,8 +45,13 @@ interface Props {
 
 export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
   const [form, setForm] = useState<VehicleFormData>(initialData ?? emptyForm);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.photo_url ?? null);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>(() => {
+    const urls = initialData?.photo_urls ?? [];
+    if (urls.length > 0) return urls;
+    if (initialData?.photo_url) return [initialData.photo_url];
+    return [];
+  });
   const [saving, setSaving] = useState(false);
   const [nextPoliceNumber, setNextPoliceNumber] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -72,19 +78,37 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
   const set = (key: keyof VehicleFormData, value: any) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop volumineuse (max 5 Mo)"); return; }
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const totalCount = photoPreviews.length + files.length;
+    if (totalCount > 10) {
+      toast.error("Maximum 10 photos par véhicule");
+      return;
+    }
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} trop volumineux (max 5 Mo)`);
+        return;
+      }
+    }
+    setNewFiles((prev) => [...prev, ...files]);
+    setPhotoPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
-  const removePhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    set("photo_url", null);
-    if (fileRef.current) fileRef.current.value = "";
+  const removePhoto = (index: number) => {
+    const existingCount = (form.photo_urls?.length ?? 0) || (form.photo_url ? 1 : 0);
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+    if (index < existingCount) {
+      // Removing an existing uploaded photo
+      const existingUrls = form.photo_urls?.length ? [...form.photo_urls] : (form.photo_url ? [form.photo_url] : []);
+      existingUrls.splice(index, 1);
+      setForm((f) => ({ ...f, photo_urls: existingUrls, photo_url: existingUrls[0] || null }));
+    } else {
+      // Removing a newly added file
+      const fileIndex = index - existingCount;
+      setNewFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,25 +120,25 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
     setSaving(true);
 
     try {
-      let photoUrl = form.photo_url;
+      // Start with existing urls
+      const existingUrls = form.photo_urls?.length ? [...form.photo_urls] : (form.photo_url ? [form.photo_url] : []);
+      // Filter to only keep the ones still in previews
+      const keptExisting = existingUrls.slice(0, photoPreviews.length - newFiles.length);
 
-      // Upload photo if new file selected
-      if (photoFile) {
-        const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      // Upload new files
+      const uploadedUrls: string[] = [];
+      for (const file of newFiles) {
+        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `vehicles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("vehicle-photos")
-          .upload(path, photoFile, {
-            contentType: photoFile.type,
-            upsert: false,
-          });
-        if (upErr) {
-          console.error("Upload error:", upErr);
-          throw new Error(`Erreur upload photo: ${upErr.message}`);
-        }
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw new Error(`Erreur upload: ${upErr.message}`);
         const { data: urlData } = supabase.storage.from("vehicle-photos").getPublicUrl(path);
-        photoUrl = urlData.publicUrl;
+        uploadedUrls.push(urlData.publicUrl);
       }
+
+      const allUrls = [...keptExisting, ...uploadedUrls];
 
       const payload: any = {
         police_number: form.police_number === "" ? null : Number(form.police_number),
@@ -130,7 +154,8 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         selling_price: form.selling_price === "" ? 0 : Number(form.selling_price),
         status: form.status,
         description: form.description.trim() || null,
-        photo_url: photoUrl,
+        photo_url: allUrls[0] || null,
+        photo_urls: allUrls,
       };
 
       if (isEdit && initialData?.id) {
@@ -165,34 +190,39 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
-          {/* Photo */}
+          {/* Photos */}
           <div>
-            <Label className="mb-2 block">Photo</Label>
-            <div className="flex items-center gap-4">
-              {photoPreview ? (
-                <div className="relative">
-                  <img src={photoPreview} alt="" className="h-24 w-32 object-cover rounded-lg border border-border" />
-                  <button type="button" onClick={removePhoto} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                    <X className="h-3.5 w-3.5" />
+            <Label className="mb-2 block">Photos <span className="text-muted-foreground font-normal text-xs">(max 10)</span></Label>
+            <div className="flex flex-wrap gap-3">
+              {photoPreviews.map((src, i) => (
+                <div key={i} className="relative group">
+                  <img src={src} alt="" className="h-20 w-28 object-cover rounded-lg border border-border" />
+                  {i === 0 && (
+                    <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[9px] px-1.5 py-0.5 rounded font-medium">
+                      Principale
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
                   </button>
                 </div>
-              ) : (
+              ))}
+              {photoPreviews.length < 10 && (
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="h-24 w-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  className="h-20 w-28 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                 >
-                  <Upload className="h-5 w-5" />
-                  <span className="text-xs">Upload</span>
+                  <Plus className="h-5 w-5" />
+                  <span className="text-[10px]">Ajouter</span>
                 </button>
               )}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
-              {photoPreview && (
-                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                  Changer
-                </Button>
-              )}
             </div>
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
           </div>
 
           {/* Police number + Main fields */}

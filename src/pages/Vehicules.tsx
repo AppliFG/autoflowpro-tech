@@ -35,6 +35,7 @@ interface Vehicle {
   status: VehicleStatus;
   jours: number;
   description: string;
+  photoUrls: string[];
 }
 
 const statusDbToUi: Record<string, VehicleStatus> = {
@@ -61,7 +62,8 @@ function mapVehicle(v: any, works: any[]): Vehicle {
     id: v.id,
     policeNumber: v.police_number ?? null,
     immatriculation: v.registration,
-    photo: v.photo_url || "/placeholder.svg",
+    photo: v.photo_url || (v.photo_urls?.[0]) || "/placeholder.svg",
+    photoUrls: v.photo_urls || (v.photo_url ? [v.photo_url] : []),
     marque: v.brand,
     modele: v.model,
     annee: v.year || 0,
@@ -363,7 +365,7 @@ export default function Vehicules() {
                 <div className="flex items-center justify-between pt-1 border-t border-border" onClick={(e) => e.stopPropagation()}>
                   <span className={`text-xs ${joursColor(v.jours)}`}>{v.jours}j en stock</span>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo, photo_urls: (v as any).photoUrls || [] }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="h-4 w-4" /></button>
                     <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Wrench className="h-4 w-4" /></button>
                     <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Receipt className="h-4 w-4" /></button>
                     <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Eye className="h-4 w-4" /></button>
@@ -417,7 +419,7 @@ export default function Vehicules() {
                     <td className={`px-4 py-3 text-center hidden lg:table-cell ${joursColor(v.jours)}`}>{v.jours}j</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Modifier"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => { setEditVehicle({ id: v.id, police_number: v.policeNumber ?? "", registration: v.immatriculation, brand: v.marque, model: v.modele, version: "", year: v.annee || "", mileage: v.km || "", fuel_type: v.carburant || "Diesel", color: "", purchase_price: v.prixAchat || "", selling_price: v.prixVente || "", status: Object.entries(statusDbToUi).find(([, ui]) => ui === v.status)?.[0] || "En préparation", description: v.description, photo_url: v.photo === "/placeholder.svg" ? null : v.photo, photo_urls: (v as any).photoUrls || [] }); setShowForm(true); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Modifier"><Pencil className="h-4 w-4" /></button>
                         <button onClick={() => setWorksVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Travaux"><Wrench className="h-4 w-4" /></button>
                         <button onClick={() => setInvoiceVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Générer facture"><Receipt className="h-4 w-4" /></button>
                         <button onClick={() => setSelectedVehicle(v)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Voir fiche"><Eye className="h-4 w-4" /></button>

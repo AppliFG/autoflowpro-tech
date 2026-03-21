@@ -1054,6 +1054,53 @@ export default function Parametres() {
         </div>
         )}
 
+        {/* Garanties */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "garanties" ? null : "garanties")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Garanties</h3>
+                <p className="text-xs text-muted-foreground">Gérer les garanties et leurs tarifs</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "garanties" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "garanties" && (
+            <div className="mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
+              <ParametresGaranties />
+            </div>
+          )}
+        </div>
+
+        {/* Fournisseurs & Connecteurs */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "connecteurs" ? null : "connecteurs")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Plug className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Fournisseurs & Connecteurs</h3>
+                <p className="text-xs text-muted-foreground">Configurez vos accès fournisseurs</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "connecteurs" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "connecteurs" && (
+            <div className="mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
+              <ParametresConnecteurs />
+            </div>
+          )}
+        </div>
 
         <div
           className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"

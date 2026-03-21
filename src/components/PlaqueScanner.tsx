@@ -41,7 +41,16 @@ export default function PlaqueScanner({ onDecoded }: Props) {
 
   return (
     <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mb-5">
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Search className="h-4 w-4 text-primary" />
+        <span className="font-semibold text-sm text-card-foreground">Identification par plaque</span>
+        {isDemo !== null && (
+          <Badge variant={isDemo ? "secondary" : "default"} className="text-[10px] ml-auto">
+            {isDemo ? "Mode démo" : "API connectée"}
+          </Badge>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground mb-3">Formats acceptés : SIV (AA-123-BB), FNI ancien (1234 AB 75), plaques européennes</p>
         <Search className="h-4 w-4 text-primary" />
         <span className="font-semibold text-sm text-card-foreground">Identification par plaque</span>
         {isDemo !== null && (

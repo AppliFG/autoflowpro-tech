@@ -84,19 +84,19 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
   const set = (key: keyof VehicleFormData, value: any) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  const handlePlaqueDecoded = (data: PlaqueDecodedData) => {
+  const handlePlaqueDecoded = (data: PlaqueResultData) => {
     setForm((f) => ({
       ...f,
       vin: data.vin || f.vin,
-      registration: f.registration || "",
-      brand: data.brand || f.brand,
-      model: data.model || f.model,
+      registration: data.immatriculation || f.registration,
+      brand: data.marque || f.brand,
+      model: data.modele || f.model,
       version: data.version || f.version,
-      year: data.year || f.year,
-      fuel_type: data.fuelType || f.fuel_type,
-      color: data.color || f.color,
-      power_din: data.powerDIN || f.power_din,
-      cv_fiscaux: data.powerCV || f.cv_fiscaux,
+      year: data.annee || f.year,
+      fuel_type: data.energie || f.fuel_type,
+      color: data.couleur || f.color,
+      power_din: data.puissanceDin || f.power_din,
+      cv_fiscaux: data.puissanceFiscale || f.cv_fiscaux,
     }));
     toast.success("Champs pré-remplis depuis la plaque");
   };

@@ -70,16 +70,16 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
     setPlatform(detectPlatform(val));
   };
 
-  const handlePlaque = (data: PlaqueDecodedData) => {
+  const handlePlaque = (data: PlaqueResultData) => {
     if (data.vin) setVin(data.vin);
-    if (data.brand) setBrand(data.brand);
-    if (data.model) setModel(data.model);
+    if (data.marque) setBrand(data.marque);
+    if (data.modele) setModel(data.modele);
     if (data.version) setVersion(data.version || "");
-    if (data.year) setYear(data.year);
-    if (data.fuelType) setFuelType(data.fuelType);
-    if (data.color) setColor(data.color || "");
-    if (data.powerDIN) setPowerDIN(data.powerDIN);
-    if (data.powerCV) setCvFiscaux(data.powerCV);
+    if (data.annee) setYear(data.annee);
+    if (data.energie) setFuelType(data.energie);
+    if (data.couleur) setColor(data.couleur || "");
+    if (data.puissanceDin) setPowerDIN(data.puissanceDin);
+    if (data.puissanceFiscale) setCvFiscaux(data.puissanceFiscale);
   };
 
   const toggleEquipment = (eq: string) => {

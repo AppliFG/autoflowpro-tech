@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { decodePlaque } from "@/services/plaqueService";
+import { decodePlaque, detectPlaqueType, type PlaqueType } from "@/services/plaqueService";
 import type { PlaqueDecodedData } from "@/types/vehicle";
 
 interface Props {

@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload, X, Plus } from "lucide-react";
+import { ArrowLeft, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PlaqueScanner from "./PlaqueScanner";
+import type { PlaqueDecodedData } from "@/types/vehicle";
 
 interface VehicleFormData {
   id?: string;
@@ -25,6 +27,9 @@ interface VehicleFormData {
   description: string;
   photo_url: string | null;
   photo_urls?: string[];
+  vin?: string;
+  power_din?: number | "";
+  cv_fiscaux?: number | "";
 }
 
 const emptyForm: VehicleFormData = {
@@ -32,6 +37,7 @@ const emptyForm: VehicleFormData = {
   registration: "", brand: "", model: "", version: "", year: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
+  vin: "", power_din: "", cv_fiscaux: "",
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];
@@ -78,6 +84,23 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
   const set = (key: keyof VehicleFormData, value: any) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  const handlePlaqueDecoded = (data: PlaqueDecodedData) => {
+    setForm((f) => ({
+      ...f,
+      vin: data.vin || f.vin,
+      registration: f.registration || "",
+      brand: data.brand || f.brand,
+      model: data.model || f.model,
+      version: data.version || f.version,
+      year: data.year || f.year,
+      fuel_type: data.fuelType || f.fuel_type,
+      color: data.color || f.color,
+      power_din: data.powerDIN || f.power_din,
+      cv_fiscaux: data.powerCV || f.cv_fiscaux,
+    }));
+    toast.success("Champs pré-remplis depuis la plaque");
+  };
+
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalCount = photoPreviews.length + files.length;
@@ -100,12 +123,10 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
     const existingCount = (form.photo_urls?.length ?? 0) || (form.photo_url ? 1 : 0);
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
     if (index < existingCount) {
-      // Removing an existing uploaded photo
       const existingUrls = form.photo_urls?.length ? [...form.photo_urls] : (form.photo_url ? [form.photo_url] : []);
       existingUrls.splice(index, 1);
       setForm((f) => ({ ...f, photo_urls: existingUrls, photo_url: existingUrls[0] || null }));
     } else {
-      // Removing a newly added file
       const fileIndex = index - existingCount;
       setNewFiles((prev) => prev.filter((_, i) => i !== fileIndex));
     }
@@ -120,12 +141,9 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
     setSaving(true);
 
     try {
-      // Start with existing urls
       const existingUrls = form.photo_urls?.length ? [...form.photo_urls] : (form.photo_url ? [form.photo_url] : []);
-      // Filter to only keep the ones still in previews
       const keptExisting = existingUrls.slice(0, photoPreviews.length - newFiles.length);
 
-      // Upload new files
       const uploadedUrls: string[] = [];
       for (const file of newFiles) {
         const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -190,6 +208,9 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          {/* Plaque Scanner - en haut */}
+          {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} />}
+
           {/* Photos */}
           <div>
             <Label className="mb-2 block">Photos <span className="text-muted-foreground font-normal text-xs">(max 10)</span></Label>
@@ -225,7 +246,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
             <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
           </div>
 
-          {/* Police number + Main fields */}
+          {/* Police number + Registration + VIN */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -236,6 +257,10 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
               <div>
                 <Label htmlFor="reg">Immatriculation *</Label>
                 <Input id="reg" value={form.registration} onChange={(e) => set("registration", e.target.value)} placeholder="AA-123-BB" />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="vin" className="text-xs">VIN <span className="text-destructive text-[9px]">(confidentiel — jamais publié)</span></Label>
+                <Input id="vin" value={form.vin || ""} onChange={(e) => set("vin", e.target.value)} placeholder="VF3LCBHZ6JS000000" className="font-mono text-xs" />
               </div>
             </div>
           </div>
@@ -273,6 +298,18 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
             <div>
               <Label htmlFor="color">Couleur</Label>
               <Input id="color" value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="Gris" />
+            </div>
+          </div>
+
+          {/* Puissance DIN + CV fiscaux */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="powerDin">Puissance DIN (Ch)</Label>
+              <Input id="powerDin" type="number" value={form.power_din} onChange={(e) => set("power_din", e.target.value === "" ? "" : Number(e.target.value))} placeholder="130" />
+            </div>
+            <div>
+              <Label htmlFor="cvFiscaux">CV fiscaux</Label>
+              <Input id="cvFiscaux" type="number" value={form.cv_fiscaux} onChange={(e) => set("cv_fiscaux", e.target.value === "" ? "" : Number(e.target.value))} placeholder="7" />
             </div>
           </div>
 

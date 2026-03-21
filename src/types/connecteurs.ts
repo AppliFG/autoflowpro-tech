@@ -1,381 +1,314 @@
+// ═══════════════════════════════════════════════════════
+// Connecteurs Fournisseurs — Système modulaire SaaS
+// Chaque société configure ses propres accès dans Paramètres
+// ═══════════════════════════════════════════════════════
+
+export type ConnecteurAuthType = "api_token" | "login_password" | "oauth" | "api_key_secret";
+
 export interface ConnecteurConfig {
   id: string;
-  name: string;
+  nom: string;
   description: string;
-  category: "identification" | "pieces" | "lubrifiants" | "diffusion" | "garanties" | "atelier" | "financement" | "logistique" | "controle" | "assurance";
-  authType: "token" | "login_password";
-  color: string;
-  siteUrl: string;
+  categorie: ConnecteurCategorie;
+  logo: string; // URL ou emoji/icône
+  couleur: string;
+  siteUrl: string; // URL du site officiel
+  authType: ConnecteurAuthType;
+  // Champs d'auth (remplis par l'utilisateur dans Paramètres)
+  credentials: ConnecteurCredentials;
+  // État
+  actif: boolean;
+  connecte: boolean; // true si les credentials sont renseignés
+  // Abonnement requis
+  abonnementRequis: boolean;
+  abonnementLabel: string; // Ex: "Inclus", "Premium", "Accès fournisseur requis"
+  // Docs
   docsUrl: string;
-  features: string[];
-  requiresSubscription: boolean;
-  icon?: string;
+  // Fonctionnalités fournies par ce connecteur
+  fonctionnalites: string[];
 }
 
 export interface ConnecteurCredentials {
-  id?: string;
-  connecteur_id: string;
-  enabled: boolean;
-  token?: string;
   login?: string;
   password?: string;
+  apiToken?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  clientId?: string;
+  accountId?: string;
+  customFields?: Record<string, string>;
 }
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  identification: "Identification véhicule",
-  pieces: "Pièces détachées",
-  lubrifiants: "Lubrifiants",
-  diffusion: "Diffusion annonces",
+export type ConnecteurCategorie =
+  | "identification_vehicule"
+  | "pieces_detachees"
+  | "lubrifiants_produits"
+  | "diffusion_annonces"
+  | "garanties"
+  | "gestion_atelier"
+  | "facturation"
+  | "autre";
+
+export const CATEGORIE_LABELS: Record<ConnecteurCategorie, string> = {
+  identification_vehicule: "Identification véhicule",
+  pieces_detachees: "Pièces détachées",
+  lubrifiants_produits: "Lubrifiants & Produits",
+  diffusion_annonces: "Diffusion annonces",
   garanties: "Garanties",
-  atelier: "Gestion atelier",
-  financement: "Financement & Crédit",
-  logistique: "Logistique & Transport",
-  controle: "Contrôle technique",
-  assurance: "Assurance",
+  gestion_atelier: "Gestion atelier",
+  facturation: "Facturation & Comptabilité",
+  autre: "Autre",
 };
 
-export const CONNECTEURS: ConnecteurConfig[] = [
-  // === IDENTIFICATION ===
+export const CATEGORIE_ICONS: Record<ConnecteurCategorie, string> = {
+  identification_vehicule: "🔍",
+  pieces_detachees: "🔧",
+  lubrifiants_produits: "🛢️",
+  diffusion_annonces: "📢",
+  garanties: "🛡️",
+  gestion_atelier: "🏭",
+  facturation: "📄",
+  autre: "⚙️",
+};
+
+// ─── CONNECTEURS PRÉ-CONFIGURÉS ───
+// L'utilisateur n'a qu'à renseigner ses credentials
+
+export const CONNECTEURS_DISPONIBLES: ConnecteurConfig[] = [
+  // ── IDENTIFICATION VÉHICULE ──
   {
-    id: "api_plaque",
-    name: "API Plaque Immatriculation",
-    description: "Identification complète d'un véhicule à partir de sa plaque (VIN, marque, modèle, version, énergie, etc.)",
-    category: "identification",
-    authType: "token",
-    color: "bg-blue-600",
-    siteUrl: "https://www.apiplaqueimmatriculation.com",
-    docsUrl: "https://www.apiplaqueimmatriculation.com/documentation",
-    features: ["Recherche par plaque SIV", "Plaques FNI anciennes", "Plaques étrangères EU", "Décodage VIN", "Données techniques complètes", "K-Type TecDoc"],
-    requiresSubscription: true,
-  },
-  {
-    id: "siv_ants",
-    name: "SIV / ANTS",
-    description: "Système d'Immatriculation des Véhicules — interrogation officielle du fichier national.",
-    category: "identification",
+    id: "siv-ants",
+    nom: "SIV / ANTS",
+    description: "Accès direct au Système d'Immatriculation des Véhicules (base officielle de l'État). Identification par plaque → VIN + toutes les données techniques.",
+    categorie: "identification_vehicule",
+    logo: "🇫🇷",
+    couleur: "#000091",
+    siteUrl: "https://ants.gouv.fr/nos-missions/les-solutions-numeriques/siv",
     authType: "login_password",
-    color: "bg-indigo-600",
-    siteUrl: "https://immatriculation.ants.gouv.fr",
-    docsUrl: "https://immatriculation.ants.gouv.fr",
-    features: ["Vérification immatriculation", "Historique véhicule", "Situation administrative"],
-    requiresSubscription: true,
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Accès professionnel ANTS requis",
+    docsUrl: "https://ants.gouv.fr",
+    fonctionnalites: ["Plaque → VIN", "Données SIV officielles", "Historique véhicule"],
   },
   {
-    id: "histovec",
-    name: "HistoVec",
-    description: "Historique officiel du véhicule fourni par le Ministère de l'Intérieur (sinistres, km, propriétaires).",
-    category: "identification",
-    authType: "token",
-    color: "bg-blue-800",
-    siteUrl: "https://histovec.interieur.gouv.fr",
-    docsUrl: "https://histovec.interieur.gouv.fr",
-    features: ["Historique sinistres", "Kilométrage certifié", "Nombre de propriétaires", "Rapport officiel"],
-    requiresSubscription: false,
-  },
-  {
-    id: "vin_decoder",
-    name: "VIN Decoder (NHTSA)",
-    description: "Décodage du numéro VIN pour obtenir les spécifications constructeur (mondial).",
-    category: "identification",
-    authType: "token",
-    color: "bg-slate-600",
-    siteUrl: "https://vpic.nhtsa.dot.gov",
-    docsUrl: "https://vpic.nhtsa.dot.gov/api/",
-    features: ["Décodage VIN mondial", "Specs constructeur", "Rappels sécurité", "API gratuite"],
-    requiresSubscription: false,
+    id: "api-plaque-immatriculation",
+    nom: "API Plaque Immatriculation",
+    description: "Service tiers d'identification véhicule par plaque. Alternative au SIV direct. Retourne VIN, marque, modèle, puissance, CO2, couleur et 40+ champs.",
+    categorie: "identification_vehicule",
+    logo: "🔑",
+    couleur: "#3B82F6",
+    siteUrl: "https://apiplaqueimmatriculation.com",
+    authType: "api_token",
+    credentials: {},
+    actif: true,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "À partir de 39€/mois — Token démo disponible pour test",
+    docsUrl: "https://apiplaqueimmatriculation.com/tester-lapi-plaque-immatriculation-siv/",
+    fonctionnalites: ["Plaque → VIN + infos complètes", "France, Espagne, UK, Italie", "TecDoc K-Type", "Code SRA"],
   },
 
-  // === PIÈCES DÉTACHÉES ===
+  // ── PIÈCES DÉTACHÉES ──
   {
-    id: "tecdoc",
-    name: "TecDoc",
-    description: "Catalogue international de pièces détachées automobiles (TecAlliance).",
-    category: "pieces",
-    authType: "token",
-    color: "bg-orange-600",
-    siteUrl: "https://www.tecalliance.net",
-    docsUrl: "https://webservice.tecalliance.net/pegasus-3-0/info",
-    features: ["Catalogue pièces", "Références croisées", "Recherche par K-Type", "Illustrations techniques"],
-    requiresSubscription: true,
+    id: "dasir-tecalliance",
+    nom: "DASIR / TecAlliance",
+    description: "Portail B2B DASIR avec accès au catalogue TecDoc via TecAlliance. Recherche de pièces par VIN/K-Type, tarifs, disponibilité.",
+    categorie: "pieces_detachees",
+    logo: "🔴",
+    couleur: "#E53E3E",
+    siteUrl: "https://b2b.dasirweb.fr",
+    authType: "login_password",
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte client DASIR requis",
+    docsUrl: "https://b2b.dasirweb.fr",
+    fonctionnalites: ["Catalogue TecDoc", "Recherche par VIN/K-Type", "Commande en ligne", "Tarifs pro"],
   },
   {
-    id: "dasir",
-    name: "DASIR / TecAlliance",
-    description: "Base de données techniques et pièces détachées du marché français.",
-    category: "pieces",
+    id: "tecdoc-tecalliance",
+    nom: "TecDoc / TecAlliance",
+    description: "Accès direct au catalogue TecAlliance TecDoc. Identification pièces, compatibilité véhicule, références croisées.",
+    categorie: "pieces_detachees",
+    logo: "🟦",
+    couleur: "#2563EB",
+    siteUrl: "https://web.tecalliance.net/dasir/fr/login",
     authType: "login_password",
-    color: "bg-amber-600",
-    siteUrl: "https://www.tecalliance.net",
-    docsUrl: "https://www.tecalliance.net",
-    features: ["Données techniques FR", "Pièces de rechange", "Équivalences"],
-    requiresSubscription: true,
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte TecAlliance requis (via distributeur)",
+    docsUrl: "https://web.tecalliance.net",
+    fonctionnalites: ["Catalogue pièces", "Compatibilité véhicule", "Références croisées OE/aftermarket"],
   },
   {
     id: "partslink24",
-    name: "Partslink24",
-    description: "Catalogue de pièces d'origine constructeur (OEM) avec schémas éclatés.",
-    category: "pieces",
+    nom: "Partslink24",
+    description: "Plateforme de pièces d'origine constructeur (OEM). Accès aux catalogues officiels des marques.",
+    categorie: "pieces_detachees",
+    logo: "🟠",
+    couleur: "#F97316",
+    siteUrl: "https://partslink24.com/partslink24/user/login.do",
     authType: "login_password",
-    color: "bg-teal-600",
-    siteUrl: "https://www.partslink24.com",
-    docsUrl: "https://www.partslink24.com",
-    features: ["Pièces OEM", "Schémas éclatés", "Références constructeur"],
-    requiresSubscription: true,
+    credentials: { customFields: { accountId: "" } },
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Abonnement Partslink24 requis",
+    docsUrl: "https://partslink24.com",
+    fonctionnalites: ["Pièces OEM constructeur", "Catalogues officiels", "Schémas éclatés"],
   },
   {
     id: "pavi",
-    name: "PAVI",
-    description: "Plateforme d'aide à la vente et à l'identification de pièces auto.",
-    category: "pieces",
+    nom: "PAVI Pièces Auto",
+    description: "Plateforme de pièces automobiles de marque d'origine. Matériel, outillage, peinture et carrosserie.",
+    categorie: "pieces_detachees",
+    logo: "🔵",
+    couleur: "#1D4ED8",
+    siteUrl: "https://pieces-auto.plateformepavi.com",
     authType: "login_password",
-    color: "bg-cyan-600",
-    siteUrl: "https://www.pavi.fr",
-    docsUrl: "https://www.pavi.fr",
-    features: ["Identification pièces", "Tarification", "Commande en ligne"],
-    requiresSubscription: true,
-  },
-  {
-    id: "oscaro_pro",
-    name: "Oscaro Pro",
-    description: "Catalogue et commande de pièces détachées pour professionnels.",
-    category: "pieces",
-    authType: "login_password",
-    color: "bg-sky-600",
-    siteUrl: "https://www.oscaro.com",
-    docsUrl: "https://www.oscaro.com/pro",
-    features: ["Catalogue pièces", "Tarifs pro", "Livraison express", "Retours simplifiés"],
-    requiresSubscription: false,
-  },
-  {
-    id: "autodoc_pro",
-    name: "Autodoc Pro",
-    description: "Plateforme européenne de commande de pièces auto pour professionnels.",
-    category: "pieces",
-    authType: "login_password",
-    color: "bg-emerald-600",
-    siteUrl: "https://www.autodoc.fr",
-    docsUrl: "https://www.autodoc.fr",
-    features: ["Pièces multimarques", "Prix compétitifs", "Livraison EU", "API catalogue"],
-    requiresSubscription: false,
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte client PAVI requis",
+    docsUrl: "https://pieces-auto.plateformepavi.com",
+    fonctionnalites: ["Pièces de marque", "Outillage", "Peinture & carrosserie"],
   },
 
-  // === LUBRIFIANTS ===
+  // ── LUBRIFIANTS ──
   {
     id: "yacco",
-    name: "Yacco",
-    description: "Préconisations lubrifiants et huiles moteur par véhicule.",
-    category: "lubrifiants",
+    nom: "Yacco",
+    description: "Espace client Yacco — Préconisation huiles et lubrifiants, commandes, documentation technique.",
+    categorie: "lubrifiants_produits",
+    logo: "🟢",
+    couleur: "#166534",
+    siteUrl: "https://yacco.com/fr/connexion",
     authType: "login_password",
-    color: "bg-red-600",
-    siteUrl: "https://www.yacco.com",
-    docsUrl: "https://www.yacco.com/preconisations",
-    features: ["Préconisations huile", "Catalogue produits", "Fiches techniques"],
-    requiresSubscription: false,
-  },
-  {
-    id: "total_lubrifiants",
-    name: "TotalEnergies Lubrifiants",
-    description: "Préconisations et catalogue lubrifiants TotalEnergies pour professionnels.",
-    category: "lubrifiants",
-    authType: "login_password",
-    color: "bg-red-500",
-    siteUrl: "https://lubricants.totalenergies.com",
-    docsUrl: "https://lubricants.totalenergies.com",
-    features: ["Préconisations huile", "Catalogue Quartz/Rubia", "Fiches de sécurité"],
-    requiresSubscription: false,
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte client Yacco requis",
+    docsUrl: "https://yacco.com",
+    fonctionnalites: ["Préconisation lubrifiants", "Commande en ligne", "Documentation technique"],
   },
 
-  // === GESTION ATELIER ===
+  // ── GESTION ATELIER ──
   {
     id: "vroomly",
-    name: "Vroomly",
-    description: "Plateforme de gestion atelier, devis et prise de rendez-vous en ligne.",
-    category: "atelier",
+    nom: "Vroomly",
+    description: "Réseau de garagistes certifiés. Gestion des rendez-vous, devis en ligne, visibilité web.",
+    categorie: "gestion_atelier",
+    logo: "🔴",
+    couleur: "#EF4444",
+    siteUrl: "https://vroomly.com/professional/login/",
     authType: "login_password",
-    color: "bg-green-600",
-    siteUrl: "https://www.vroomly.com",
-    docsUrl: "https://www.vroomly.com",
-    features: ["Gestion atelier", "Devis en ligne", "Rendez-vous", "Facturation"],
-    requiresSubscription: true,
-  },
-  {
-    id: "mecaplanning",
-    name: "MecaPlanning",
-    description: "Logiciel de planification atelier et gestion des interventions mécaniques.",
-    category: "atelier",
-    authType: "login_password",
-    color: "bg-lime-600",
-    siteUrl: "https://www.mecaplanning.com",
-    docsUrl: "https://www.mecaplanning.com",
-    features: ["Planning atelier", "OR numérique", "Suivi temps", "Facturation"],
-    requiresSubscription: true,
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Certification Vroomly requise",
+    docsUrl: "https://vroomly.com",
+    fonctionnalites: ["Gestion rendez-vous", "Devis en ligne", "Avis clients", "Visibilité web"],
   },
 
-  // === DIFFUSION ANNONCES ===
+  // ── DIFFUSION ANNONCES ──
   {
-    id: "leboncoin",
-    name: "Leboncoin",
-    description: "Diffusion automatique de vos annonces véhicules sur Leboncoin.",
-    category: "diffusion",
-    authType: "login_password",
-    color: "bg-orange-500",
+    id: "leboncoin-api",
+    nom: "Leboncoin",
+    description: "Diffusion d'annonces véhicules sur Leboncoin. Publication automatique depuis votre stock.",
+    categorie: "diffusion_annonces",
+    logo: "🟠",
+    couleur: "#F97316",
     siteUrl: "https://www.leboncoin.fr",
+    authType: "api_token",
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "API Leboncoin Pro requise",
     docsUrl: "https://www.leboncoin.fr",
-    features: ["Publication annonces", "Synchronisation stock", "Gestion statuts"],
-    requiresSubscription: true,
+    fonctionnalites: ["Publication annonces", "Mise à jour automatique", "Gestion des contacts"],
   },
   {
-    id: "autoscout24",
-    name: "AutoScout24",
-    description: "Diffusion de vos annonces sur AutoScout24, leader européen.",
-    category: "diffusion",
-    authType: "login_password",
-    color: "bg-yellow-500",
+    id: "autoscout24-api",
+    nom: "AutoScout24",
+    description: "Diffusion d'annonces sur AutoScout24 Europe.",
+    categorie: "diffusion_annonces",
+    logo: "🟡",
+    couleur: "#F59E0B",
     siteUrl: "https://www.autoscout24.fr",
+    authType: "api_token",
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte pro AutoScout24 requis",
     docsUrl: "https://www.autoscout24.fr",
-    features: ["Publication annonces", "Audience européenne", "Statistiques vues"],
-    requiresSubscription: true,
+    fonctionnalites: ["Publication annonces", "Diffusion européenne"],
   },
   {
-    id: "lacentrale",
-    name: "LaCentrale",
-    description: "Diffusion sur LaCentrale, référence du marché VO en France.",
-    category: "diffusion",
-    authType: "login_password",
-    color: "bg-blue-500",
+    id: "lacentrale-api",
+    nom: "LaCentrale",
+    description: "Diffusion d'annonces sur LaCentrale.fr.",
+    categorie: "diffusion_annonces",
+    logo: "🔵",
+    couleur: "#2563EB",
     siteUrl: "https://www.lacentrale.fr",
+    authType: "api_token",
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Compte pro LaCentrale requis",
     docsUrl: "https://www.lacentrale.fr",
-    features: ["Publication annonces", "Côte véhicule", "Visibilité nationale"],
-    requiresSubscription: true,
-  },
-  {
-    id: "paruvendu",
-    name: "ParuVendu",
-    description: "Diffusion d'annonces véhicules sur ParuVendu Auto.",
-    category: "diffusion",
-    authType: "login_password",
-    color: "bg-rose-500",
-    siteUrl: "https://www.paruvendu.fr",
-    docsUrl: "https://www.paruvendu.fr",
-    features: ["Publication annonces", "Audience nationale", "Gestion multi-annonces"],
-    requiresSubscription: true,
-  },
-  {
-    id: "facebook_marketplace",
-    name: "Facebook Marketplace",
-    description: "Publication automatique sur Facebook Marketplace et pages professionnelles.",
-    category: "diffusion",
-    authType: "token",
-    color: "bg-blue-700",
-    siteUrl: "https://www.facebook.com/marketplace",
-    docsUrl: "https://developers.facebook.com/docs/marketing-apis",
-    features: ["Publication automatique", "Audience locale", "Ciblage géographique", "Intégration page pro"],
-    requiresSubscription: false,
+    fonctionnalites: ["Publication annonces", "Mise à jour automatique"],
   },
 
-  // === GARANTIES ===
+  // ── GARANTIES ──
   {
-    id: "ams",
-    name: "AMS Garantie",
-    description: "Garanties mécaniques pour véhicules d'occasion (9 formules disponibles).",
-    category: "garanties",
+    id: "ams-garanties",
+    nom: "AMS Garanties",
+    description: "Société de garantie panne mécanique. Gestion des contrats, conditions, PDF à joindre aux factures.",
+    categorie: "garanties",
+    logo: "🛡️",
+    couleur: "#7C3AED",
+    siteUrl: "https://www.amsassistance.com/game_ams",
     authType: "login_password",
-    color: "bg-purple-600",
-    siteUrl: "https://www.ams-garantie.com",
-    docsUrl: "https://www.ams-garantie.com",
-    features: ["9 formules garantie", "Tarifs par véhicule", "PDF conditions", "Attestation en ligne"],
-    requiresSubscription: true,
-  },
-  {
-    id: "opteven",
-    name: "Opteven",
-    description: "Solutions de garantie panne mécanique et assistance pour véhicules d'occasion.",
-    category: "garanties",
-    authType: "login_password",
-    color: "bg-violet-600",
-    siteUrl: "https://www.opteven.com",
-    docsUrl: "https://www.opteven.com",
-    features: ["Garantie panne mécanique", "Assistance 24/7", "Réseau réparateurs agréés", "Gestion en ligne"],
-    requiresSubscription: true,
-  },
-  {
-    id: "icare",
-    name: "iCare by GPA",
-    description: "Garanties constructeur étendues et garanties VO multimarques.",
-    category: "garanties",
-    authType: "login_password",
-    color: "bg-fuchsia-600",
-    siteUrl: "https://www.gpa.fr",
-    docsUrl: "https://www.gpa.fr",
-    features: ["Garantie constructeur étendue", "Garantie VO", "Interface pro", "Certificat en ligne"],
-    requiresSubscription: true,
-  },
-
-  // === FINANCEMENT ===
-  {
-    id: "cetelem",
-    name: "Cetelem (BNP Paribas)",
-    description: "Solutions de financement auto et crédit pour particuliers via votre concession.",
-    category: "financement",
-    authType: "login_password",
-    color: "bg-green-700",
-    siteUrl: "https://www.cetelem.fr",
-    docsUrl: "https://www.cetelem.fr/professionnels",
-    features: ["Crédit auto", "LOA / LLD", "Simulation en ligne", "Dossier dématérialisé"],
-    requiresSubscription: true,
-  },
-  {
-    id: "cofidis",
-    name: "Cofidis",
-    description: "Crédit auto et financement pour professionnels de l'automobile.",
-    category: "financement",
-    authType: "login_password",
-    color: "bg-yellow-600",
-    siteUrl: "https://www.cofidis.fr",
-    docsUrl: "https://www.cofidis.fr/professionnels",
-    features: ["Crédit classique", "LOA", "Scoring instantané", "API partenaire"],
-    requiresSubscription: true,
-  },
-
-  // === LOGISTIQUE ===
-  {
-    id: "allo_trans_auto",
-    name: "AlloTransAuto",
-    description: "Transport de véhicules par camion plateau entre professionnels.",
-    category: "logistique",
-    authType: "login_password",
-    color: "bg-gray-600",
-    siteUrl: "https://www.allotransauto.com",
-    docsUrl: "https://www.allotransauto.com",
-    features: ["Devis transport", "Suivi livraison", "Plateau / remorque", "France entière"],
-    requiresSubscription: false,
-  },
-
-  // === CONTRÔLE TECHNIQUE ===
-  {
-    id: "utac_otc",
-    name: "UTAC OTC",
-    description: "Accès aux données de contrôle technique et résultats OTC (Organisme Technique Central).",
-    category: "controle",
-    authType: "login_password",
-    color: "bg-stone-600",
-    siteUrl: "https://www.utac-otc.com",
-    docsUrl: "https://www.utac-otc.com",
-    features: ["Résultats CT", "Historique contrôles", "Points de contrôle", "Contre-visite"],
-    requiresSubscription: true,
-  },
-
-  // === ASSURANCE ===
-  {
-    id: "assurance_pro",
-    name: "Assurance Garage Pro",
-    description: "Assurance tous risques garage, responsabilité civile pro et couverture stock.",
-    category: "assurance",
-    authType: "login_password",
-    color: "bg-pink-600",
-    siteUrl: "https://www.ffsa.fr",
-    docsUrl: "https://www.ffsa.fr",
-    features: ["RC Pro garage", "Assurance stock", "Garantie essai route", "Couverture incendie/vol"],
-    requiresSubscription: true,
+    credentials: {},
+    actif: true,
+    connecte: false,
+    abonnementRequis: true,
+    abonnementLabel: "Partenariat AMS requis",
+    docsUrl: "https://ams.sng.pt/garanties/conditions-particulieres/",
+    fonctionnalites: ["Garantie panne mécanique", "9 niveaux de couverture", "PDF conditions particulières"],
   },
 ];
+
+// ─── UTILITAIRE ───
+
+/** Récupère le token/credentials d'un connecteur par son ID */
+export function getConnecteurCredentials(
+  connecteurs: ConnecteurConfig[],
+  connecteurId: string
+): ConnecteurCredentials | null {
+  const c = connecteurs.find(x => x.id === connecteurId);
+  if (!c || !c.actif || !c.connecte) return null;
+  return c.credentials;
+}
+
+/** Vérifie si un connecteur est configuré et actif */
+export function isConnecteurReady(
+  connecteurs: ConnecteurConfig[],
+  connecteurId: string
+): boolean {
+  const c = connecteurs.find(x => x.id === connecteurId);
+  return !!c && c.actif && c.connecte;
+}

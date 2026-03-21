@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, ArrowRight, Link, Lock, Shield, FileText, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { AMS_GARANTIES } from "@/types/vehicle";
 import PlaqueScanner from "./PlaqueScanner";
-import type { PlaqueDecodedData } from "@/types/vehicle";
+import type { PlaqueResultData } from "./PlaqueScanner";
 
 interface Props {
   onClose: () => void;

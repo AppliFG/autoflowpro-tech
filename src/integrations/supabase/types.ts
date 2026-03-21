@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      demandes_devis: {
+        Row: {
+          annee: number | null
+          chat_id: number | null
+          created_at: string | null
+          id: string
+          immatriculation: string | null
+          marque: string | null
+          modele: string | null
+          notes: string | null
+          pieces_demandees: string
+          statut: string | null
+          updated_at: string | null
+          vehicule_id: string | null
+        }
+        Insert: {
+          annee?: number | null
+          chat_id?: number | null
+          created_at?: string | null
+          id?: string
+          immatriculation?: string | null
+          marque?: string | null
+          modele?: string | null
+          notes?: string | null
+          pieces_demandees: string
+          statut?: string | null
+          updated_at?: string | null
+          vehicule_id?: string | null
+        }
+        Update: {
+          annee?: number | null
+          chat_id?: number | null
+          created_at?: string | null
+          id?: string
+          immatriculation?: string | null
+          marque?: string | null
+          modele?: string | null
+          notes?: string | null
+          pieces_demandees?: string
+          statut?: string | null
+          updated_at?: string | null
+          vehicule_id?: string | null
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           ai_extracted_data: Json | null
@@ -437,6 +482,57 @@ export type Database = {
           phone?: string | null
           telegram?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_admins: {
+        Row: {
+          chat_id: number
+          created_at: string | null
+          id: string
+          nom: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string | null
+          id?: string
+          nom?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string | null
+          id?: string
+          nom?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      telegram_sessions: {
+        Row: {
+          chat_id: number
+          data_json: Json | null
+          etape: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          chat_id: number
+          data_json?: Json | null
+          etape?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          chat_id?: number
+          data_json?: Json | null
+          etape?: string
+          id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

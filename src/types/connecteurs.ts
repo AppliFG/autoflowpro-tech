@@ -290,6 +290,25 @@ export const CONNECTEURS_DISPONIBLES: ConnecteurConfig[] = [
     docsUrl: "https://ams.sng.pt/garanties/conditions-particulieres/",
     fonctionnalites: ["Garantie panne mécanique", "9 niveaux de couverture", "PDF conditions particulières"],
   },
+
+  // ── AUTRE ──
+  {
+    id: "telegram-bot",
+    nom: "Telegram Bot",
+    description: "Bot Telegram pour envoyer des factures, consulter le stock, demander des devis pièces et recevoir des notifications — directement depuis votre téléphone.",
+    categorie: "autre",
+    logo: "✈️",
+    couleur: "#0088CC",
+    siteUrl: "https://t.me/",
+    authType: "api_token",
+    credentials: {},
+    actif: false,
+    connecte: false,
+    abonnementRequis: false,
+    abonnementLabel: "Gratuit — Créez votre bot via @BotFather sur Telegram",
+    docsUrl: "https://core.telegram.org/bots",
+    fonctionnalites: ["Envoi de factures PDF", "Demande de devis pièces", "Consultation du stock", "Notifications temps réel"],
+  },
 ];
 
 // ─── UTILITAIRE ───

@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2, Truck, History, Plus, Pencil, Plug } from "lucide-react";
+import { Building2, Users, FileText, Bell, Shield, BookOpen, Save, Upload, Lock, Eye, EyeOff, UserPlus, Trash2, Truck, History, Plus, Pencil, Plug, MessageCircle } from "lucide-react";
 import ParametresConnecteurs from "@/components/ParametresConnecteurs";
 import ParametresGaranties from "@/components/ParametresGaranties";
+import TelegramAdminSettings from "@/components/TelegramAdminSettings";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1098,6 +1099,30 @@ export default function Parametres() {
           {activeSection === "connecteurs" && (
             <div className="mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
               <ParametresConnecteurs />
+            </div>
+          )}
+        </div>
+
+        {/* Telegram Bot */}
+        <div
+          className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveSection(activeSection === "telegram" ? null : "telegram")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0088CC]/10 text-[#0088CC]">
+                <MessageCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-card-foreground">Telegram Bot</h3>
+                <p className="text-xs text-muted-foreground">Gérer les administrateurs du bot Telegram</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">{activeSection === "telegram" ? "Fermer" : "Configurer"}</Button>
+          </div>
+          {activeSection === "telegram" && (
+            <div className="mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
+              <TelegramAdminSettings />
             </div>
           )}
         </div>

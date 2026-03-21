@@ -25,6 +25,7 @@ export default function PlaqueScanner({ onDecoded }: Props) {
     try {
       const result = await decodePlaque(plaque);
       setIsDemo(result.isDemo);
+      setPlaqueType(result.plaqueType);
       if (result.error) {
         setError(result.error);
       } else if (result.data) {

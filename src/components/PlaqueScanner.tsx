@@ -15,6 +15,7 @@ export default function PlaqueScanner({ onDecoded }: Props) {
   const [isDemo, setIsDemo] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [found, setFound] = useState(false);
+  const [plaqueType, setPlaqueType] = useState<PlaqueType | null>(null);
 
   const handleSearch = async () => {
     if (!plaque.trim()) return;

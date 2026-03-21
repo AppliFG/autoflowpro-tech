@@ -8,7 +8,7 @@ import { ArrowLeft, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PlaqueScanner from "./PlaqueScanner";
-import type { PlaqueDecodedData } from "@/types/vehicle";
+import type { PlaqueResultData } from "./PlaqueScanner";
 
 interface VehicleFormData {
   id?: string;

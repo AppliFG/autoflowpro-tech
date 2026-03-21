@@ -1126,6 +1126,8 @@ export default function Parametres() {
             </div>
           )}
         </div>
+
+        <div
           className="rounded-xl border border-border bg-card p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveSection(activeSection === "securite" ? null : "securite")}
         >

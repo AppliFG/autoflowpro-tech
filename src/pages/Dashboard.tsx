@@ -5,7 +5,7 @@ import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import KpiCard from "@/components/KpiCard";
 import WeekAgendaWidget from "@/components/WeekAgendaWidget";
 import UpcomingEventsAlert from "@/components/UpcomingEventsAlert";
-import { Car, Euro, TrendingUp, Users, Clock, AlertTriangle, Settings2 } from "lucide-react";
+import { Car, Euro, TrendingUp, Users, Clock, AlertTriangle, Settings2, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
@@ -13,9 +13,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
 const SECTIONS_CONFIG = [
+  { key: "agenda", label: "Agenda semaine" },
   { key: "kpis", label: "KPIs principaux" },
   { key: "kpis2", label: "KPIs secondaires" },
-  { key: "agenda", label: "Agenda semaine" },
   { key: "alerts", label: "Rappels" },
 ] as const;
 
@@ -134,6 +134,13 @@ export default function Dashboard() {
         </Popover>
       </div>
 
+      {/* Agenda de la semaine EN PREMIER */}
+      {visibility.agenda && (
+        <div className="mb-6">
+          <WeekAgendaWidget />
+        </div>
+      )}
+
       {/* Rappels */}
       {visibility.alerts && (
         <div className="mb-6">
@@ -141,29 +148,22 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* KPIs principaux */}
+      {/* KPIs principaux - 4 cards */}
       {visibility.kpis && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} />
-          <KpiCard title="Valeur stock" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} />
-          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "default"} />
-          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" />
+          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} variant="default" />
+          <KpiCard title="Valeur stock" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} variant="accent" />
+          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "destructive"} />
+          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" variant="violet" />
         </div>
       )}
 
-      {/* KPIs secondaires */}
+      {/* KPIs secondaires - 3 cards */}
       {visibility.kpis2 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Car className="h-5 w-5" />} subtitle="Mandats actifs" />
-          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" />
+          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Handshake className="h-5 w-5" />} subtitle="Mandats actifs" variant="default" />
+          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" variant="accent" />
           <KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} />
-        </div>
-      )}
-
-      {/* Agenda semaine */}
-      {visibility.agenda && (
-        <div className="mb-6">
-          <WeekAgendaWidget />
         </div>
       )}
     </AppLayout>

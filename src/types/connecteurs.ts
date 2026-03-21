@@ -2,7 +2,7 @@ export interface ConnecteurConfig {
   id: string;
   name: string;
   description: string;
-  category: "identification" | "pieces" | "lubrifiants" | "diffusion" | "garanties" | "atelier";
+  category: "identification" | "pieces" | "lubrifiants" | "diffusion" | "garanties" | "atelier" | "financement" | "logistique" | "controle" | "assurance";
   authType: "token" | "login_password";
   color: string;
   siteUrl: string;
@@ -28,9 +28,14 @@ export const CATEGORY_LABELS: Record<string, string> = {
   diffusion: "Diffusion annonces",
   garanties: "Garanties",
   atelier: "Gestion atelier",
+  financement: "Financement & Crédit",
+  logistique: "Logistique & Transport",
+  controle: "Contrôle technique",
+  assurance: "Assurance",
 };
 
 export const CONNECTEURS: ConnecteurConfig[] = [
+  // === IDENTIFICATION ===
   {
     id: "api_plaque",
     name: "API Plaque Immatriculation",
@@ -40,7 +45,7 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     color: "bg-blue-600",
     siteUrl: "https://www.apiplaqueimmatriculation.com",
     docsUrl: "https://www.apiplaqueimmatriculation.com/documentation",
-    features: ["Recherche par plaque", "Décodage VIN", "Données techniques complètes", "K-Type TecDoc"],
+    features: ["Recherche par plaque SIV", "Plaques FNI anciennes", "Plaques étrangères EU", "Décodage VIN", "Données techniques complètes", "K-Type TecDoc"],
     requiresSubscription: true,
   },
   {
@@ -55,6 +60,32 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     features: ["Vérification immatriculation", "Historique véhicule", "Situation administrative"],
     requiresSubscription: true,
   },
+  {
+    id: "histovec",
+    name: "HistoVec",
+    description: "Historique officiel du véhicule fourni par le Ministère de l'Intérieur (sinistres, km, propriétaires).",
+    category: "identification",
+    authType: "token",
+    color: "bg-blue-800",
+    siteUrl: "https://histovec.interieur.gouv.fr",
+    docsUrl: "https://histovec.interieur.gouv.fr",
+    features: ["Historique sinistres", "Kilométrage certifié", "Nombre de propriétaires", "Rapport officiel"],
+    requiresSubscription: false,
+  },
+  {
+    id: "vin_decoder",
+    name: "VIN Decoder (NHTSA)",
+    description: "Décodage du numéro VIN pour obtenir les spécifications constructeur (mondial).",
+    category: "identification",
+    authType: "token",
+    color: "bg-slate-600",
+    siteUrl: "https://vpic.nhtsa.dot.gov",
+    docsUrl: "https://vpic.nhtsa.dot.gov/api/",
+    features: ["Décodage VIN mondial", "Specs constructeur", "Rappels sécurité", "API gratuite"],
+    requiresSubscription: false,
+  },
+
+  // === PIÈCES DÉTACHÉES ===
   {
     id: "tecdoc",
     name: "TecDoc",
@@ -104,6 +135,32 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     requiresSubscription: true,
   },
   {
+    id: "oscaro_pro",
+    name: "Oscaro Pro",
+    description: "Catalogue et commande de pièces détachées pour professionnels.",
+    category: "pieces",
+    authType: "login_password",
+    color: "bg-sky-600",
+    siteUrl: "https://www.oscaro.com",
+    docsUrl: "https://www.oscaro.com/pro",
+    features: ["Catalogue pièces", "Tarifs pro", "Livraison express", "Retours simplifiés"],
+    requiresSubscription: false,
+  },
+  {
+    id: "autodoc_pro",
+    name: "Autodoc Pro",
+    description: "Plateforme européenne de commande de pièces auto pour professionnels.",
+    category: "pieces",
+    authType: "login_password",
+    color: "bg-emerald-600",
+    siteUrl: "https://www.autodoc.fr",
+    docsUrl: "https://www.autodoc.fr",
+    features: ["Pièces multimarques", "Prix compétitifs", "Livraison EU", "API catalogue"],
+    requiresSubscription: false,
+  },
+
+  // === LUBRIFIANTS ===
+  {
     id: "yacco",
     name: "Yacco",
     description: "Préconisations lubrifiants et huiles moteur par véhicule.",
@@ -116,6 +173,20 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     requiresSubscription: false,
   },
   {
+    id: "total_lubrifiants",
+    name: "TotalEnergies Lubrifiants",
+    description: "Préconisations et catalogue lubrifiants TotalEnergies pour professionnels.",
+    category: "lubrifiants",
+    authType: "login_password",
+    color: "bg-red-500",
+    siteUrl: "https://lubricants.totalenergies.com",
+    docsUrl: "https://lubricants.totalenergies.com",
+    features: ["Préconisations huile", "Catalogue Quartz/Rubia", "Fiches de sécurité"],
+    requiresSubscription: false,
+  },
+
+  // === GESTION ATELIER ===
+  {
     id: "vroomly",
     name: "Vroomly",
     description: "Plateforme de gestion atelier, devis et prise de rendez-vous en ligne.",
@@ -127,6 +198,20 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     features: ["Gestion atelier", "Devis en ligne", "Rendez-vous", "Facturation"],
     requiresSubscription: true,
   },
+  {
+    id: "mecaplanning",
+    name: "MecaPlanning",
+    description: "Logiciel de planification atelier et gestion des interventions mécaniques.",
+    category: "atelier",
+    authType: "login_password",
+    color: "bg-lime-600",
+    siteUrl: "https://www.mecaplanning.com",
+    docsUrl: "https://www.mecaplanning.com",
+    features: ["Planning atelier", "OR numérique", "Suivi temps", "Facturation"],
+    requiresSubscription: true,
+  },
+
+  // === DIFFUSION ANNONCES ===
   {
     id: "leboncoin",
     name: "Leboncoin",
@@ -164,6 +249,32 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     requiresSubscription: true,
   },
   {
+    id: "paruvendu",
+    name: "ParuVendu",
+    description: "Diffusion d'annonces véhicules sur ParuVendu Auto.",
+    category: "diffusion",
+    authType: "login_password",
+    color: "bg-rose-500",
+    siteUrl: "https://www.paruvendu.fr",
+    docsUrl: "https://www.paruvendu.fr",
+    features: ["Publication annonces", "Audience nationale", "Gestion multi-annonces"],
+    requiresSubscription: true,
+  },
+  {
+    id: "facebook_marketplace",
+    name: "Facebook Marketplace",
+    description: "Publication automatique sur Facebook Marketplace et pages professionnelles.",
+    category: "diffusion",
+    authType: "token",
+    color: "bg-blue-700",
+    siteUrl: "https://www.facebook.com/marketplace",
+    docsUrl: "https://developers.facebook.com/docs/marketing-apis",
+    features: ["Publication automatique", "Audience locale", "Ciblage géographique", "Intégration page pro"],
+    requiresSubscription: false,
+  },
+
+  // === GARANTIES ===
+  {
     id: "ams",
     name: "AMS Garantie",
     description: "Garanties mécaniques pour véhicules d'occasion (9 formules disponibles).",
@@ -173,6 +284,98 @@ export const CONNECTEURS: ConnecteurConfig[] = [
     siteUrl: "https://www.ams-garantie.com",
     docsUrl: "https://www.ams-garantie.com",
     features: ["9 formules garantie", "Tarifs par véhicule", "PDF conditions", "Attestation en ligne"],
+    requiresSubscription: true,
+  },
+  {
+    id: "opteven",
+    name: "Opteven",
+    description: "Solutions de garantie panne mécanique et assistance pour véhicules d'occasion.",
+    category: "garanties",
+    authType: "login_password",
+    color: "bg-violet-600",
+    siteUrl: "https://www.opteven.com",
+    docsUrl: "https://www.opteven.com",
+    features: ["Garantie panne mécanique", "Assistance 24/7", "Réseau réparateurs agréés", "Gestion en ligne"],
+    requiresSubscription: true,
+  },
+  {
+    id: "icare",
+    name: "iCare by GPA",
+    description: "Garanties constructeur étendues et garanties VO multimarques.",
+    category: "garanties",
+    authType: "login_password",
+    color: "bg-fuchsia-600",
+    siteUrl: "https://www.gpa.fr",
+    docsUrl: "https://www.gpa.fr",
+    features: ["Garantie constructeur étendue", "Garantie VO", "Interface pro", "Certificat en ligne"],
+    requiresSubscription: true,
+  },
+
+  // === FINANCEMENT ===
+  {
+    id: "cetelem",
+    name: "Cetelem (BNP Paribas)",
+    description: "Solutions de financement auto et crédit pour particuliers via votre concession.",
+    category: "financement",
+    authType: "login_password",
+    color: "bg-green-700",
+    siteUrl: "https://www.cetelem.fr",
+    docsUrl: "https://www.cetelem.fr/professionnels",
+    features: ["Crédit auto", "LOA / LLD", "Simulation en ligne", "Dossier dématérialisé"],
+    requiresSubscription: true,
+  },
+  {
+    id: "cofidis",
+    name: "Cofidis",
+    description: "Crédit auto et financement pour professionnels de l'automobile.",
+    category: "financement",
+    authType: "login_password",
+    color: "bg-yellow-600",
+    siteUrl: "https://www.cofidis.fr",
+    docsUrl: "https://www.cofidis.fr/professionnels",
+    features: ["Crédit classique", "LOA", "Scoring instantané", "API partenaire"],
+    requiresSubscription: true,
+  },
+
+  // === LOGISTIQUE ===
+  {
+    id: "allo_trans_auto",
+    name: "AlloTransAuto",
+    description: "Transport de véhicules par camion plateau entre professionnels.",
+    category: "logistique",
+    authType: "login_password",
+    color: "bg-gray-600",
+    siteUrl: "https://www.allotransauto.com",
+    docsUrl: "https://www.allotransauto.com",
+    features: ["Devis transport", "Suivi livraison", "Plateau / remorque", "France entière"],
+    requiresSubscription: false,
+  },
+
+  // === CONTRÔLE TECHNIQUE ===
+  {
+    id: "utac_otc",
+    name: "UTAC OTC",
+    description: "Accès aux données de contrôle technique et résultats OTC (Organisme Technique Central).",
+    category: "controle",
+    authType: "login_password",
+    color: "bg-stone-600",
+    siteUrl: "https://www.utac-otc.com",
+    docsUrl: "https://www.utac-otc.com",
+    features: ["Résultats CT", "Historique contrôles", "Points de contrôle", "Contre-visite"],
+    requiresSubscription: true,
+  },
+
+  // === ASSURANCE ===
+  {
+    id: "assurance_pro",
+    name: "Assurance Garage Pro",
+    description: "Assurance tous risques garage, responsabilité civile pro et couverture stock.",
+    category: "assurance",
+    authType: "login_password",
+    color: "bg-pink-600",
+    siteUrl: "https://www.ffsa.fr",
+    docsUrl: "https://www.ffsa.fr",
+    features: ["RC Pro garage", "Assurance stock", "Garantie essai route", "Couverture incendie/vol"],
     requiresSubscription: true,
   },
 ];

@@ -6,43 +6,68 @@ interface KpiCardProps {
   subtitle?: string;
   icon: ReactNode;
   trend?: { value: number; positive: boolean };
-  variant?: "default" | "success" | "warning" | "destructive";
+  variant?: "default" | "success" | "warning" | "destructive" | "violet" | "accent";
+  color?: string;
 }
 
-const variantStyles = {
-  default: "border-border/50 bg-card",
-  success: "border-success/20 bg-gradient-to-br from-success/5 to-success/10",
-  warning: "border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10",
-  destructive: "border-destructive/20 bg-gradient-to-br from-destructive/5 to-destructive/10",
+const dotColors: Record<string, string> = {
+  default: "bg-primary",
+  success: "bg-success",
+  warning: "bg-accent",
+  destructive: "bg-destructive",
+  violet: "bg-violet",
+  accent: "bg-accent",
 };
 
-const iconVariantStyles = {
+const barColors: Record<string, string> = {
+  default: "bg-primary",
+  success: "bg-success",
+  warning: "bg-accent",
+  destructive: "bg-destructive",
+  violet: "bg-violet",
+  accent: "bg-accent",
+};
+
+const iconVariantStyles: Record<string, string> = {
   default: "bg-primary/10 text-primary",
   success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
+  warning: "bg-accent/15 text-accent",
   destructive: "bg-destructive/15 text-destructive",
+  violet: "bg-violet/15 text-violet",
+  accent: "bg-accent/15 text-accent",
 };
 
 export default function KpiCard({ title, value, subtitle, icon, trend, variant = "default" }: KpiCardProps) {
   return (
-    <div className={`group relative rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${variantStyles[variant]}`}>
+    <div className="group relative rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden">
+      {/* Color dot */}
+      <div className={`absolute top-4 right-4 h-2 w-2 rounded-full ${dotColors[variant]}`} />
+
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2 flex-1 min-w-0">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest leading-tight">{title}</p>
-          <p className="text-3xl font-extrabold text-card-foreground tracking-tight">{value}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-          {trend && (
-            <p className={`text-xs font-semibold flex items-center gap-1 ${trend.positive ? "text-success" : "text-destructive"}`}>
-              <span className={`inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] ${trend.positive ? "bg-success/15" : "bg-destructive/15"}`}>
-                {trend.positive ? "↑" : "↓"}
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[1px] leading-tight">{title}</p>
+          <p className="text-[30px] font-semibold text-card-foreground tracking-tight leading-none">{value}</p>
+          <div className="flex items-center gap-2">
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+            {trend && (
+              <span className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
+                trend.positive
+                  ? "text-success bg-success/10"
+                  : "text-destructive bg-destructive/10"
+              }`}>
+                {trend.positive ? "↑" : "↓"}{Math.abs(trend.value)}%
               </span>
-              {Math.abs(trend.value)}% vs mois dernier
-            </p>
-          )}
+            )}
+          </div>
         </div>
         <div className={`flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${iconVariantStyles[variant]}`}>
           {icon}
         </div>
+      </div>
+
+      {/* Bottom progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30">
+        <div className={`h-full ${barColors[variant]} rounded-full`} style={{ width: "60%" }} />
       </div>
     </div>
   );

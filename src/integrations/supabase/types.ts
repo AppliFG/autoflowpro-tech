@@ -89,6 +89,36 @@ export type Database = {
         }
         Relationships: []
       }
+      connector_credentials: {
+        Row: {
+          connector_id: string
+          created_at: string
+          enabled: boolean
+          encrypted_credentials: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          enabled?: boolean
+          encrypted_credentials?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          enabled?: boolean
+          encrypted_credentials?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           ai_extracted_data: Json | null

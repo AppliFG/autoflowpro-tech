@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.extract-expense]
 verify_jwt = false
+
+[functions.manage-connector-credentials]
+verify_jwt = false

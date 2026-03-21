@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   role: AppRole;
   roleLoading: boolean;
+  mustChangePassword: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   role: null,
   roleLoading: true,
+  mustChangePassword: false,
   signOut: async () => {},
 });
 
@@ -30,6 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const fetchRole = async (userId: string, retries = 3) => {
     setRoleLoading(true);
@@ -44,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRoleLoading(false);
         return;
       }
-      // Role might not be assigned yet (trigger delay), retry
       if (retries > 0) {
         setTimeout(() => fetchRole(userId, retries - 1), 1000);
         return;
@@ -60,6 +62,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setRoleLoading(false);
   };
 
+  const fetchMustChangePassword = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("user_id", userId)
+        .single();
+      setMustChangePassword(data?.must_change_password ?? false);
+    } catch {
+      setMustChangePassword(false);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -68,9 +83,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
         if (session?.user?.id) {
           setTimeout(() => fetchRole(session.user.id), 0);
+          fetchMustChangePassword(session.user.id);
         } else {
           setRole(null);
           setRoleLoading(false);
+          setMustChangePassword(false);
         }
       }
     );
@@ -81,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       if (session?.user?.id) {
         fetchRole(session.user.id);
+        fetchMustChangePassword(session.user.id);
       } else {
         setRoleLoading(false);
       }
@@ -94,7 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, role, roleLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, role, roleLoading, mustChangePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );

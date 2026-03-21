@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import ForcePasswordChange from "@/components/ForcePasswordChange";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { session, loading, role, roleLoading } = useAuth();
+  const { session, loading, role, roleLoading, mustChangePassword } = useAuth();
 
   if (loading || roleLoading) {
     return (
@@ -19,6 +20,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Force password change gate
+  if (mustChangePassword) {
+    return <ForcePasswordChange />;
   }
 
   // Dev role has full access to everything

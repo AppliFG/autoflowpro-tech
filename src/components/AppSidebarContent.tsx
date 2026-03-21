@@ -3,34 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppMode } from "@/hooks/useHostname";
 import {
-  LayoutDashboard,
-  Car,
-  HandCoins,
-  Megaphone,
-  Users,
-  ArrowLeftRight,
-  Package,
-  Settings,
-  CreditCard,
-  Puzzle,
-  Receipt,
-  Building2,
-  FileText,
-  Globe,
-  LogOut,
-  CalendarDays,
-  FileDown,
-  Download,
+  LayoutDashboard, Car, HandCoins, Megaphone, Users, ArrowLeftRight,
+  Package, Settings, CreditCard, Puzzle, Receipt, Building2, FileText,
+  Globe, LogOut, CalendarDays, FileDown, Download,
 } from "lucide-react";
 
 type AppRole = "admin" | "commercial" | "comptable" | "dev";
 
-interface NavItem {
-  icon: any;
-  label: string;
-  path: string;
-  roles?: AppRole[];
-}
+interface NavItem { icon: any; label: string; path: string; roles?: AppRole[]; }
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Tableau de bord", path: "/" },
@@ -58,10 +38,7 @@ const crmNavItems: NavItem[] = [
   { icon: ArrowLeftRight, label: "Reprises", path: "/reprises", roles: ["admin", "commercial"] },
 ];
 
-interface AppSidebarContentProps {
-  collapsed?: boolean;
-  onNavigate?: () => void;
-}
+interface AppSidebarContentProps { collapsed?: boolean; onNavigate?: () => void; }
 
 export default function AppSidebarContent({ collapsed = false, onNavigate }: AppSidebarContentProps) {
   const location = useLocation();
@@ -69,38 +46,31 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
   const { signOut, user, role } = useAuth();
 
   const roleLabels: Record<string, string> = {
-    admin: "Admin",
-    commercial: "Commercial",
-    comptable: "Comptable",
-    dev: "Dev",
+    admin: "Admin", commercial: "Commercial", comptable: "Comptable", dev: "Dev",
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
-  };
+  const handleSignOut = async () => { await signOut(); navigate("/login"); };
 
   const mode = useAppMode();
   const sourceItems = mode === 'crm' ? crmNavItems : navItems;
-
   const filteredNavItems = sourceItems.filter((item) => {
-    if (role === "dev") return true; // Dev has full access
+    if (role === "dev") return true;
     if (!item.roles) return true;
     if (!role) return false;
     return item.roles.includes(role);
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gradient-to-b from-primary to-primary-dark">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm shrink-0">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/15">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary font-bold text-sm shrink-0">
           AF
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight">{mode === 'crm' ? 'AutoFlow CRM' : 'AutoFlow Pro'}</h1>
-            <p className="text-[10px] opacity-70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
+            <h1 className="text-base font-bold tracking-tight text-white">{mode === 'crm' ? 'AutoFlow CRM' : 'AutoFlow Pro'}</h1>
+            <p className="text-[10px] text-white/70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
           </div>
         )}
       </div>
@@ -116,8 +86,8 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
               onClick={onNavigate}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  ? "bg-white/20 text-white"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
               }`}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
@@ -128,12 +98,12 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
       </nav>
 
       {/* User & Logout */}
-      <div className="border-t border-sidebar-border p-3 space-y-2">
+      <div className="border-t border-white/15 p-3 space-y-2">
         {!collapsed && user && (
           <div className="px-1 space-y-1">
-            <p className="text-xs text-sidebar-foreground/60 truncate">{user.email}</p>
+            <p className="text-xs text-white/60 truncate">{user.email}</p>
             {role && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-white/20 text-white border-0">
                 {roleLabels[role] || role}
               </Badge>
             )}
@@ -141,7 +111,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
         )}
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
+          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
         >
           <LogOut className="h-[18px] w-[18px] shrink-0" />
           {!collapsed && <span>Déconnexion</span>}

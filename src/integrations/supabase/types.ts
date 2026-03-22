@@ -92,6 +92,7 @@ export type Database = {
       connecteurs_config: {
         Row: {
           actif: boolean
+          connecte: boolean
           connecteur_id: string
           created_at: string | null
           credentials: Json
@@ -101,6 +102,7 @@ export type Database = {
         }
         Insert: {
           actif?: boolean
+          connecte?: boolean
           connecteur_id: string
           created_at?: string | null
           credentials?: Json
@@ -110,6 +112,7 @@ export type Database = {
         }
         Update: {
           actif?: boolean
+          connecte?: boolean
           connecteur_id?: string
           created_at?: string | null
           credentials?: Json

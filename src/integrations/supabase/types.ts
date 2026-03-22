@@ -89,6 +89,36 @@ export type Database = {
         }
         Relationships: []
       }
+      connecteurs_config: {
+        Row: {
+          actif: boolean
+          connecteur_id: string
+          created_at: string | null
+          credentials: Json
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actif?: boolean
+          connecteur_id: string
+          created_at?: string | null
+          credentials?: Json
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actif?: boolean
+          connecteur_id?: string
+          created_at?: string | null
+          credentials?: Json
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       connector_credentials: {
         Row: {
           connector_id: string

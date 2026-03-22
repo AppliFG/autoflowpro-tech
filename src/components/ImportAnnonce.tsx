@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, ArrowRight, Link, Lock, Shield, FileText, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
-import { AMS_GARANTIES } from "@/types/vehicle";
+import type { GarantieOption } from "@/types/vehicle";
 import PlaqueScanner from "./PlaqueScanner";
 import type { PlaqueResultData } from "./PlaqueScanner";
+import { supabase } from "@/integrations/supabase/client";
 import { useConnecteurs } from "@/hooks/useConnecteurs";
 
 interface Props {
@@ -57,11 +58,27 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [customEquipment, setCustomEquipment] = useState("");
   const [garantieId, setGarantieId] = useState("");
-  const [garantieDuration, setGarantieDuration] = useState<number>(6);
-  const [garantieMode, setGarantieMode] = useState<"inclus" | "ajout">("ajout");
+  const [garantiesList, setGarantiesList] = useState<GarantieOption[]>([]);
   const [fraisMiseEnRoute, setFraisMiseEnRoute] = useState<number | "">(0);
   const [fraisCarteGrise, setFraisCarteGrise] = useState<number | "">(0);
   const [fraisAssurance, setFraisAssurance] = useState<number | "">(0);
+
+  // Load garanties from settings
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "garanties_list")
+        .maybeSingle();
+      if (data?.value) {
+        try {
+          const list = JSON.parse(data.value) as GarantieOption[];
+          setGarantiesList(list.filter((g) => g.active));
+        } catch { /* ignore */ }
+      }
+    })();
+  }, []);
 
   // Collapsibles
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ confidential: true, main: true });
@@ -94,9 +111,8 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
     setCustomEquipment("");
   };
 
-  const selectedGarantie = AMS_GARANTIES.find((g) => g.id === garantieId);
-  const selectedDuration = selectedGarantie?.durations.find((d) => d.months === garantieDuration);
-  const garantiePrice = garantieMode === "ajout" ? (selectedDuration?.priceHT || 0) : 0;
+  const selectedGarantie = garantiesList.find((g) => g.id === garantieId);
+  const garantiePrice = selectedGarantie?.costHT || 0;
   const totalFrais = (Number(fraisMiseEnRoute) || 0) + (Number(fraisCarteGrise) || 0) + (Number(fraisAssurance) || 0);
   const totalFacture = (Number(sellingPrice) || 0) + totalFrais + garantiePrice;
 
@@ -105,7 +121,7 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
       vin, registration, brand, model, version, year, mileage, fuelType, color,
       powerDIN, cvFiscaux, purchasePrice, sellingPrice, description, policeNumber,
       equipments: selectedEquipments,
-      garantie: garantieId ? { optionId: garantieId, durationMonths: garantieDuration, mode: garantieMode } : undefined,
+      garantie: selectedGarantie ? { optionId: selectedGarantie.id, name: selectedGarantie.name, costHT: selectedGarantie.costHT } : undefined,
       frais: { miseEnRoute: Number(fraisMiseEnRoute) || 0, carteGrise: Number(fraisCarteGrise) || 0, assurance: Number(fraisAssurance) || 0, autres: 0 },
       platform,
     });
@@ -253,30 +269,13 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
                   <SelectTrigger className="text-xs"><SelectValue placeholder="Sélectionner une garantie..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucune garantie</SelectItem>
-                    {AMS_GARANTIES.filter((g) => g.active).map((g) => (
-                      <SelectItem key={g.id} value={g.id}>{g.name} — {g.provider} ({g.vehicleType})</SelectItem>
+                    {garantiesList.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>{g.name} — {g.costHT}€ HT</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedGarantie && (
-                  <div className="flex gap-3 items-center">
-                    <Select value={String(garantieDuration)} onValueChange={(v) => setGarantieDuration(Number(v))}>
-                      <SelectTrigger className="text-xs w-24"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {selectedGarantie.durations.map((d) => <SelectItem key={d.months} value={String(d.months)}>{d.months} mois</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select value={garantieMode} onValueChange={(v) => setGarantieMode(v as "inclus" | "ajout")}>
-                      <SelectTrigger className="text-xs w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ajout">En supplément</SelectItem>
-                        <SelectItem value="inclus">Incluse</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {selectedDuration && (
-                      <span className="text-xs text-muted-foreground">{selectedDuration.priceHT}€ HT</span>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground">Coût : {selectedGarantie.costHT}€ HT</p>
                 )}
               </div>
             )}

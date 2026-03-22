@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { GarantieOption } from "@/types/vehicle";
 
 interface InvoiceDialogProps {
   open: boolean;
@@ -21,9 +23,30 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
   const [clientEmail, setClientEmail] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
+  const [garantieId, setGarantieId] = useState("none");
+  const [garantiesList, setGarantiesList] = useState<GarantieOption[]>([]);
   const [generating, setGenerating] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultNumber, setResultNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "garanties_list")
+        .maybeSingle();
+      if (data?.value) {
+        try {
+          const list = JSON.parse(data.value) as GarantieOption[];
+          setGarantiesList(list.filter((g) => g.active));
+        } catch { /* ignore */ }
+      }
+    })();
+  }, [open]);
+
+  const selectedGarantie = garantiesList.find((g) => g.id === garantieId);
 
   const handleGenerate = async () => {
     if (!clientNom.trim()) {
@@ -41,6 +64,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
           client_email: clientEmail || undefined,
           invoice_number: invoiceNumber || undefined,
           deposit_amount: parseFloat(depositAmount) || 0,
+          garantie: selectedGarantie ? { name: selectedGarantie.name, costHT: selectedGarantie.costHT } : undefined,
         },
       });
       if (error) throw new Error(error.message);
@@ -62,6 +86,7 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
     setClientEmail("");
     setInvoiceNumber("");
     setDepositAmount("");
+    setGarantieId("none");
     setResultUrl(null);
     setResultNumber(null);
     onOpenChange(false);
@@ -139,6 +164,31 @@ export default function InvoiceDialog({ open, onOpenChange, vehicleId, vehicleLa
             />
             <p className="text-xs text-muted-foreground mt-1">Laissez à 0 si aucun acompte n'a été versé.</p>
           </div>
+
+          {/* Garantie */}
+          {garantiesList.length > 0 && (
+            <div>
+              <Label>Garantie (optionnel)</Label>
+              <Select value={garantieId} onValueChange={setGarantieId}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Aucune garantie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucune garantie</SelectItem>
+                  {garantiesList.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name} — {g.costHT}€ HT
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedGarantie && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Le montant de {selectedGarantie.costHT}€ HT sera ajouté à la facture.
+                </p>
+              )}
+            </div>
+          )}
 
           {resultUrl && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">

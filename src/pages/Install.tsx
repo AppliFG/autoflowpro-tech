@@ -51,8 +51,15 @@ export default function Install() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Back button */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+      </div>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 px-6 pt-16 pb-12 text-center">
+      <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 px-6 pt-12 pb-12 text-center">
         <div className="mx-auto max-w-md">
           <div className="h-20 w-20 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-6">
             <Smartphone className="h-10 w-10 text-primary" />

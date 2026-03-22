@@ -383,7 +383,7 @@ export default function Vitrine() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {filteredVehicles.map((v) => (
-                    <div key={v.id} onClick={() => setSelected(v)}
+                    <div key={v.id} onClick={() => navigate(`/vitrine/${v.id}`)}
                       className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-[3px] transition-all duration-200 group">
                       <div className="relative">
                         <VehicleImageOverlay src={v.photo_url || "/placeholder.svg"} alt={`${v.brand} ${v.model}`} status={v.status} className="aspect-[4/3] bg-muted" />

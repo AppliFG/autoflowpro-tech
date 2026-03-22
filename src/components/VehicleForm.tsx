@@ -19,6 +19,7 @@ interface VehicleFormData {
   model: string;
   version: string;
   year: number | "";
+  date_first_registration: string;
   mileage: number | "";
   fuel_type: string;
   color: string;

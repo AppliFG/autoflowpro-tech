@@ -31,6 +31,7 @@ function detectPlatform(url: string): string | null {
 }
 
 export default function ImportAnnonce({ onClose, onImport }: Props) {
+  const { connecteurs } = useConnecteurs();
   const [step, setStep] = useState<1 | 2>(1);
   const [url, setUrl] = useState("");
   const [platform, setPlatform] = useState<string | null>(null);

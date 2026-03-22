@@ -28,7 +28,7 @@ export default function DepotVente() {
       {showForm && (
         <VehicleForm
           initialData={{
-            registration: "", brand: "", model: "", version: "", year: "", mileage: "",
+            registration: "", brand: "", model: "", version: "", year: "", date_first_registration: "", mileage: "",
             fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
             status: "Dépôt-vente", description: "", photo_url: null,
           }}

@@ -114,6 +114,17 @@ export default function VitrineDetail() {
       if (error) throw error;
       setContactSent(true);
       toast.success("Votre message a bien été envoyé !");
+
+      // Fire-and-forget Telegram notification to admins
+      supabase.functions.invoke("notify-new-prospect", {
+        body: {
+          full_name: full_name.trim(),
+          phone: phone.trim() || null,
+          email: email.trim() || null,
+          vehicle_interest: vehicleLabel,
+          message: message.trim() || null,
+        },
+      }).catch(() => {}); // silent fail — notification is best-effort
     } catch {
       toast.error("Erreur lors de l'envoi, veuillez réessayer");
     } finally {

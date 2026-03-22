@@ -34,9 +34,15 @@ export function useConnecteurs() {
 
   const userId = user?.id ?? null;
 
+  const getDefaultConnecteurs = useCallback(
+    () => CONNECTEURS_DISPONIBLES.map((c) => ({ ...c, credentials: {} })),
+    []
+  );
+
   // Charger les connecteurs depuis Supabase
   const loadConnecteurs = useCallback(async () => {
     if (!userId) {
+      setConnecteurs(getDefaultConnecteurs());
       setLoading(false);
       return;
     }
@@ -51,7 +57,8 @@ export function useConnecteurs() {
 
       if (error) {
         console.error("Erreur chargement connecteurs:", error);
-        setLoading(false);
+        console.warn("Fallback connecteurs par défaut (credentials vides)");
+        setConnecteurs(getDefaultConnecteurs());
         return;
       }
 
@@ -95,10 +102,12 @@ export function useConnecteurs() {
       setConnecteurs([...merged, ...customConnecteurs]);
     } catch (err) {
       console.error("Erreur useConnecteurs:", err);
+      console.warn("Fallback connecteurs par défaut (credentials vides)");
+      setConnecteurs(getDefaultConnecteurs());
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, getDefaultConnecteurs]);
 
   // Recharger quand userId change
   useEffect(() => {

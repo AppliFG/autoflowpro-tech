@@ -39,11 +39,19 @@ export default function Install() {
 
   if (isStandalone) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="text-center max-w-sm">
-          <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Déjà installée !</h1>
-          <p className="text-muted-foreground">L'application est déjà installée sur votre appareil.</p>
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+        </div>
+        <div className="flex items-center justify-center p-6" style={{ minHeight: 'calc(100vh - 53px)' }}>
+          <div className="text-center max-w-sm">
+            <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Déjà installée !</h1>
+            <p className="text-muted-foreground">L'application est déjà installée sur votre appareil.</p>
+          </div>
         </div>
       </div>
     );

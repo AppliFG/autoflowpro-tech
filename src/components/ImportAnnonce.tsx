@@ -111,9 +111,8 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
     setCustomEquipment("");
   };
 
-  const selectedGarantie = AMS_GARANTIES.find((g) => g.id === garantieId);
-  const selectedDuration = selectedGarantie?.durations.find((d) => d.months === garantieDuration);
-  const garantiePrice = garantieMode === "ajout" ? (selectedDuration?.priceHT || 0) : 0;
+  const selectedGarantie = garantiesList.find((g) => g.id === garantieId);
+  const garantiePrice = selectedGarantie?.costHT || 0;
   const totalFrais = (Number(fraisMiseEnRoute) || 0) + (Number(fraisCarteGrise) || 0) + (Number(fraisAssurance) || 0);
   const totalFacture = (Number(sellingPrice) || 0) + totalFrais + garantiePrice;
 

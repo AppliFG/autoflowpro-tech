@@ -43,7 +43,7 @@ serve(async (req) => {
       });
     }
 
-    const { vehicle_id, client_nom, client_adresse, client_email, invoice_number, deposit_amount } = await req.json();
+    const { vehicle_id, client_nom, client_adresse, client_email, invoice_number, deposit_amount, garantie } = await req.json();
 
     if (!vehicle_id) {
       return new Response(JSON.stringify({ error: "vehicle_id requis" }), {
@@ -85,7 +85,9 @@ serve(async (req) => {
 
     const sellingPrice = Number(vehicle.selling_price) || 0;
     const depositAmt = Number(deposit_amount) || 0;
-    const remaining = sellingPrice - depositAmt;
+    const garantieCost = garantie?.costHT ? Number(garantie.costHT) : 0;
+    const totalWithGarantie = sellingPrice + garantieCost;
+    const remaining = totalWithGarantie - depositAmt;
 
     // ─── Build PDF ───
     const pdfDoc = await PDFDocument.create();
@@ -221,11 +223,20 @@ serve(async (req) => {
     };
 
     drawPriceLine("Prix de vente TTC", `${formatPrice(sellingPrice)} EUR`, true, false);
+
+    // Garantie line
+    if (garantieCost > 0 && garantie?.name) {
+      drawPriceLine(`Garantie : ${sanitize(garantie.name)}`, `${formatPrice(garantieCost)} EUR`, false, false);
+    }
+
     if (depositAmt > 0) {
+      if (garantieCost > 0) {
+        drawPriceLine("Sous-total", `${formatPrice(totalWithGarantie)} EUR`, false, false);
+      }
       drawPriceLine("Acompte verse", `- ${formatPrice(depositAmt)} EUR`, false, false);
       drawPriceLine("RESTE A PAYER", `${formatPrice(remaining)} EUR`, true, true);
     } else {
-      drawPriceLine("MONTANT TOTAL TTC", `${formatPrice(sellingPrice)} EUR`, true, true);
+      drawPriceLine("MONTANT TOTAL TTC", `${formatPrice(totalWithGarantie)} EUR`, true, true);
     }
 
     // ─── Legal mentions ───
@@ -270,7 +281,7 @@ serve(async (req) => {
       vehicle_id,
       client_nom: client_nom || "",
       client_adresse: client_adresse || "",
-      amount: sellingPrice,
+      amount: totalWithGarantie,
       deposit_amount: depositAmt,
       payment_status: paymentStatus,
       pdf_url: urlData.publicUrl,
@@ -278,7 +289,7 @@ serve(async (req) => {
     });
 
     // Update vehicle status
-    if (depositAmt > 0 && depositAmt < sellingPrice) {
+    if (depositAmt > 0 && depositAmt < totalWithGarantie) {
       await supabase.from("vehicles").update({ status: "Réservé" }).eq("id", vehicle_id);
     } else {
       await supabase.from("vehicles").update({ status: "Vendu" }).eq("id", vehicle_id);
@@ -305,7 +316,7 @@ serve(async (req) => {
                   <h2 style="color:#333;">Facture ${numero}</h2>
                   <p>Bonjour ${client_nom || ""},</p>
                   <p>Veuillez trouver ci-joint votre facture pour le vehicule <strong>${vehicle.brand} ${vehicle.model}</strong> (${vehicle.registration}).</p>
-                  <p><strong>Montant :</strong> ${formatPrice(sellingPrice)} EUR</p>
+                  <p><strong>Montant :</strong> ${formatPrice(totalWithGarantie)} EUR</p>
                   <p><a href="${urlData.publicUrl}" style="display:inline-block;background:#0a5cb8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Telecharger la facture PDF</a></p>
                   <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
                   <p style="font-size:12px;color:#888;">${agencyName}<br/>${s.agency_address || ""}<br/>SIRET : ${s.agency_siret || ""}</p>

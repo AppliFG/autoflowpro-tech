@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, X, Plus } from "lucide-react";
+import { ArrowLeft, X, Plus, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PlaqueScanner from "./PlaqueScanner";
@@ -59,6 +59,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
     if (initialData?.photo_url) return [initialData.photo_url];
     return [];
   });
+  const [coverIndex, setCoverIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [nextPoliceNumber, setNextPoliceNumber] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -131,6 +132,9 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
       const fileIndex = index - existingCount;
       setNewFiles((prev) => prev.filter((_, i) => i !== fileIndex));
     }
+    // Adjust cover index
+    if (coverIndex === index) setCoverIndex(0);
+    else if (coverIndex > index) setCoverIndex((prev) => prev - 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,7 +161,13 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         uploadedUrls.push(urlData.publicUrl);
       }
 
-      const allUrls = [...keptExisting, ...uploadedUrls];
+      let allUrls = [...keptExisting, ...uploadedUrls];
+      
+      // Reorder so cover photo is first
+      if (coverIndex > 0 && coverIndex < allUrls.length) {
+        const [cover] = allUrls.splice(coverIndex, 1);
+        allUrls = [cover, ...allUrls];
+      }
 
       const payload: any = {
         police_number: form.police_number === "" ? null : Number(form.police_number),
@@ -213,35 +223,53 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
           {/* Plaque Scanner - en haut */}
           {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} />}
 
-          {/* Photos */}
+          {/* Photos — compact horizontal layout */}
           <div>
             <Label className="mb-2 block">Photos <span className="text-muted-foreground font-normal text-xs">(max 10)</span></Label>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
               {photoPreviews.map((src, i) => (
-                <div key={i} className="relative group">
-                  <img src={src} alt="" className="h-20 w-28 object-cover rounded-lg border border-border" />
-                  {i === 0 && (
-                    <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[9px] px-1.5 py-0.5 rounded font-medium">
-                      Principale
+                <div
+                  key={i}
+                  className={`relative group shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === coverIndex ? "border-accent ring-2 ring-accent/30" : "border-border"
+                  }`}
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => setCoverIndex(i)}
+                      className="bg-background/90 rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors"
+                      title="Définir comme couverture vitrine"
+                    >
+                      <Star className={`h-3.5 w-3.5 ${i === coverIndex ? "text-accent fill-accent" : ""}`} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="bg-destructive/90 text-destructive-foreground rounded-full p-1 hover:bg-destructive transition-colors"
+                      title="Supprimer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  {/* Cover badge */}
+                  {i === coverIndex && (
+                    <span className="absolute bottom-0.5 left-0.5 bg-accent text-white text-[8px] px-1 py-0.5 rounded font-semibold flex items-center gap-0.5">
+                      <Star className="h-2 w-2 fill-white" />Couverture
                     </span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(i)}
-                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
                 </div>
               ))}
               {photoPreviews.length < 10 && (
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="h-20 w-28 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  className="shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                 >
-                  <Plus className="h-5 w-5" />
-                  <span className="text-[10px]">Ajouter</span>
+                  <Plus className="h-4 w-4" />
+                  <span className="text-[9px]">Ajouter</span>
                 </button>
               )}
             </div>

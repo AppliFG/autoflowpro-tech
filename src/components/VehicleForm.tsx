@@ -180,6 +180,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         model: form.model.trim(),
         version: form.version.trim() || null,
         year: form.year === "" ? null : Number(form.year),
+        date_first_registration: form.date_first_registration.trim() || null,
         mileage: form.mileage === "" ? null : Number(form.mileage),
         fuel_type: form.fuel_type || null,
         color: form.color.trim() || null,

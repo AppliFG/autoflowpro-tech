@@ -21,6 +21,7 @@ import Parametres from "./pages/Parametres";
 import Devis from "./pages/Devis";
 import Agenda from "./pages/Agenda";
 import Vitrine from "./pages/Vitrine";
+import VitrineDetail from "./pages/VitrineDetail";
 import Importation from "./pages/Importation";
 import Login from "./pages/Login";
 import Install from "./pages/Install";
@@ -47,6 +48,7 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/vitrine" element={<Vitrine />} />
+    <Route path="/vitrine/:id" element={<VitrineDetail />} />
     <Route path="/install" element={<Install />} />
 
     {/* Subscription page - always accessible */}

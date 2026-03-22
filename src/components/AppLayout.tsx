@@ -3,6 +3,7 @@ import AppSidebar from "./AppSidebar";
 import MobileBottomNav from "./MobileBottomNav";
 import TrialBanner from "./TrialBanner";
 import { Search, Bell } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 className="h-9 w-64 rounded-lg border border-input bg-background pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
+            <ThemeToggle />
             <button className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors">
               <Bell className="h-5 w-5" />
             </button>

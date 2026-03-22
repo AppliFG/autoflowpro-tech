@@ -121,7 +121,7 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
       vin, registration, brand, model, version, year, mileage, fuelType, color,
       powerDIN, cvFiscaux, purchasePrice, sellingPrice, description, policeNumber,
       equipments: selectedEquipments,
-      garantie: garantieId ? { optionId: garantieId, durationMonths: garantieDuration, mode: garantieMode } : undefined,
+      garantie: selectedGarantie ? { optionId: selectedGarantie.id, name: selectedGarantie.name, costHT: selectedGarantie.costHT } : undefined,
       frais: { miseEnRoute: Number(fraisMiseEnRoute) || 0, carteGrise: Number(fraisCarteGrise) || 0, assurance: Number(fraisAssurance) || 0, autres: 0 },
       platform,
     });

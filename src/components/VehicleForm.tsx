@@ -223,7 +223,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
           {/* Plaque Scanner - en haut */}
-          {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} />}
+          {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} connecteurs={connecteurs} />}
 
           {/* Photos — compact horizontal layout */}
           <div>

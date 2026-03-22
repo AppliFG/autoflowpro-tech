@@ -166,7 +166,7 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
 
         <div className="p-5 space-y-4">
           {/* Plaque scanner */}
-          <PlaqueScanner onDecoded={handlePlaque} />
+          <PlaqueScanner onDecoded={handlePlaque} connecteurs={connecteurs} />
 
           {/* Confidential */}
           <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-3">

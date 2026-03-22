@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Link, Lock, Shield, FileText, Plus, X, ChevronDo
 import { AMS_GARANTIES } from "@/types/vehicle";
 import PlaqueScanner from "./PlaqueScanner";
 import type { PlaqueResultData } from "./PlaqueScanner";
+import { useConnecteurs } from "@/hooks/useConnecteurs";
 
 interface Props {
   onClose: () => void;

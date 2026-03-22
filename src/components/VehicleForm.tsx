@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PlaqueScanner from "./PlaqueScanner";
 import type { PlaqueResultData } from "./PlaqueScanner";
+import { useConnecteurs } from "@/hooks/useConnecteurs";
 
 interface VehicleFormData {
   id?: string;

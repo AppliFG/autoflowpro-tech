@@ -421,41 +421,7 @@ export default function Vitrine() {
         </div>
       )}
 
-      {/* Detail modal */}
-      {selected && (
-        <div className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-          <div className="bg-card rounded-2xl border border-border shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <VehicleImageOverlay src={selected.photo_url || "/placeholder.svg"} alt={`${selected.brand} ${selected.model}`} status={selected.status} className="aspect-video rounded-t-2xl bg-muted" />
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-card-foreground">{selected.brand} {selected.model}</h2>
-              <p className="text-accent font-bold text-2xl mt-1">{(selected.selling_price || 0).toLocaleString()} €</p>
-              <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" />{selected.year}</span>
-                <span className="flex items-center gap-1.5"><Gauge className="h-4 w-4" />{(selected.mileage || 0).toLocaleString()} km</span>
-                <span className="flex items-center gap-1.5"><Fuel className="h-4 w-4" />{selected.fuel_type}</span>
-              </div>
-              {selected.description && (
-                <div className="mt-5 pt-5 border-t border-border">
-                  <h3 className="font-semibold text-card-foreground mb-2">Description</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{selected.description}</p>
-                </div>
-              )}
-              <div className="mt-5 flex gap-3">
-                {agencyPhone && (
-                  <a href={`tel:${agencyPhone}`} className="flex-1 bg-accent text-white rounded-lg py-3 text-center font-medium text-sm hover:bg-accent/90 transition-colors flex items-center justify-center gap-2">
-                    <Phone className="h-4 w-4" /> Nous contacter
-                  </a>
-                )}
-                {agencyEmailAddr && (
-                  <a href={`mailto:${agencyEmailAddr}`} className="flex-1 border border-border rounded-lg py-3 text-center font-medium text-sm text-card-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2">
-                    <Mail className="h-4 w-4" /> Email
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Detail modal removed — now using /vitrine/:id page */}
 
       <footer className="border-t border-border bg-muted/30 mt-12">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-muted-foreground">

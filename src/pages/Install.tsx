@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, Share, Plus, CheckCircle2, Smartphone, Monitor, FileText, Megaphone } from "lucide-react";
+import { ArrowLeft, Download, Share, Plus, CheckCircle2, Smartphone, Monitor, FileText, Megaphone } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -8,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function Install() {
+  const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -49,8 +51,15 @@ export default function Install() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Back button */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+      </div>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 px-6 pt-16 pb-12 text-center">
+      <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 px-6 pt-12 pb-12 text-center">
         <div className="mx-auto max-w-md">
           <div className="h-20 w-20 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-6">
             <Smartphone className="h-10 w-10 text-primary" />

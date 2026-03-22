@@ -56,7 +56,7 @@ export const CATEGORIE_LABELS: Record<ConnecteurCategorie, string> = {
   diffusion_annonces: "Diffusion annonces",
   garanties: "Garanties",
   gestion_atelier: "Gestion atelier",
-  // facturation category removed from filters
+  facturation: "Facturation & Comptabilité",
   autre: "Autre",
 };
 

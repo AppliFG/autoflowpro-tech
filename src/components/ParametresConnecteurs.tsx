@@ -100,7 +100,9 @@ export default function ParametresConnecteurs() {
         </div>
         <div className="flex gap-1.5 flex-wrap">
           <Button variant={filterCategorie === "all" ? "default" : "outline"} size="sm" onClick={() => setFilterCategorie("all")}>Tous</Button>
-          {Object.entries(CATEGORIE_LABELS).map(([key, label]) => (
+          {Object.entries(CATEGORIE_LABELS)
+            .filter(([key]) => key !== "facturation")
+            .map(([key, label]) => (
             <Button key={key} variant={filterCategorie === key ? "default" : "outline"} size="sm" onClick={() => setFilterCategorie(key as ConnecteurCategorie)} className="gap-1">
               <span>{CATEGORIE_ICONS[key as ConnecteurCategorie]}</span>
               <span className="hidden md:inline">{label}</span>

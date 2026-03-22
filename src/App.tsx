@@ -21,6 +21,7 @@ import Parametres from "./pages/Parametres";
 import Devis from "./pages/Devis";
 import Agenda from "./pages/Agenda";
 import Vitrine from "./pages/Vitrine";
+import VitrineDetail from "./pages/VitrineDetail";
 import Importation from "./pages/Importation";
 import Login from "./pages/Login";
 import Install from "./pages/Install";

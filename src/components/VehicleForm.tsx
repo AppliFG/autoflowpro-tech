@@ -30,6 +30,7 @@ interface VehicleFormData {
   vin?: string;
   power_din?: number | "";
   cv_fiscaux?: number | "";
+  equipments?: string[];
 }
 
 const emptyForm: VehicleFormData = {
@@ -37,7 +38,7 @@ const emptyForm: VehicleFormData = {
   registration: "", brand: "", model: "", version: "", year: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
-  vin: "", power_din: "", cv_fiscaux: "",
+  vin: "", power_din: "", cv_fiscaux: "", equipments: [],
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];
@@ -174,6 +175,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         description: form.description.trim() || null,
         photo_url: allUrls[0] || null,
         photo_urls: allUrls,
+        equipments: (form.equipments || []).filter(e => e.trim()),
       };
 
       if (isEdit && initialData?.id) {
@@ -340,6 +342,17 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
           <div>
             <Label htmlFor="desc">Descriptif annonce</Label>
             <Textarea id="desc" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Description pour les plateformes de diffusion..." />
+          </div>
+
+          {/* Equipments */}
+          <div>
+            <Label>Équipements <span className="text-muted-foreground font-normal text-xs">(un par ligne)</span></Label>
+            <Textarea
+              rows={4}
+              value={(form.equipments || []).join("\n")}
+              onChange={(e) => set("equipments", e.target.value.split("\n"))}
+              placeholder={"Climatisation automatique\nGPS intégré\nRadar de recul\nBluetooth"}
+            />
           </div>
 
           {/* Actions */}

@@ -19,6 +19,7 @@ interface VehicleFormData {
   model: string;
   version: string;
   year: number | "";
+  date_first_registration: string;
   mileage: number | "";
   fuel_type: string;
   color: string;
@@ -36,7 +37,7 @@ interface VehicleFormData {
 
 const emptyForm: VehicleFormData = {
   police_number: "",
-  registration: "", brand: "", model: "", version: "", year: "", mileage: "",
+  registration: "", brand: "", model: "", version: "", year: "", date_first_registration: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
   vin: "", power_din: "", cv_fiscaux: "", equipments: [],
@@ -97,6 +98,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
       model: data.modele || f.model,
       version: data.version || f.version,
       year: data.annee || f.year,
+      date_first_registration: data.dateMiseCirculation || f.date_first_registration,
       fuel_type: data.energie || f.fuel_type,
       color: data.couleur || f.color,
       power_din: data.puissanceDin || f.power_din,
@@ -178,6 +180,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         model: form.model.trim(),
         version: form.version.trim() || null,
         year: form.year === "" ? null : Number(form.year),
+        date_first_registration: form.date_first_registration.trim() || null,
         mileage: form.mileage === "" ? null : Number(form.mileage),
         fuel_type: form.fuel_type || null,
         color: form.color.trim() || null,
@@ -313,6 +316,10 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
             <div>
               <Label htmlFor="year">Année</Label>
               <Input id="year" type="number" value={form.year} onChange={(e) => set("year", e.target.value === "" ? "" : Number(e.target.value))} placeholder="2022" />
+            </div>
+            <div>
+              <Label htmlFor="date_first_registration">Date 1ère mise en circulation</Label>
+              <Input id="date_first_registration" value={form.date_first_registration} onChange={(e) => set("date_first_registration", e.target.value)} placeholder="01/01/2022" />
             </div>
             <div>
               <Label htmlFor="km">Kilométrage</Label>

@@ -20,7 +20,7 @@ import {
 
 export default function ParametresConnecteurs() {
   const { toast } = useToast();
-  const { connecteurs, loading, saveConnecteur, toggleConnecteur, deleteConnecteur, saving } = useConnecteurs();
+  const { connecteurs, loading, saveConnecteur, toggleConnecteur, disconnectConnecteur, deleteConnecteur, saving } = useConnecteurs();
 
   // Local credential edits (only while form is expanded)
   const [localEdits, setLocalEdits] = useState<Record<string, ConnecteurCredentials>>({});
@@ -57,9 +57,8 @@ export default function ParametresConnecteurs() {
 
   const handleDisconnect = async (id: string) => {
     try {
-      await saveConnecteur(id, {}, false);
+      await disconnectConnecteur(id);
       setLocalEdits(prev => { const n = { ...prev }; delete n[id]; return n; });
-      toast({ title: "Connecteur déconnecté" });
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
     }

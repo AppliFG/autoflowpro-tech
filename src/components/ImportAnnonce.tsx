@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Link, Lock, Shield, FileText, Plus, X, ChevronDo
 import { AMS_GARANTIES } from "@/types/vehicle";
 import PlaqueScanner from "./PlaqueScanner";
 import type { PlaqueResultData } from "./PlaqueScanner";
+import { useConnecteurs } from "@/hooks/useConnecteurs";
 
 interface Props {
   onClose: () => void;
@@ -30,6 +31,7 @@ function detectPlatform(url: string): string | null {
 }
 
 export default function ImportAnnonce({ onClose, onImport }: Props) {
+  const { connecteurs } = useConnecteurs();
   const [step, setStep] = useState<1 | 2>(1);
   const [url, setUrl] = useState("");
   const [platform, setPlatform] = useState<string | null>(null);
@@ -164,7 +166,7 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
 
         <div className="p-5 space-y-4">
           {/* Plaque scanner */}
-          <PlaqueScanner onDecoded={handlePlaque} />
+          <PlaqueScanner onDecoded={handlePlaque} connecteurs={connecteurs} />
 
           {/* Confidential */}
           <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-3">

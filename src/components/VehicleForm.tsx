@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import PlaqueScanner from "./PlaqueScanner";
 import type { PlaqueResultData } from "./PlaqueScanner";
+import { useConnecteurs } from "@/hooks/useConnecteurs";
 
 interface VehicleFormData {
   id?: string;
@@ -51,6 +52,7 @@ interface Props {
 }
 
 export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
+  const { connecteurs } = useConnecteurs();
   const [form, setForm] = useState<VehicleFormData>(initialData ?? emptyForm);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>(() => {
@@ -221,7 +223,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
           {/* Plaque Scanner - en haut */}
-          {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} />}
+          {!isEdit && <PlaqueScanner onDecoded={handlePlaqueDecoded} connecteurs={connecteurs} />}
 
           {/* Photos — compact horizontal layout */}
           <div>

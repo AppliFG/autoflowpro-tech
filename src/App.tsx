@@ -48,6 +48,7 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/vitrine" element={<Vitrine />} />
+    <Route path="/vitrine/:id" element={<VitrineDetail />} />
     <Route path="/install" element={<Install />} />
 
     {/* Subscription page - always accessible */}

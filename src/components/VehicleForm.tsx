@@ -30,6 +30,7 @@ interface VehicleFormData {
   vin?: string;
   power_din?: number | "";
   cv_fiscaux?: number | "";
+  equipments?: string[];
 }
 
 const emptyForm: VehicleFormData = {
@@ -37,7 +38,7 @@ const emptyForm: VehicleFormData = {
   registration: "", brand: "", model: "", version: "", year: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
-  vin: "", power_din: "", cv_fiscaux: "",
+  vin: "", power_din: "", cv_fiscaux: "", equipments: [],
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];

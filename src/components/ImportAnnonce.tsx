@@ -63,6 +63,23 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
   const [fraisCarteGrise, setFraisCarteGrise] = useState<number | "">(0);
   const [fraisAssurance, setFraisAssurance] = useState<number | "">(0);
 
+  // Load garanties from settings
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "garanties_list")
+        .maybeSingle();
+      if (data?.value) {
+        try {
+          const list = JSON.parse(data.value) as GarantieOption[];
+          setGarantiesList(list.filter((g) => g.active));
+        } catch { /* ignore */ }
+      }
+    })();
+  }, []);
+
   // Collapsibles
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ confidential: true, main: true });
   const toggleSection = (s: string) => setOpenSections((p) => ({ ...p, [s]: !p[s] }));

@@ -13,7 +13,7 @@ function VehicleImageOverlay({ src, alt, status, className = "" }: { src: string
       <img src={src || "/placeholder.svg"} alt={alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
       {isReserved && (
         <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
-          <span className="bg-accent text-white font-extrabold text-2xl px-6 py-2 rounded-lg -rotate-12 shadow-lg tracking-wider uppercase">Réservé</span>
+          <span className="bg-accent text-accent-foreground font-extrabold text-2xl px-6 py-2 rounded-lg -rotate-12 shadow-lg tracking-wider uppercase">Réservé</span>
         </div>
       )}
       {isSold && (
@@ -26,7 +26,6 @@ function VehicleImageOverlay({ src, alt, status, className = "" }: { src: string
 }
 
 export default function Vitrine() {
-  const [selected, setSelected] = useState<any | null>(null);
   const [showReprise, setShowReprise] = useState(false);
   const [repriseForm, setRepriseForm] = useState({ nom: "", email: "", telephone: "", immatriculation: "", km: "", montantSouhaite: "" });
   const [reprisePhotos, setReprisePhotos] = useState<File[]>([]);
@@ -110,7 +109,6 @@ export default function Vitrine() {
       if (yearFilter && (v.year || 0) < Number(yearFilter)) return false;
       return true;
     });
-    // Sort
     if (sortBy === "price_asc") result.sort((a, b) => (a.selling_price || 0) - (b.selling_price || 0));
     else if (sortBy === "price_desc") result.sort((a, b) => (b.selling_price || 0) - (a.selling_price || 0));
     else if (sortBy === "km_asc") result.sort((a, b) => (a.mileage || 0) - (b.mileage || 0));
@@ -161,40 +159,45 @@ export default function Vitrine() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header cobalt gradient */}
-      <header className="relative bg-gradient-to-r from-primary via-primary-dark to-primary-darker text-white overflow-hidden">
+      <header className="relative bg-gradient-to-r from-primary via-primary-dark to-primary-darker text-primary-foreground overflow-hidden">
         <div className="absolute inset-0 opacity-[0.06]">
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white blur-3xl translate-x-1/3 -translate-y-1/2" />
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-primary-foreground blur-3xl translate-x-1/3 -translate-y-1/2" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {agencyLogoUrl ? (
-              <img src={agencyLogoUrl} alt={agencyName} className="h-12 w-12 rounded-xl object-cover ring-2 ring-white/30" />
+              <img src={agencyLogoUrl} alt={agencyName} className="h-12 w-12 rounded-xl object-cover ring-2 ring-primary-foreground/30" />
             ) : (
-              <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center font-bold text-lg text-primary shadow-lg">
+              <div className="h-12 w-12 rounded-xl bg-primary-foreground flex items-center justify-center font-bold text-lg text-primary shadow-lg">
                 <Car className="h-6 w-6" />
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold tracking-tight">{agencyName}</h1>
+              <h1 className="text-xl font-bold tracking-tight">
+                {agencyName.split(" ").map((word, i) => (
+                  <span key={i}>{i === agencyName.split(" ").length - 1 ? <span className="text-accent">{word}</span> : word + " "}</span>
+                ))}
+              </h1>
+              <p className="text-xs text-primary-foreground/60 mt-0.5">Véhicules d'occasion sélectionnés et garantis</p>
               {(agencyCity || agencyZipcode) && (
-                <p className="text-xs text-white/60 flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-primary-foreground/50 flex items-center gap-1 mt-0.5">
                   <MapPin className="h-3 w-3" />{[agencyZipcode, agencyCity].filter(Boolean).join(" ")}
                 </p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <button onClick={() => navigate("/")} className="flex items-center gap-1.5 text-sm hover:text-accent bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all">
+            <button onClick={() => navigate("/")} className="flex items-center gap-1.5 text-sm hover:text-accent bg-primary-foreground/10 hover:bg-primary-foreground/20 px-3 py-2 rounded-lg transition-all">
               <ArrowLeft className="h-4 w-4" /> Accueil
             </button>
             <div className="hidden sm:flex items-center gap-3">
               {agencyPhone && (
-                <a href={`tel:${agencyPhone}`} className="flex items-center gap-1.5 text-sm bg-accent text-white px-3 py-2 rounded-lg hover:bg-accent/90 transition-colors font-medium">
+                <a href={`tel:${agencyPhone}`} className="flex items-center gap-1.5 text-sm bg-accent text-accent-foreground px-3 py-2 rounded-lg hover:bg-accent-dark transition-colors font-medium">
                   <Phone className="h-4 w-4" /> {agencyPhone}
                 </a>
               )}
               {agencyEmailAddr && (
-                <a href={`mailto:${agencyEmailAddr}`} className="flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
+                <a href={`mailto:${agencyEmailAddr}`} className="flex items-center gap-1.5 text-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 px-3 py-2 rounded-lg transition-colors">
                   <Mail className="h-4 w-4" /> Contact
                 </a>
               )}
@@ -204,14 +207,14 @@ export default function Vitrine() {
         {/* Vehicle count + phone in orange */}
         <div className="relative max-w-7xl mx-auto px-4 pb-4 flex items-center gap-4">
           <span className="text-accent font-bold text-2xl">{displayVehicles.length}</span>
-          <span className="text-white/80 text-sm">véhicules disponibles</span>
+          <span className="text-primary-foreground/80 text-sm">véhicules disponibles</span>
         </div>
       </header>
 
       {/* Buyback CTA */}
-      <div className="bg-primary/5 border-b border-border">
+      <div className="bg-primary-light border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-center">
-          <button onClick={() => setShowReprise(!showReprise)} className="bg-accent text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors">
+          <button onClick={() => setShowReprise(!showReprise)} className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors">
             {showReprise ? "Voir les annonces" : "Faire racheter mon véhicule"}
           </button>
         </div>
@@ -246,7 +249,7 @@ export default function Vitrine() {
                 {reprisePhotos.map((photo, idx) => (
                   <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border bg-muted">
                     <img src={URL.createObjectURL(photo)} alt="" className="w-full h-full object-cover" />
-                    <button onClick={() => removePhoto(idx)} className="absolute top-0.5 right-0.5 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">×</button>
+                    <button onClick={() => removePhoto(idx)} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">×</button>
                   </div>
                 ))}
                 <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
@@ -269,7 +272,7 @@ export default function Vitrine() {
               )}
             </div>
             <button onClick={submitReprise} disabled={!isRepriseValid || submitting}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-40">
+              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-40">
               <Send className="h-4 w-4" /> {submitting ? "Envoi en cours..." : "Envoyer ma demande"}
             </button>
           </div>
@@ -291,17 +294,17 @@ export default function Vitrine() {
                     <p className="text-xs font-semibold text-card-foreground uppercase tracking-wider mb-2">Marques</p>
                     <div className="space-y-0.5">
                       <button onClick={() => setBrandFilter("")}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${!brandFilter ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${!brandFilter ? "text-primary font-semibold bg-primary-light" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                         <span>Toutes</span>
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${!brandFilter ? "bg-accent text-white" : "bg-muted text-muted-foreground"}`}>
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${!brandFilter ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
                           {displayVehicles.length}
                         </span>
                       </button>
                       {brandCounts.map(([brand, count]) => (
                         <button key={brand} onClick={() => setBrandFilter(brand === brandFilter ? "" : brand)}
-                          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${brandFilter === brand ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}>
+                          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${brandFilter === brand ? "text-primary font-semibold bg-primary-light" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                           <span>{brand}</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${brandFilter === brand ? "bg-accent text-white" : "bg-muted text-muted-foreground"}`}>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${brandFilter === brand ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
                             {count}
                           </span>
                         </button>
@@ -314,7 +317,7 @@ export default function Vitrine() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Énergie</label>
                       <select value={fuelFilter} onChange={(e) => setFuelFilter(e.target.value)}
-                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                         <option value="">Toutes</option>
                         <option value="Diesel">Diesel</option>
                         <option value="Essence">Essence</option>
@@ -325,7 +328,7 @@ export default function Vitrine() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Prix max</label>
                       <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)}
-                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                         <option value="">Tous</option>
                         <option value="<10000">&lt; 10 000 €</option>
                         <option value="<20000">&lt; 20 000 €</option>
@@ -336,7 +339,7 @@ export default function Vitrine() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Année min</label>
                       <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}
-                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                        className="w-full h-8 rounded-lg border border-input bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                         <option value="">Toutes</option>
                         <option value="2024">2024</option>
                         <option value="2022">2022</option>
@@ -353,15 +356,43 @@ export default function Vitrine() {
               <div className="lg:hidden mb-4 w-full">
                 <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                   <button onClick={() => setBrandFilter("")}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!brandFilter ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!brandFilter ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                     Toutes ({displayVehicles.length})
                   </button>
                   {brandCounts.map(([brand, count]) => (
                     <button key={brand} onClick={() => setBrandFilter(brand === brandFilter ? "" : brand)}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${brandFilter === brand ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${brandFilter === brand ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                       {brand} ({count})
                     </button>
                   ))}
+                </div>
+                {/* Mobile dropdowns */}
+                <div className="flex gap-2 mt-2">
+                  <select value={fuelFilter} onChange={(e) => setFuelFilter(e.target.value)}
+                    className="flex-1 h-8 rounded-lg border border-input bg-background px-2 text-xs text-foreground">
+                    <option value="">Énergie</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Essence">Essence</option>
+                    <option value="Hybride">Hybride</option>
+                    <option value="Électrique">Électrique</option>
+                  </select>
+                  <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)}
+                    className="flex-1 h-8 rounded-lg border border-input bg-background px-2 text-xs text-foreground">
+                    <option value="">Prix</option>
+                    <option value="<10000">&lt;10k</option>
+                    <option value="<20000">&lt;20k</option>
+                    <option value="<30000">&lt;30k</option>
+                    <option value=">30000">&gt;30k</option>
+                  </select>
+                  <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}
+                    className="flex-1 h-8 rounded-lg border border-input bg-background px-2 text-xs text-foreground">
+                    <option value="">Année</option>
+                    <option value="2024">2024</option>
+                    <option value="2022">2022</option>
+                    <option value="2020">2020</option>
+                    <option value="2018">2018</option>
+                    <option value="2015">2015</option>
+                  </select>
                 </div>
               </div>
 
@@ -373,7 +404,7 @@ export default function Vitrine() {
                     <span className="text-primary font-bold">{filteredVehicles.length}</span> véhicule{filteredVehicles.length > 1 ? "s" : ""} trouvé{filteredVehicles.length > 1 ? "s" : ""}
                   </p>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                    className="h-8 rounded-lg border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring">
+                    className="h-8 rounded-lg border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="recent">Plus récents</option>
                     <option value="price_asc">Prix croissant</option>
                     <option value="price_desc">Prix décroissant</option>
@@ -384,17 +415,17 @@ export default function Vitrine() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {filteredVehicles.map((v) => (
                     <div key={v.id} onClick={() => navigate(`/vitrine/${v.id}`)}
-                      className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-[3px] transition-all duration-200 group">
+                      className="rounded-xl border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-[3px] transition-all duration-200 group">
                       <div className="relative">
                         <VehicleImageOverlay src={v.photo_url || "/placeholder.svg"} alt={`${v.brand} ${v.model}`} status={v.status} className="aspect-[4/3] bg-muted" />
                         {/* Photo count badge */}
                         {photoCount(v) > 0 && (
-                          <span className="absolute bottom-2 left-2 bg-primary text-white text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <span className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
                             <Camera className="h-3 w-3" />{photoCount(v)}
                           </span>
                         )}
                         {/* Price badge */}
-                        <span className="absolute bottom-2 right-2 bg-accent text-white text-sm font-bold px-2.5 py-1 rounded-md">
+                        <span className="absolute bottom-2 right-2 bg-accent text-accent-foreground text-sm font-bold px-2.5 py-1 rounded-md">
                           {(v.selling_price || 0).toLocaleString()} €
                         </span>
                       </div>
@@ -407,6 +438,7 @@ export default function Vitrine() {
                         </div>
                         <div className="flex gap-1.5 mt-3">
                           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{v.brand}</span>
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent-dark">Garantie</span>
                         </div>
                       </div>
                     </div>
@@ -420,8 +452,6 @@ export default function Vitrine() {
           )}
         </div>
       )}
-
-      {/* Detail modal removed — now using /vitrine/:id page */}
 
       <footer className="border-t border-border bg-muted/30 mt-12">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-muted-foreground">

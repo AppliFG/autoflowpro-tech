@@ -14,7 +14,6 @@ export default function VitrineDetail() {
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
-  // Contact form state
   const [contactForm, setContactForm] = useState({ full_name: "", phone: "", email: "", message: "" });
   const [contactSent, setContactSent] = useState(false);
   const [contactSending, setContactSending] = useState(false);
@@ -114,8 +113,6 @@ export default function VitrineDetail() {
       if (error) throw error;
       setContactSent(true);
       toast.success("Votre message a bien été envoyé !");
-
-      // Fire-and-forget Telegram notification to admins
       supabase.functions.invoke("notify-new-prospect", {
         body: {
           full_name: full_name.trim(),
@@ -124,7 +121,7 @@ export default function VitrineDetail() {
           vehicle_interest: vehicleLabel,
           message: message.trim() || null,
         },
-      }).catch(() => {}); // silent fail — notification is best-effort
+      }).catch(() => {});
     } catch {
       toast.error("Erreur lors de l'envoi, veuillez réessayer");
     } finally {
@@ -141,15 +138,16 @@ export default function VitrineDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-primary via-primary-dark to-primary-darker text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-primary via-primary-dark to-primary-darker text-primary-foreground">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate("/vitrine")} className="flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all">
+          <button onClick={() => navigate("/vitrine")} className="flex items-center gap-1.5 text-sm bg-primary-foreground/10 hover:bg-primary-foreground/20 px-3 py-2 rounded-lg transition-all">
             <ArrowLeft className="h-4 w-4" /> Retour
           </button>
           <span className="text-sm font-medium opacity-80">{agencyName}</span>
           <div className="flex items-center gap-2">
             {agencyPhone && (
-              <a href={`tel:${agencyPhone}`} className="bg-accent text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors flex items-center gap-1.5">
+              <a href={`tel:${agencyPhone}`} className="bg-accent text-accent-foreground px-3 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors flex items-center gap-1.5">
                 <Phone className="h-4 w-4" /> Appeler
               </a>
             )}
@@ -159,12 +157,13 @@ export default function VitrineDetail() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Photo gallery */}
           <div className="lg:col-span-3">
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-muted group" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               <img src={photos[currentPhoto]} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover transition-opacity duration-300" />
               {isReserved && (
                 <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center">
-                  <span className="bg-accent text-white font-extrabold text-3xl px-8 py-3 rounded-xl -rotate-12 shadow-lg tracking-wider uppercase">Réservé</span>
+                  <span className="bg-accent text-accent-foreground font-extrabold text-3xl px-8 py-3 rounded-xl -rotate-12 shadow-lg tracking-wider uppercase">Réservé</span>
                 </div>
               )}
               {isSold && (
@@ -198,6 +197,7 @@ export default function VitrineDetail() {
             )}
           </div>
 
+          {/* Info panel — NO VIN, NO registration */}
           <div className="lg:col-span-2 space-y-4">
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
               <h1 className="text-2xl font-bold text-card-foreground">{vehicle.brand} {vehicle.model}</h1>
@@ -221,9 +221,10 @@ export default function VitrineDetail() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-success/30 bg-success/5 p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-success/20 flex items-center justify-center shrink-0">
-                <Shield className="h-5 w-5 text-success" />
+            {/* Guarantee badge */}
+            <div className="rounded-2xl border border-accent/30 bg-accent-light p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                <Shield className="h-5 w-5 text-accent" />
               </div>
               <div>
                 <p className="font-semibold text-card-foreground text-sm">Garantie incluse</p>
@@ -231,9 +232,10 @@ export default function VitrineDetail() {
               </div>
             </div>
 
+            {/* CTA buttons */}
             <div className="space-y-2">
               {agencyPhone && (
-                <a href={`tel:${agencyPhone}`} className="w-full flex items-center justify-center gap-2 bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold text-sm hover:bg-accent/90 transition-colors shadow-md shadow-accent/20">
+                <a href={`tel:${agencyPhone}`} className="w-full flex items-center justify-center gap-2 bg-accent text-accent-foreground rounded-xl py-3.5 font-semibold text-sm hover:bg-accent-dark transition-colors shadow-md shadow-accent/20">
                   <Phone className="h-4 w-4" /> Nous contacter — {agencyPhone}
                 </a>
               )}
@@ -253,6 +255,7 @@ export default function VitrineDetail() {
           </div>
         </div>
 
+        {/* Description */}
         {vehicle.description && (
           <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 className="font-bold text-card-foreground text-lg mb-3">Description</h2>
@@ -260,6 +263,7 @@ export default function VitrineDetail() {
           </div>
         )}
 
+        {/* Equipment */}
         {equipments.length > 0 && (
           <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 className="font-bold text-card-foreground text-lg mb-4">Équipements</h2>
@@ -274,6 +278,7 @@ export default function VitrineDetail() {
           </div>
         )}
 
+        {/* Works */}
         {works.length > 0 && (
           <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 className="font-bold text-card-foreground text-lg mb-3">Travaux effectués</h2>
@@ -288,8 +293,8 @@ export default function VitrineDetail() {
           </div>
         )}
 
-        {/* Inline Contact Form */}
-        <div className="mt-8 rounded-2xl border border-accent/30 bg-accent/5 p-6 shadow-sm">
+        {/* Contact Form */}
+        <div className="mt-8 rounded-2xl border border-accent/30 bg-accent-light p-6 shadow-sm">
           <h2 className="font-bold text-card-foreground text-lg mb-1 flex items-center gap-2">
             <Send className="h-5 w-5 text-accent" /> Intéressé par ce véhicule ?
           </h2>
@@ -323,7 +328,7 @@ export default function VitrineDetail() {
                 <label className="text-sm font-medium text-card-foreground mb-1.5 block">Message</label>
                 <Textarea placeholder={`Bonjour, je suis intéressé par votre ${vehicle.brand} ${vehicle.model}...`} value={contactForm.message} onChange={(e) => setContactForm(f => ({ ...f, message: e.target.value }))} rows={3} maxLength={1000} />
               </div>
-              <Button type="submit" disabled={contactSending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl py-3 font-semibold shadow-md shadow-accent/20">
+              <Button type="submit" disabled={contactSending} className="w-full bg-accent text-accent-foreground hover:bg-accent-dark rounded-xl py-3 font-semibold shadow-md shadow-accent/20">
                 {contactSending ? "Envoi en cours..." : "Envoyer mon message"}
               </Button>
               <p className="text-[10px] text-muted-foreground text-center">En envoyant ce formulaire, vous acceptez d'être recontacté concernant ce véhicule.</p>

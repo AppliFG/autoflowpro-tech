@@ -7,7 +7,7 @@ interface KpiCardProps {
   icon: ReactNode;
   trend?: { value: number; positive: boolean };
   variant?: "default" | "success" | "warning" | "destructive" | "violet" | "accent";
-  color?: string;
+  progressPercent?: number;
 }
 
 const dotColors: Record<string, string> = {
@@ -37,9 +37,9 @@ const iconVariantStyles: Record<string, string> = {
   accent: "bg-accent/15 text-accent",
 };
 
-export default function KpiCard({ title, value, subtitle, icon, trend, variant = "default" }: KpiCardProps) {
+export default function KpiCard({ title, value, subtitle, icon, trend, variant = "default", progressPercent = 60 }: KpiCardProps) {
   return (
-    <div className="group relative rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 overflow-hidden">
+    <div className="group relative rounded-lg border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 overflow-hidden">
       {/* Color dot */}
       <div className={`absolute top-4 right-4 h-2 w-2 rounded-full ${dotColors[variant]}`} />
 
@@ -67,7 +67,7 @@ export default function KpiCard({ title, value, subtitle, icon, trend, variant =
 
       {/* Bottom progress bar */}
       <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30">
-        <div className={`h-full ${barColors[variant]} rounded-full`} style={{ width: "60%" }} />
+        <div className={`h-full ${barColors[variant]} rounded-full transition-all duration-500`} style={{ width: `${progressPercent}%` }} />
       </div>
     </div>
   );

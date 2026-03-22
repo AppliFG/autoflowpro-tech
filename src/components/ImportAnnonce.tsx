@@ -58,8 +58,7 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [customEquipment, setCustomEquipment] = useState("");
   const [garantieId, setGarantieId] = useState("");
-  const [garantieDuration, setGarantieDuration] = useState<number>(6);
-  const [garantieMode, setGarantieMode] = useState<"inclus" | "ajout">("ajout");
+  const [garantiesList, setGarantiesList] = useState<GarantieOption[]>([]);
   const [fraisMiseEnRoute, setFraisMiseEnRoute] = useState<number | "">(0);
   const [fraisCarteGrise, setFraisCarteGrise] = useState<number | "">(0);
   const [fraisAssurance, setFraisAssurance] = useState<number | "">(0);

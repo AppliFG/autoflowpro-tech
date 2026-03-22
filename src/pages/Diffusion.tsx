@@ -66,23 +66,23 @@ export default function Diffusion() {
         <div className="space-y-3">
           <h3 className="font-semibold text-card-foreground text-sm">Véhicules en stock ({vehicles.length})</h3>
           {vehicles.map((v) => (
-            <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center gap-4">
+            <div key={v.id} className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               {v.photo_url ? (
-                <img src={v.photo_url} alt="" className="h-16 w-24 object-cover rounded-lg border border-border" />
+                <img src={v.photo_url} alt="" className="h-24 w-full sm:h-16 sm:w-24 object-cover rounded-lg border border-border" />
               ) : (
-                <div className="h-16 w-24 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                <div className="h-24 w-full sm:h-16 sm:w-24 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">
                   Pas de photo
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-sm text-card-foreground truncate">{v.brand} {v.model}</span>
                   <Badge variant={v.status === "En ligne" ? "default" : "secondary"} className="text-[9px]">{v.status}</Badge>
                   {v.police_number && (
                     <Badge variant="outline" className="text-[9px]">Police n°{v.police_number}</Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
                   {v.year && <span>{v.year}</span>}
                   {v.mileage && <span>{v.mileage.toLocaleString()} km</span>}
                   {v.fuel_type && <span>{v.fuel_type}</span>}
@@ -91,9 +91,9 @@ export default function Diffusion() {
                   </span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto">
                 <span className="font-bold text-card-foreground">{v.selling_price?.toLocaleString()} €</span>
-                <div className="flex gap-1 mt-1">
+                <div className="flex gap-1 sm:mt-1">
                   <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3 w-3" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button>
                 </div>

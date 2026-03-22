@@ -3,6 +3,7 @@ import AppSidebar from "./AppSidebar";
 import MobileBottomNav from "./MobileBottomNav";
 import TrialBanner from "./TrialBanner";
 import { Search, Bell } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 interface AppLayoutProps {
   children: ReactNode;

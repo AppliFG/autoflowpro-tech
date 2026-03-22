@@ -57,9 +57,8 @@ export default function ParametresConnecteurs() {
 
   const handleDisconnect = async (id: string) => {
     try {
-      await saveConnecteur(id, {}, false);
+      await disconnectConnecteur(id);
       setLocalEdits(prev => { const n = { ...prev }; delete n[id]; return n; });
-      toast({ title: "Connecteur déconnecté" });
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
     }

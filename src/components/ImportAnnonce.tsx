@@ -269,30 +269,13 @@ export default function ImportAnnonce({ onClose, onImport }: Props) {
                   <SelectTrigger className="text-xs"><SelectValue placeholder="Sélectionner une garantie..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucune garantie</SelectItem>
-                    {AMS_GARANTIES.filter((g) => g.active).map((g) => (
-                      <SelectItem key={g.id} value={g.id}>{g.name} — {g.provider} ({g.vehicleType})</SelectItem>
+                    {garantiesList.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>{g.name} — {g.costHT}€ HT</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedGarantie && (
-                  <div className="flex gap-3 items-center">
-                    <Select value={String(garantieDuration)} onValueChange={(v) => setGarantieDuration(Number(v))}>
-                      <SelectTrigger className="text-xs w-24"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {selectedGarantie.durations.map((d) => <SelectItem key={d.months} value={String(d.months)}>{d.months} mois</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select value={garantieMode} onValueChange={(v) => setGarantieMode(v as "inclus" | "ajout")}>
-                      <SelectTrigger className="text-xs w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ajout">En supplément</SelectItem>
-                        <SelectItem value="inclus">Incluse</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {selectedDuration && (
-                      <span className="text-xs text-muted-foreground">{selectedDuration.priceHT}€ HT</span>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground">Coût : {selectedGarantie.costHT}€ HT</p>
                 )}
               </div>
             )}

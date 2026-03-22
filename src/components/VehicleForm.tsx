@@ -52,6 +52,7 @@ interface Props {
 }
 
 export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
+  const { connecteurs } = useConnecteurs();
   const [form, setForm] = useState<VehicleFormData>(initialData ?? emptyForm);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>(() => {

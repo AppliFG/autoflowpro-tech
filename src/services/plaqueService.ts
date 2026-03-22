@@ -3,7 +3,7 @@
 // Utilise le connecteur configuré dans Paramètres
 // ═══════════════════════════════════════════════════════
 
-import { ConnecteurConfig, getConnecteurCredentials } from "@/types/connecteurs";
+import { ConnecteurConfig } from "@/types/connecteurs";
 
 export interface PlaqueDecodedData {
   vin: string;
@@ -44,17 +44,25 @@ const DEMO_TOKEN = "TokenDemo2026B";
  */
 export async function rechercherParPlaque(
   plaque: string,
-  connecteurs?: ConnecteurConfig[],
+  connecteurs?: ConnecteurConfig[] | null,
   pays: string = "FR"
 ): Promise<PlaqueDecodedData> {
   const cleanPlaque = plaque.trim().toUpperCase().replace(/[\s-]/g, "");
   if (cleanPlaque.length < 5) throw new Error("Plaque trop courte.");
 
-  // Chercher le token dans les connecteurs configurés
+  // Token démo par défaut : toujours disponible même si les connecteurs ne chargent pas
   let apiToken = DEMO_TOKEN;
-  if (connecteurs) {
-    const creds = getConnecteurCredentials(connecteurs, "api-plaque-immatriculation");
-    if (creds?.apiToken) apiToken = creds.apiToken;
+  try {
+    if (Array.isArray(connecteurs) && connecteurs.length > 0) {
+      const apiPlaque = connecteurs.find(
+        (c) => c?.id === "api-plaque-immatriculation" && c?.actif && c?.connecte
+      );
+
+      const configuredToken = apiPlaque?.credentials?.apiToken?.trim();
+      if (configuredToken) apiToken = configuredToken;
+    }
+  } catch (error) {
+    console.warn("Connecteurs non disponibles, utilisation du token démo", error);
   }
 
   const url = `${API_URL}?immatriculation=${encodeURIComponent(cleanPlaque)}&token=${apiToken}&pays=${pays}`;

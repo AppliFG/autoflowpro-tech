@@ -151,19 +151,19 @@ export default function Dashboard() {
       {/* KPIs principaux - 4 cards */}
       {visibility.kpis && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} variant="default" />
-          <KpiCard title="Valeur stock" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} variant="accent" />
-          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "destructive"} />
-          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" variant="violet" />
+          <KpiCard title="Véhicules en stock" value={stats.vehiclesInStock} icon={<Car className="h-5 w-5" />} variant="default" progressPercent={Math.min(100, stats.vehiclesInStock * 5)} />
+          <KpiCard title="Valeur stock" value={`${stats.totalSellingPrice.toLocaleString("fr-FR")} €`} icon={<Euro className="h-5 w-5" />} variant="accent" progressPercent={70} />
+          <KpiCard title="Marge prévisionnelle" value={`${margin.toLocaleString("fr-FR")} €`} icon={<TrendingUp className="h-5 w-5" />} variant={margin > 0 ? "success" : "destructive"} progressPercent={margin > 0 ? 65 : 20} />
+          <KpiCard title="Leads entrants" value={stats.leadsCount} icon={<Users className="h-5 w-5" />} subtitle="Ce mois" variant="violet" progressPercent={Math.min(100, stats.leadsCount * 10)} />
         </div>
       )}
 
       {/* KPIs secondaires - 3 cards */}
       {visibility.kpis2 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Handshake className="h-5 w-5" />} subtitle="Mandats actifs" variant="default" />
-          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" variant="accent" />
-          <KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} />
+          <KpiCard title="Dépôt-vente" value={stats.deposCount} icon={<Handshake className="h-5 w-5" />} subtitle="Mandats actifs" variant="default" progressPercent={Math.min(100, stats.deposCount * 10)} />
+          <KpiCard title="Rotation moyenne" value={stats.avgDaysInStock > 0 ? `${stats.avgDaysInStock}j` : "—"} icon={<Clock className="h-5 w-5" />} subtitle="Temps en stock" variant="accent" progressPercent={stats.avgDaysInStock > 0 ? Math.max(10, 100 - stats.avgDaysInStock) : 0} />
+          <KpiCard title="Stock > 60 jours" value={stats.oldStockCount} icon={<AlertTriangle className="h-5 w-5" />} subtitle="Action requise" variant={stats.oldStockCount > 0 ? "destructive" : "default"} progressPercent={stats.oldStockCount > 0 ? Math.min(100, stats.oldStockCount * 20) : 0} />
         </div>
       )}
     </AppLayout>

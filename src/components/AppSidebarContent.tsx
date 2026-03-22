@@ -63,14 +63,17 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-primary to-primary-dark">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/15">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary font-bold text-sm shrink-0">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-foreground text-primary font-bold text-sm shrink-0">
           AF
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-base font-bold tracking-tight text-white">{mode === 'crm' ? 'AutoFlow CRM' : 'AutoFlow Pro'}</h1>
-            <p className="text-[10px] text-white/70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
+            <h1 className="text-base font-bold tracking-tight text-primary-foreground">
+              {mode === 'crm' ? 'AutoFlow ' : 'AutoFlow '}
+              <span className="text-accent">{mode === 'crm' ? 'CRM' : 'Pro'}</span>
+            </h1>
+            <p className="text-[10px] text-primary-foreground/70">{mode === 'crm' ? 'Gestion des prospects' : 'Gestion VO & Dépôt-vente'}</p>
           </div>
         )}
       </div>
@@ -86,8 +89,8 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
               onClick={onNavigate}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-white/20 text-white"
-                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
               }`}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
@@ -98,12 +101,12 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
       </nav>
 
       {/* User & Logout */}
-      <div className="border-t border-white/15 p-3 space-y-2">
+      <div className="border-t border-sidebar-border p-3 space-y-2">
         {!collapsed && user && (
           <div className="px-1 space-y-1">
-            <p className="text-xs text-white/60 truncate">{user.email}</p>
+            <p className="text-xs text-primary-foreground/60 truncate">{user.email}</p>
             {role && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-white/20 text-white border-0">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary-foreground/20 text-primary-foreground border-0">
                 {roleLabels[role] || role}
               </Badge>
             )}
@@ -111,7 +114,7 @@ export default function AppSidebarContent({ collapsed = false, onNavigate }: App
         )}
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors"
         >
           <LogOut className="h-[18px] w-[18px] shrink-0" />
           {!collapsed && <span>Déconnexion</span>}

@@ -344,6 +344,17 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
             <Textarea id="desc" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Description pour les plateformes de diffusion..." />
           </div>
 
+          {/* Equipments */}
+          <div>
+            <Label>Équipements <span className="text-muted-foreground font-normal text-xs">(un par ligne)</span></Label>
+            <Textarea
+              rows={4}
+              value={(form.equipments || []).join("\n")}
+              onChange={(e) => set("equipments", e.target.value.split("\n"))}
+              placeholder={"Climatisation automatique\nGPS intégré\nRadar de recul\nBluetooth"}
+            />
+          </div>
+
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>

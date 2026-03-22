@@ -699,6 +699,7 @@ export type Database = {
           color: string | null
           created_at: string
           description: string | null
+          equipments: string[] | null
           fuel_type: string | null
           id: string
           mileage: number | null
@@ -719,6 +720,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          equipments?: string[] | null
           fuel_type?: string | null
           id?: string
           mileage?: number | null
@@ -739,6 +741,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          equipments?: string[] | null
           fuel_type?: string | null
           id?: string
           mileage?: number | null

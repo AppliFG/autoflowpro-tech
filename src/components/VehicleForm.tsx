@@ -175,6 +175,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
         description: form.description.trim() || null,
         photo_url: allUrls[0] || null,
         photo_urls: allUrls,
+        equipments: (form.equipments || []).filter(e => e.trim()),
       };
 
       if (isEdit && initialData?.id) {

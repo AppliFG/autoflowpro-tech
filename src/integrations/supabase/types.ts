@@ -731,6 +731,7 @@ export type Database = {
           brand: string
           color: string | null
           created_at: string
+          date_first_registration: string | null
           description: string | null
           equipments: string[] | null
           fuel_type: string | null
@@ -752,6 +753,7 @@ export type Database = {
           brand: string
           color?: string | null
           created_at?: string
+          date_first_registration?: string | null
           description?: string | null
           equipments?: string[] | null
           fuel_type?: string | null
@@ -773,6 +775,7 @@ export type Database = {
           brand?: string
           color?: string | null
           created_at?: string
+          date_first_registration?: string | null
           description?: string | null
           equipments?: string[] | null
           fuel_type?: string | null

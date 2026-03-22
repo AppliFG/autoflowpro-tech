@@ -37,7 +37,7 @@ interface VehicleFormData {
 
 const emptyForm: VehicleFormData = {
   police_number: "",
-  registration: "", brand: "", model: "", version: "", year: "", mileage: "",
+  registration: "", brand: "", model: "", version: "", year: "", date_first_registration: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
   vin: "", power_din: "", cv_fiscaux: "", equipments: [],

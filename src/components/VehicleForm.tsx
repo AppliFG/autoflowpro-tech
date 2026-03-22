@@ -98,6 +98,7 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
       model: data.modele || f.model,
       version: data.version || f.version,
       year: data.annee || f.year,
+      date_first_registration: data.dateMiseCirculation || f.date_first_registration,
       fuel_type: data.energie || f.fuel_type,
       color: data.couleur || f.color,
       power_din: data.puissanceDin || f.power_din,

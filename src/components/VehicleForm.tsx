@@ -32,6 +32,8 @@ interface VehicleFormData {
   vin?: string;
   power_din?: number | "";
   cv_fiscaux?: number | "";
+  code_moteur?: string;
+  boite_vitesse?: string;
   equipments?: string[];
 }
 
@@ -40,7 +42,7 @@ const emptyForm: VehicleFormData = {
   registration: "", brand: "", model: "", version: "", year: "", date_first_registration: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
-  vin: "", power_din: "", cv_fiscaux: "", equipments: [],
+  vin: "", power_din: "", cv_fiscaux: "", code_moteur: "", boite_vitesse: "", equipments: [],
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];
@@ -103,6 +105,8 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
       color: data.couleur || f.color,
       power_din: data.puissanceDin || f.power_din,
       cv_fiscaux: data.puissanceFiscale || f.cv_fiscaux,
+      code_moteur: data.codeMoteur || f.code_moteur,
+      boite_vitesse: data.boiteVitesse || f.boite_vitesse,
     }));
     toast.success("Champs pré-remplis depuis la plaque");
   };
@@ -314,10 +318,6 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
               <Input id="version" value={form.version} onChange={(e) => set("version", e.target.value)} placeholder="GT Line" />
             </div>
             <div>
-              <Label htmlFor="year">Année</Label>
-              <Input id="year" type="number" value={form.year} onChange={(e) => set("year", e.target.value === "" ? "" : Number(e.target.value))} placeholder="2022" />
-            </div>
-            <div>
               <Label htmlFor="date_first_registration">Date 1ère mise en circulation</Label>
               <Input id="date_first_registration" value={form.date_first_registration} onChange={(e) => set("date_first_registration", e.target.value)} placeholder="01/01/2022" />
             </div>
@@ -350,17 +350,25 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
               <Label htmlFor="cvFiscaux">CV fiscaux</Label>
               <Input id="cvFiscaux" type="number" value={form.cv_fiscaux} onChange={(e) => set("cv_fiscaux", e.target.value === "" ? "" : Number(e.target.value))} placeholder="7" />
             </div>
+            <div>
+              <Label htmlFor="codeMoteur">Code moteur</Label>
+              <Input id="codeMoteur" value={form.code_moteur || ""} onChange={(e) => set("code_moteur", e.target.value)} placeholder="DV6C" className="font-mono text-xs" />
+            </div>
+            <div>
+              <Label htmlFor="boiteVitesse">Code boîte de vitesse</Label>
+              <Input id="boiteVitesse" value={form.boite_vitesse || ""} onChange={(e) => set("boite_vitesse", e.target.value)} placeholder="Manuelle" className="font-mono text-xs" />
+            </div>
           </div>
 
           {/* Prices */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="pa">Prix d'achat (€)</Label>
-              <Input id="pa" type="number" value={form.purchase_price} onChange={(e) => set("purchase_price", e.target.value === "" ? "" : Number(e.target.value))} placeholder="12000" />
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <Label htmlFor="pa" className="text-blue-700 dark:text-blue-300 font-semibold">Prix d'achat (€)</Label>
+              <Input id="pa" type="number" value={form.purchase_price} onChange={(e) => set("purchase_price", e.target.value === "" ? "" : Number(e.target.value))} placeholder="12000" className="border-blue-300 dark:border-blue-700" />
             </div>
-            <div>
-              <Label htmlFor="pv">Prix de vente (€)</Label>
-              <Input id="pv" type="number" value={form.selling_price} onChange={(e) => set("selling_price", e.target.value === "" ? "" : Number(e.target.value))} placeholder="15000" />
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+              <Label htmlFor="pv" className="text-emerald-700 dark:text-emerald-300 font-semibold">Prix de vente (€)</Label>
+              <Input id="pv" type="number" value={form.selling_price} onChange={(e) => set("selling_price", e.target.value === "" ? "" : Number(e.target.value))} placeholder="15000" className="border-emerald-300 dark:border-emerald-700" />
             </div>
           </div>
 

@@ -32,6 +32,8 @@ interface VehicleFormData {
   vin?: string;
   power_din?: number | "";
   cv_fiscaux?: number | "";
+  code_moteur?: string;
+  boite_vitesse?: string;
   equipments?: string[];
 }
 

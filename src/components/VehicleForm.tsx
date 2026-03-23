@@ -318,10 +318,6 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
               <Input id="version" value={form.version} onChange={(e) => set("version", e.target.value)} placeholder="GT Line" />
             </div>
             <div>
-              <Label htmlFor="year">Année</Label>
-              <Input id="year" type="number" value={form.year} onChange={(e) => set("year", e.target.value === "" ? "" : Number(e.target.value))} placeholder="2022" />
-            </div>
-            <div>
               <Label htmlFor="date_first_registration">Date 1ère mise en circulation</Label>
               <Input id="date_first_registration" value={form.date_first_registration} onChange={(e) => set("date_first_registration", e.target.value)} placeholder="01/01/2022" />
             </div>

@@ -42,7 +42,7 @@ const emptyForm: VehicleFormData = {
   registration: "", brand: "", model: "", version: "", year: "", date_first_registration: "", mileage: "",
   fuel_type: "Diesel", color: "", purchase_price: "", selling_price: "",
   status: "En préparation", description: "", photo_url: null, photo_urls: [],
-  vin: "", power_din: "", cv_fiscaux: "", equipments: [],
+  vin: "", power_din: "", cv_fiscaux: "", code_moteur: "", boite_vitesse: "", equipments: [],
 };
 
 const fuelTypes = ["Diesel", "Essence", "Hybride", "Électrique", "GPL"];

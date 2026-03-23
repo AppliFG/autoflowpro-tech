@@ -105,6 +105,8 @@ export default function VehicleForm({ initialData, onClose, onSaved }: Props) {
       color: data.couleur || f.color,
       power_din: data.puissanceDin || f.power_din,
       cv_fiscaux: data.puissanceFiscale || f.cv_fiscaux,
+      code_moteur: data.codeMoteur || f.code_moteur,
+      boite_vitesse: data.boiteVitesse || f.boite_vitesse,
     }));
     toast.success("Champs pré-remplis depuis la plaque");
   };
